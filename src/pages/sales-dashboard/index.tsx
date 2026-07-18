@@ -44,8 +44,8 @@ export const SalesDashboardPage: React.FC = () => {
     <div className="flex flex-col gap-6 text-left">
       {/* Title Header */}
       <div className="mb-2">
-        <h2 className="font-headline text-2xl font-bold text-on-surface">Agent Partner Portal</h2>
-        <p className="font-body text-body-lg text-on-surface-variant">Track your referrals, commissions, and customer onboarding pipelines.</p>
+        <h2 className="font-headline text-xl sm:text-2xl font-bold text-on-surface">Agent Partner Portal</h2>
+        <p className="font-body text-sm sm:text-body-lg text-on-surface-variant">Track your referrals, commissions, and customer onboarding pipelines.</p>
       </div>
 
       {/* Row 1: Referral Link & Commission Tier progress */}
@@ -53,9 +53,9 @@ export const SalesDashboardPage: React.FC = () => {
         {/* Referral link box */}
         <div className="lg:col-span-2 glass-panel p-6 flex flex-col justify-between">
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="font-headline text-lg font-bold text-on-surface">Your Unique Referral Link</h3>
-              <span className="flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-bold">
+            <div className="flex justify-between items-start sm:items-center mb-2 gap-2">
+              <h3 className="font-headline text-base sm:text-lg font-bold text-on-surface">Your Unique Referral Link</h3>
+              <span className="flex items-center gap-1 bg-primary/10 text-primary px-2.5 py-1 rounded-full text-xs font-bold shrink-0">
                 <span className="material-symbols-outlined text-[14px]">ads_click</span>
                 {clicksCount} Clicks
               </span>
@@ -64,26 +64,26 @@ export const SalesDashboardPage: React.FC = () => {
               Share this link with store owners. Once they register their shop using this link, they will be registered as your referral permanently.
             </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 items-center bg-black/5 p-4 rounded-2xl border border-black/5 dark:bg-white/5 dark:border-white/5">
-            <span className="font-mono text-xs select-all text-on-surface flex-1 break-all truncate">{referralLink}</span>
-            <div className="flex gap-2 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center bg-black/5 p-4 rounded-2xl border border-black/5 dark:bg-white/5 dark:border-white/5">
+            <span className="font-mono text-xs select-all text-on-surface flex-1 break-all">{referralLink}</span>
+            <div className="grid grid-cols-1 sm:flex gap-2 w-full sm:w-auto">
               <button
                 onClick={handleCopyLink}
-                className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                className="bg-primary hover:bg-primary-container text-white px-4 py-2 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
                 <span className="material-symbols-outlined text-[16px]">content_copy</span>
                 Copy Link
               </button>
               <button
                 onClick={() => setQrModalVisible(true)}
-                className="bg-black/10 hover:bg-black/20 text-on-surface px-4 py-2 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                className="bg-black/10 hover:bg-black/20 text-on-surface px-4 py-2 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
                 <span className="material-symbols-outlined text-[16px]">qr_code_2</span>
                 Show QR
               </button>
               <button
                 onClick={() => handleShareWhatsApp()}
-                className="bg-[#25D366] hover:bg-[#20BA5A] text-white px-4 py-2 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center gap-1.5 whitespace-nowrap"
+                className="bg-[#25D366] hover:bg-[#20BA5A] text-white px-4 py-2 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
                 <span className="material-symbols-outlined text-[16px]">share</span>
                 Share to WhatsApp
