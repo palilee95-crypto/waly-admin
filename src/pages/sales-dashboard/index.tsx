@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { message, Modal } from 'antd';
 import { useSalesData } from './useSalesData';
+import { WhatsAppConnectCard } from './components/WhatsAppConnectCard';
 
 export const SalesDashboardPage: React.FC = () => {
   const {
@@ -48,7 +49,7 @@ export const SalesDashboardPage: React.FC = () => {
         <p className="font-body text-sm sm:text-body-lg text-on-surface-variant">Track your referrals, commissions, and customer onboarding pipelines.</p>
       </div>
 
-      {/* Row 1: Referral Link & Commission Tier progress */}
+      {/* Row 1: Referral Link, WhatsApp Connection & Commission Tier progress */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-gutter">
         {/* Referral link box */}
         <div className="lg:col-span-2 glass-panel p-6 flex flex-col justify-between">
@@ -92,8 +93,12 @@ export const SalesDashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Commission Tier Progress */}
-        <div className="glass-panel p-6 flex flex-col justify-between">
+        {/* WhatsApp Connection + Commission Tier (stacked) */}
+        <div className="flex flex-col gap-gutter">
+          <WhatsAppConnectCard />
+
+          {/* Commission Tier Progress */}
+          <div className="glass-panel p-6 flex flex-col justify-between">
           <div>
             <div className="flex justify-between items-center mb-2">
               <h3 className="font-headline text-sm font-bold text-on-surface uppercase tracking-wider">Commission Tier</h3>
@@ -119,6 +124,7 @@ export const SalesDashboardPage: React.FC = () => {
               />
             </div>
           </div>
+        </div>
         </div>
       </div>
 
@@ -265,7 +271,7 @@ export const SalesDashboardPage: React.FC = () => {
         footer={null}
         width={340}
         centered
-        bodyStyle={{ padding: '24px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '24px' }}
+        styles={{ body: { padding: '24px', textAlign: 'center', backgroundColor: '#ffffff', borderRadius: '24px' } }}
       >
         <h4 className="font-headline text-lg font-black text-on-surface mb-1">Referral QR Code</h4>
         <p className="font-body text-xs text-on-surface-variant mb-6">Scan to register under partner agent</p>

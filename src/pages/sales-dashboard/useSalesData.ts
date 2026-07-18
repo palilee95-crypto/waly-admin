@@ -48,6 +48,22 @@ export const useSalesData = () => {
     },
   });
 
+  // 2b. Query prospects from PocketBase for this agent
+  const { data: prospectsData, isLoading: isLoadingProspects } = useList<any>({
+    resource: 'prospects',
+    filters: [
+      {
+        field: 'agent',
+        operator: 'eq',
+        value: identity?.id || '',
+      },
+    ],
+    pagination: { pageSize: 100 },
+    queryOptions: {
+      enabled: !!identity?.id,
+    },
+  });
+
   const referralCode = identity?.referral_code || 'RISEV_AGENT_100';
   const merchantAppUrl = import.meta.env.VITE_MERCHANT_APP_URL || 'https://waly-five.vercel.app';
   const referralLink = `${merchantAppUrl}/?ref=${referralCode}`;
@@ -94,6 +110,22 @@ export const useSalesData = () => {
   const inactiveProspects = merchantsList.filter(m => m.status === 'pending' || m.totalTransactions === 0);
   const activeMerchants = merchantsList.filter(m => m.status === 'active' && m.totalTransactions > 0);
   const dormantMerchants = activeMerchants.filter(m => isDormant(m.lastActive));
+
+  // Merge prospects collection leads into inactiveProspects
+  const prospectLeads: ReferredMerchant[] = (prospectsData?.data || []).map((p: any) => ({
+    id: p.id,
+    name: `Prospect ${p.phone}`,
+    category: 'Lead',
+    created: String(p.created).substring(0, 10),
+    status: 'pending',
+    totalTransactions: 0,
+    totalSales: 0,
+    commission: 0,
+    phone: p.phone || '',
+    lastActive: String(p.last_contacted || p.updated).substring(0, 10),
+  }));
+
+  const allInactiveProspects = [...inactiveProspects, ...prospectLeads];
 
   // Compute Overall Stats from real commission history
   const totalEarned = (realCommissionsData?.data || []).reduce((acc: number, curr: any) => acc + (curr.commission_amount || 0), 0);
@@ -237,13 +269,13 @@ export const useSalesData = () => {
 
   return {
     identity,
-    isLoading: isLoadingMerchants || isLoadingCommissions,
+    isLoading: isLoadingMerchants || isLoadingCommissions || isLoadingProspects,
     referralCode,
     referralLink,
     clicksCount,
     qrCodeUrl,
     merchantsList,
-    inactiveProspects,
+    inactiveProspects: allInactiveProspects,
     activeMerchants,
     dormantMerchants,
     totalEarned,

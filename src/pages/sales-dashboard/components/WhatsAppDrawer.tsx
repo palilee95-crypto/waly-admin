@@ -53,7 +53,7 @@ export const WhatsAppDrawer: React.FC<WhatsAppDrawerProps> = ({ visible, onClose
       onClose={onClose}
       open={visible}
       width={isMerchantDormant ? 450 : 400}
-      bodyStyle={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px' }}
+      styles={{ body: { display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px' } }}
     >
       {merchant && (
         <div className="flex flex-col gap-4 text-left">
