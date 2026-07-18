@@ -31,8 +31,8 @@ export const WhatsAppConnectCard: React.FC = () => {
         setStatus('disconnected');
         setQrCode(res.qrcode);
       } else {
+        // Still disconnected but no new QR — preserve existing QR so it doesn't flash
         setStatus('disconnected');
-        setQrCode('');
       }
     } catch (err: any) {
       console.error('WhatsApp status error:', err);
