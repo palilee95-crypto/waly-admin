@@ -214,7 +214,7 @@ export const WhatsAppConnectCard: React.FC = () => {
           <div className="flex justify-center mb-4 p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800">
             {qrCode ? (
               <img
-                src={`data:image/png;base64,${qrCode}`}
+                src={qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`}
                 alt="WhatsApp QR Code"
                 className="w-[200px] h-[200px] sm:w-[220px] sm:h-[220px]"
               />
