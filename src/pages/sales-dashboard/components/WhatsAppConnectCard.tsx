@@ -384,6 +384,13 @@ export const WhatsAppConnectCard: React.FC = () => {
                   {pairingCode}
                 </p>
               </div>
+              <button
+                onClick={handlePair}
+                disabled={isPairing}
+                className="text-xs text-primary hover:text-primary-focus underline font-semibold bg-transparent border-none cursor-pointer disabled:opacity-50 -mt-2"
+              >
+                {isPairing ? 'Regenerating...' : 'Regenerate Code'}
+              </button>
               <p className="text-xs text-on-surface-variant text-center">
                 The code expires in a few minutes. Don't close this window until you've entered it.
               </p>
