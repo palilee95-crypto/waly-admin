@@ -9,7 +9,7 @@ export const WhatsAppConnectCard: React.FC = () => {
   const [showQrModal, setShowQrModal] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchStatus = useCallback(async (generateQr = false) => {
     try {
@@ -24,7 +24,7 @@ export const WhatsAppConnectCard: React.FC = () => {
         setQrCode('');
         setShowQrModal(false);
         if (pollRef.current) {
-          clearInterval(pollRef.current);
+          clearTimeout(pollRef.current);
           pollRef.current = null;
         }
       } else if (res.qrcode) {
@@ -47,7 +47,7 @@ export const WhatsAppConnectCard: React.FC = () => {
   useEffect(() => {
     return () => {
       if (pollRef.current) {
-        clearInterval(pollRef.current);
+        clearTimeout(pollRef.current);
         pollRef.current = null;
       }
     };
@@ -58,9 +58,15 @@ export const WhatsAppConnectCard: React.FC = () => {
     try {
       await fetchStatus(true);
       setShowQrModal(true);
-      pollRef.current = setInterval(async () => {
+      // Poll with exponential backoff: 5s, 10s, 20s, 30s, 30s...
+      let pollAttempt = 0;
+      const pollFn = async () => {
         await fetchStatus(false);
-      }, 5000);
+        pollAttempt++;
+        const delay = Math.min(5000 * Math.pow(2, pollAttempt), 30000);
+        pollRef.current = setTimeout(pollFn, delay) as any;
+      };
+      pollRef.current = setTimeout(pollFn, 5000) as any;
     } catch (err: any) {
       message.error('Failed to generate QR code. Please try again.');
     } finally {
@@ -86,7 +92,7 @@ export const WhatsAppConnectCard: React.FC = () => {
   const handleCloseQrModal = () => {
     setShowQrModal(false);
     if (pollRef.current) {
-      clearInterval(pollRef.current);
+      clearTimeout(pollRef.current);
       pollRef.current = null;
     }
   };
