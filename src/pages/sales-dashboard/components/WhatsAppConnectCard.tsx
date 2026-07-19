@@ -248,6 +248,7 @@ export const WhatsAppConnectCard: React.FC = () => {
         style={{ maxWidth: 360 }}
         centered
         styles={{ body: { padding: '0' } }}
+        closeIcon={null}
       >
         {/* Custom Header */}
         <div className="flex items-center justify-between p-5 border-b border-black/5 dark:border-white/5">
@@ -303,6 +304,7 @@ export const WhatsAppConnectCard: React.FC = () => {
         style={{ maxWidth: 420 }}
         centered
         styles={{ body: { padding: '0' } }}
+        closeIcon={null}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b border-black/5 dark:border-white/5">
