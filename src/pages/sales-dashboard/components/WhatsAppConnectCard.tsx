@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { message, Modal } from 'antd';
+import { message, Modal, Input } from 'antd';
 import { pb } from '../../../lib/pocketbase';
 
 export const WhatsAppConnectCard: React.FC = () => {
@@ -7,7 +7,11 @@ export const WhatsAppConnectCard: React.FC = () => {
   const [phone, setPhone] = useState('');
   const [qrCode, setQrCode] = useState('');
   const [showQrModal, setShowQrModal] = useState(false);
+  const [showPairModal, setShowPairModal] = useState(false);
+  const [pairPhone, setPairPhone] = useState('');
+  const [pairingCode, setPairingCode] = useState('');
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isPairing, setIsPairing] = useState(false);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
   const pollRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -97,6 +101,48 @@ export const WhatsAppConnectCard: React.FC = () => {
     }
   };
 
+  const handlePair = async () => {
+    if (!pairPhone.trim()) {
+      message.warning('Please enter your WhatsApp phone number.');
+      return;
+    }
+    const cleanPhone = pairPhone.trim().replace(/[\s\-]/g, '');
+    if (!/^(\+?60|0)?\d{8,12}$/.test(cleanPhone)) {
+      message.error('Please enter a valid Malaysian phone number (e.g. 0123456789).');
+      return;
+    }
+
+    setIsPairing(true);
+    setPairingCode('');
+    try {
+      const res = await pb.send('/api/risev/agent/whatsapp/pair', {
+        method: 'POST',
+        body: { phone: cleanPhone },
+        requestKey: null,
+      });
+
+      if (res.success && res.pairingCode) {
+        setPairingCode(res.pairingCode);
+        message.success('Pairing code generated! Enter it in WhatsApp → Linked Devices.');
+      } else {
+        message.error(res.message || 'Failed to generate pairing code.');
+      }
+    } catch (err: any) {
+      const errMsg = err?.response?.message || err?.message || 'Failed to generate pairing code.';
+      message.error(errMsg);
+    } finally {
+      setIsPairing(false);
+    }
+  };
+
+  const handleClosePairModal = () => {
+    setShowPairModal(false);
+    setPairPhone('');
+    setPairingCode('');
+    // Refresh status after closing (user may have paired)
+    fetchStatus(false);
+  };
+
   const statusConfig = {
     connected: {
       dot: 'bg-green-500',
@@ -170,14 +216,24 @@ export const WhatsAppConnectCard: React.FC = () => {
               {isDisconnecting ? 'Disconnecting...' : 'Disconnect'}
             </button>
           ) : (
-            <button
-              onClick={handleConnect}
-              disabled={isConnecting || status === 'loading'}
-              className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white px-4 py-2.5 rounded-xl font-headline font-semibold text-sm transition-all border-none cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-lg shadow-[#25D366]/20"
-            >
-              <span className="material-symbols-outlined text-[18px]">qr_code_scanner</span>
-              {isConnecting ? 'Generating QR...' : 'Connect WhatsApp'}
-            </button>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={handleConnect}
+                disabled={isConnecting || status === 'loading'}
+                className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white px-4 py-2.5 rounded-xl font-headline font-semibold text-sm transition-all border-none cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-lg shadow-[#25D366]/20"
+              >
+                <span className="material-symbols-outlined text-[18px]">qr_code_scanner</span>
+                {isConnecting ? 'Generating QR...' : 'Scan QR Code'}
+              </button>
+              <button
+                onClick={() => setShowPairModal(true)}
+                disabled={status === 'loading'}
+                className="w-full bg-black/5 dark:bg-white/5 hover:bg-black/10 dark:hover:bg-white/10 text-on-surface px-4 py-2.5 rounded-xl font-headline font-semibold text-sm transition-all border border-black/5 dark:border-white/5 cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                <span className="material-symbols-outlined text-[18px]">phone_iphone</span>
+                Pair with Phone Number
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -234,6 +290,112 @@ export const WhatsAppConnectCard: React.FC = () => {
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
             Waiting for scan... Auto-closes when connected.
           </div>
+        </div>
+      </Modal>
+
+      {/* Pair with Phone Number Modal */}
+      <Modal
+        title={null}
+        open={showPairModal}
+        onCancel={handleClosePairModal}
+        footer={null}
+        width="90%"
+        style={{ maxWidth: 420 }}
+        centered
+        styles={{ body: { padding: '0' } }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-black/5 dark:border-white/5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-10 h-10 rounded-xl bg-[#25D366]/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-[#25D366] text-[20px]">phone_iphone</span>
+            </div>
+            <div>
+              <h3 className="font-headline font-bold text-on-surface text-base">Pair with Phone Number</h3>
+              <p className="text-xs text-on-surface-variant">No QR scanner needed</p>
+            </div>
+          </div>
+          <button
+            onClick={handleClosePairModal}
+            className="w-8 h-8 rounded-full hover:bg-black/5 dark:hover:bg-white/10 flex items-center justify-center transition-colors border-none bg-transparent cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px] text-on-surface-variant">close</span>
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col gap-4 p-5">
+          {!pairingCode ? (
+            <>
+              <div>
+                <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5 block">
+                  Your WhatsApp Phone Number
+                </label>
+                <Input
+                  placeholder="e.g. 0123456789 or +60123456789"
+                  value={pairPhone}
+                  onChange={(e) => setPairPhone(e.target.value)}
+                  size="large"
+                  style={{ borderRadius: 12 }}
+                  prefix={<span className="material-symbols-outlined text-[18px] text-outline">phone</span>}
+                />
+                <p className="text-xs text-on-surface-variant mt-1.5">
+                  Enter the phone number registered with your WhatsApp. We'll generate a pairing code.
+                </p>
+              </div>
+
+              {/* How it works */}
+              <div className="bg-black/5 dark:bg-white/5 p-4 rounded-2xl">
+                <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider mb-2">How it works</p>
+                <ol className="text-xs text-on-surface-variant space-y-1.5 list-decimal list-inside">
+                  <li>Enter your WhatsApp phone number above</li>
+                  <li>Click "Get Pairing Code" — you'll get an 8-digit code</li>
+                  <li>Open WhatsApp → Settings → Linked Devices → Link a Device</li>
+                  <li>Tap "Pair with phone number" and enter the code</li>
+                </ol>
+              </div>
+
+              <button
+                onClick={handlePair}
+                disabled={isPairing}
+                className="w-full bg-primary hover:bg-primary-container text-white px-4 py-2.5 rounded-xl font-headline font-semibold text-sm transition-all border-none cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-lg shadow-primary/20"
+              >
+                {isPairing ? (
+                  <>
+                    <span className="material-symbols-outlined text-[18px] animate-spin">progress_activity</span>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[18px]">key</span>
+                    Get Pairing Code
+                  </>
+                )}
+              </button>
+            </>
+          ) : (
+            /* Pairing code display */
+            <div className="flex flex-col items-center gap-4 py-4">
+              <p className="text-sm text-on-surface-variant text-center">
+                Enter this code in WhatsApp → Linked Devices → Link a Device → Pair with phone number:
+              </p>
+              <div className="bg-primary/5 border-2 border-primary/20 rounded-2xl px-8 py-6">
+                <p className="font-headline text-3xl font-black text-primary tracking-[0.2em] text-center">
+                  {pairingCode}
+                </p>
+              </div>
+              <p className="text-xs text-on-surface-variant text-center">
+                The code expires in a few minutes. Don't close this window until you've entered it.
+              </p>
+              <button
+                onClick={handleClosePairModal}
+                className="bg-primary hover:bg-primary-container text-white px-6 py-2.5 rounded-xl font-headline font-semibold text-sm transition-all border-none cursor-pointer flex items-center justify-center gap-1.5"
+              >
+                <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                I've Entered the Code
+              </button>
+            </div>
+          )}
         </div>
       </Modal>
     </>
