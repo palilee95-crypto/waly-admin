@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useTable, useUpdate } from '@refinedev/core';
-import { Modal, Form, Input, Select, Button, message, Pagination } from 'antd';
+import { useTable, useUpdate, useDelete } from '@refinedev/core';
+import { Modal, Form, Input, Select, Button, message, Pagination, Popconfirm } from 'antd';
 import { useNavigate } from 'react-router-dom';
 
 export const UserList: React.FC = () => {
@@ -29,6 +29,7 @@ export const UserList: React.FC = () => {
   });
 
   const { mutate: updateUser } = useUpdate();
+  const { mutate: deleteUser } = useDelete();
   const isFirstRender = useRef(true);
 
   // Perform search automatically when typing (with a short 250ms debounce)
@@ -92,6 +93,21 @@ export const UserList: React.FC = () => {
             };
           },
         });
+      },
+    });
+  };
+
+  const handleHardDelete = (user: any) => {
+    deleteUser({
+      resource: 'users',
+      id: user.id,
+      successNotification: () => {
+        message.success(`User ${user.name} and all related data have been deleted.`);
+        return {
+          message: 'User Deleted',
+          description: `The account for ${user.name} has been permanently removed.`,
+          type: 'success',
+        };
       },
     });
   };
@@ -269,17 +285,29 @@ export const UserList: React.FC = () => {
                           >
                             Adjust Points
                           </button>
-                          <button
-                            onClick={() => handleToggleStatus(user)}
-                            className={`px-3 py-1.5 rounded-lg text-xs transition-all border-none font-bold cursor-pointer ${
-                              user.status === 'suspended'
-                                ? 'bg-emerald-600 text-white hover:bg-emerald-700'
-                                : 'bg-red-50 text-red-600 hover:bg-red-100'
-                            }`}
-                          >
-                            {user.status === 'suspended' ? 'Activate' : 'Suspend'}
-                          </button>
-                        </div>
+                           <button
+                             onClick={() => handleToggleStatus(user)}
+                             className={`px-3 py-1.5 rounded-lg text-xs transition-all border-none font-bold cursor-pointer ${
+                               user.status === 'suspended'
+                                 ? 'bg-emerald-600 text-white hover:bg-emerald-700'
+                                 : 'bg-red-50 text-red-600 hover:bg-red-100'
+                             }`}
+                           >
+                             {user.status === 'suspended' ? 'Activate' : 'Suspend'}
+                           </button>
+                           <Popconfirm
+                             title="Delete User"
+                             description={`Are you sure you want to permanently delete ${user.name}? This will remove all their loyalty cards, transactions, and related data.`}
+                             onConfirm={() => handleHardDelete(user)}
+                             okText="Yes, Delete"
+                             cancelText="No"
+                             okButtonProps={{ danger: true, style: { border: 'none' } }}
+                           >
+                             <button className="bg-red-600 text-white px-3 py-1.5 rounded-lg text-xs hover:bg-red-700 transition-all border-none font-bold cursor-pointer">
+                               Delete
+                             </button>
+                           </Popconfirm>
+                         </div>
                       </td>
                     </tr>
                   ))
