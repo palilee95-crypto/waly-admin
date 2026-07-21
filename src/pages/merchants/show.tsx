@@ -1,7 +1,7 @@
 import React from 'react';
 import { useShow, useList } from '@refinedev/core';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Tag, Tabs, Card, Spin } from 'antd';
+import { Tag, Tabs, Card, Spin, message } from 'antd';
 import { ArrowLeftOutlined, QrcodeOutlined, TrophyOutlined } from '@ant-design/icons';
 
 export const MerchantShow: React.FC = () => {
@@ -102,6 +102,27 @@ export const MerchantShow: React.FC = () => {
               <div>
                 <p className="text-[10px] text-outline uppercase font-semibold">Description</p>
                 <p className="text-on-surface-variant text-xs leading-relaxed">{merchant.description || 'No store description provided.'}</p>
+              </div>
+
+              <div className="pt-4 border-t border-solid border-black/5 flex flex-col gap-2">
+                <p className="text-[10px] text-outline uppercase font-semibold">NFC Card Program URL</p>
+                <div className="bg-slate-100 p-2 rounded-xl text-xs font-mono break-all text-slate-800 border border-solid border-slate-200">
+                  https://waly-five.vercel.app/nfc?m={merchant.id}
+                </div>
+                <button
+                  onClick={() => {
+                    const nfcUrl = `https://waly-five.vercel.app/nfc?m=${merchant.id}`;
+                    navigator.clipboard.writeText(nfcUrl);
+                    message.success('NFC Link copied to clipboard!');
+                  }}
+                  className="w-full bg-indigo-600 text-white py-2 rounded-xl text-xs font-bold hover:bg-indigo-700 transition-all border-none cursor-pointer flex items-center justify-center gap-1 mt-1"
+                  style={{ backgroundColor: '#4f46e5' }}
+                >
+                  📋 Copy NFC Link
+                </button>
+                <p className="text-[10px] text-slate-500 mt-1 leading-normal">
+                  Use the <strong>NFC Tools</strong> app to write this URL to physical NFC cards for this store.
+                </p>
               </div>
             </div>
           </Card>

@@ -169,6 +169,18 @@ export const MerchantList: React.FC = () => {
                       <td className="py-5 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-2">
                           <button
+                            onClick={() => {
+                              const nfcUrl = `https://waly-five.vercel.app/nfc?m=${merchant.id}`;
+                              navigator.clipboard.writeText(nfcUrl);
+                              message.success(`NFC Link copied for ${merchant.name}`);
+                            }}
+                            className="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all border-none cursor-pointer flex items-center gap-1"
+                            style={{ backgroundColor: '#4f46e5' }}
+                            title="Copy NFC Card URL for writing with NFC Tools"
+                          >
+                            📋 NFC Link
+                          </button>
+                          <button
                             onClick={() => navigate(`/subscriptions?grantTrialFor=${merchant.id}`)}
                             className="bg-amber-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-amber-600 transition-all border-none cursor-pointer"
                             style={{ backgroundColor: '#f59e0b' }}
