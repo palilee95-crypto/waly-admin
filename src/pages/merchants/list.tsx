@@ -169,6 +169,13 @@ export const MerchantList: React.FC = () => {
                       <td className="py-5 text-right" onClick={(e) => e.stopPropagation()}>
                         <div className="flex justify-end gap-2">
                           <button
+                            onClick={() => navigate(`/subscriptions?grantTrialFor=${merchant.id}`)}
+                            className="bg-amber-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold hover:bg-amber-600 transition-all border-none cursor-pointer"
+                            style={{ backgroundColor: '#f59e0b' }}
+                          >
+                            Grant Trial
+                          </button>
+                          <button
                             onClick={() => navigate(`/merchants/${merchant.id}`)}
                             className="text-primary font-bold text-xs hover:underline bg-transparent border-none cursor-pointer"
                           >

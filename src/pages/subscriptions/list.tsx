@@ -16,9 +16,97 @@ export const SubscriptionList: React.FC = () => {
     return result;
   };
 
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'pricing' | 'promo_codes'>('subscriptions');
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'free_trials' | 'pricing' | 'promo_codes'>('subscriptions');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
+
+  const getDaysRemaining = (expiryDateStr: string) => {
+    if (!expiryDateStr) return { label: 'No Expiry', isExpired: false, days: 999 };
+    const expiry = dayjs(expiryDateStr);
+    const now = dayjs();
+    const diffDays = expiry.diff(now, 'day');
+    const diffHours = expiry.diff(now, 'hour');
+
+    if (diffHours < 0) {
+      const absDays = Math.abs(diffDays);
+      return { label: `Expired (${absDays === 0 ? 'today' : `${absDays}d ago`})`, isExpired: true, days: diffDays };
+    } else if (diffDays === 0) {
+      return { label: `Expires today (${diffHours}h left)`, isExpired: false, days: 0 };
+    } else {
+      return { label: `${diffDays} days left`, isExpired: false, days: diffDays };
+    }
+  };
+
+  // Grant Free Trial State
+  const [isTrialModalOpen, setIsTrialModalOpen] = useState(false);
+  const [trialMerchantId, setTrialMerchantId] = useState<string>('');
+  const [trialPreset, setTrialPreset] = useState<'7' | '14' | '30' | '60' | 'custom'>('7');
+  const [trialCustomDays, setTrialCustomDays] = useState<number>(7);
+
+  const getCalculatedDays = () => {
+    if (trialPreset === 'custom') {
+      return trialCustomDays > 0 ? trialCustomDays : 7;
+    }
+    return parseInt(trialPreset, 10) || 7;
+  };
+
+  const handleOpenTrialModal = (merchantId?: string) => {
+    setTrialMerchantId(merchantId || '');
+    setTrialPreset('7');
+    setTrialCustomDays(7);
+    setIsTrialModalOpen(true);
+  };
+
+  const handleTrialSubmit = () => {
+    if (!trialMerchantId) {
+      message.error('Please select a merchant');
+      return;
+    }
+    const days = getCalculatedDays();
+    const expiryDate = dayjs().add(days, 'day');
+
+    const formattedValues = {
+      id: generatePbId(),
+      merchant: trialMerchantId,
+      plan: 'pro',
+      status: 'trialing',
+      current_period_end: expiryDate.toISOString().replace('T', ' ').substring(0, 19),
+      chipin_payment_id: `free_trial_admin_${Date.now()}`,
+      chipin_customer_email: 'free_trial@admin',
+    };
+
+    createSubscription({
+      resource: 'subscriptions',
+      values: formattedValues,
+      successNotification: () => {
+        message.success(`Granted ${days} days free trial successfully!`);
+        setIsTrialModalOpen(false);
+        tableQueryResult.refetch();
+        return {
+          message: 'Free Trial Granted',
+          description: `Merchant now has trial access until ${expiryDate.format('MMM D, YYYY')}.`,
+          type: 'success',
+        };
+      },
+      errorNotification: (err: any) => {
+        message.error(err?.message || 'Failed to grant free trial.');
+        return {
+          message: 'Grant Failed',
+          description: err?.message,
+          type: 'error',
+        };
+      }
+    });
+  };
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const merchantId = params.get('grantTrialFor');
+    if (merchantId) {
+      handleOpenTrialModal(merchantId);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+  }, []);
 
   // 1. Subscriptions Table
   const { tableQueryResult } = useTable<any>({
@@ -257,14 +345,23 @@ export const SubscriptionList: React.FC = () => {
           <h2 className="font-headline text-2xl font-bold text-on-surface">Billing & Subscriptions</h2>
           <p className="font-body text-body-lg text-on-surface-variant">Manage manual and automated merchant subscriptions</p>
         </div>
-        {activeTab === 'subscriptions' && (
-          <button
-            onClick={handleOpenCreateModal}
-            className="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all border-none flex items-center gap-2 cursor-pointer"
-            style={{ backgroundColor: '#0040e0' }}
-          >
-            <PlusOutlined /> Create Billing
-          </button>
+        {(activeTab === 'subscriptions' || activeTab === 'free_trials') && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => handleOpenTrialModal()}
+              className="bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all border-none flex items-center gap-2 cursor-pointer shadow-sm"
+              style={{ backgroundColor: '#f59e0b' }}
+            >
+              <PlusOutlined /> Grant Free Trial
+            </button>
+            <button
+              onClick={handleOpenCreateModal}
+              className="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all border-none flex items-center gap-2 cursor-pointer"
+              style={{ backgroundColor: '#0040e0' }}
+            >
+              <PlusOutlined /> Create Billing
+            </button>
+          </div>
         )}
         {activeTab === 'promo_codes' && (
           <button
@@ -288,7 +385,23 @@ export const SubscriptionList: React.FC = () => {
           }`}
           style={activeTab === 'subscriptions' ? { backgroundColor: '#0040e0' } : {}}
         >
-          Subscriptions
+          All Subscriptions
+        </button>
+        <button
+          onClick={() => setActiveTab('free_trials')}
+          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border-none cursor-pointer flex items-center gap-2 ${
+            activeTab === 'free_trials'
+              ? 'bg-amber-500 text-white'
+              : 'bg-black/5 text-on-surface-variant hover:bg-black/10'
+          }`}
+          style={activeTab === 'free_trials' ? { backgroundColor: '#f59e0b' } : {}}
+        >
+          🎁 Free Trials
+          {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length > 0 && (
+            <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+              {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab('pricing')}
@@ -408,6 +521,128 @@ export const SubscriptionList: React.FC = () => {
                         </td>
                       </tr>
                     ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Free Trials Tab */}
+      {activeTab === 'free_trials' && (
+        <div className="glass-panel rounded-[2rem] p-gutter overflow-hidden flex flex-col">
+          {tableQueryResult.isLoading ? (
+            <div className="py-20 flex justify-center items-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-black/5">
+                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Merchant</th>
+                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Plan</th>
+                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Status</th>
+                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Time Remaining</th>
+                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Trial Expiry Date</th>
+                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Trial Ref</th>
+                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-black/5 font-body">
+                  {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="py-12 text-center text-on-surface-variant text-sm">
+                        <div className="flex flex-col items-center gap-2">
+                          <span className="text-3xl">🎁</span>
+                          <p className="font-headline font-bold text-on-surface">No Free Trials Provisioned</p>
+                          <p className="text-xs text-on-surface-variant max-w-sm">Click "Grant Free Trial" above to grant a merchant 7, 14, 30, 60 or custom trial days.</p>
+                          <button
+                            onClick={() => handleOpenTrialModal()}
+                            className="mt-2 bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-bold hover:opacity-90 transition-all border-none cursor-pointer"
+                            style={{ backgroundColor: '#f59e0b' }}
+                          >
+                            + Grant First Free Trial
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : (
+                    subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).map((sub) => {
+                      const rem = getDaysRemaining(sub.current_period_end);
+                      return (
+                        <tr key={sub.id} className="group hover:bg-white/40 transition-colors">
+                          <td className="py-5">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-600 font-bold">
+                                {(sub.expand?.merchant?.name || 'M').substring(0, 2).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-headline text-sm font-semibold text-on-surface">
+                                  {sub.expand?.merchant ? (
+                                    <Link
+                                      to={`/merchants/${sub.merchant}`}
+                                      className="text-primary hover:underline"
+                                      style={{ color: '#0040e0' }}
+                                    >
+                                      {sub.expand.merchant.name}
+                                    </Link>
+                                  ) : (
+                                    sub.merchant || 'Unknown Merchant'
+                                  )}
+                                </p>
+                                <p className="text-[10px] text-on-surface-variant">ID: {sub.merchant}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="py-5 text-sm text-on-surface">
+                            <span className="capitalize font-semibold text-amber-900 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200/60 text-xs">
+                              Pro (Free Trial)
+                            </span>
+                          </td>
+                          <td className="py-5">
+                            <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">
+                              Trialing
+                            </span>
+                          </td>
+                          <td className="py-5">
+                            {rem.isExpired ? (
+                              <span className="px-2.5 py-1 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">
+                                {rem.label}
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">
+                                {rem.label}
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-5 text-sm font-semibold text-on-surface">
+                            {sub.current_period_end ? dayjs(sub.current_period_end).format('MMM D, YYYY (hh:mm A)') : 'N/A'}
+                          </td>
+                          <td className="py-5 text-xs text-on-surface-variant font-mono">
+                            {sub.chipin_payment_id || 'free_trial_admin'}
+                          </td>
+                          <td className="py-5 text-right">
+                            <div className="flex justify-end gap-2">
+                              <button
+                                onClick={() => handleOpenTrialModal(sub.merchant)}
+                                className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 font-bold text-xs px-2.5 py-1 rounded-lg transition-colors border border-amber-500/30 cursor-pointer"
+                              >
+                                Extend Trial
+                              </button>
+                              <button
+                                onClick={() => handleDelete(sub.id, sub.expand?.merchant?.name)}
+                                className="text-error hover:text-red-700 font-bold text-xs bg-transparent border-none cursor-pointer flex items-center gap-1"
+                                style={{ color: '#ef4444' }}
+                              >
+                                <DeleteOutlined /> Delete
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -756,6 +991,117 @@ export const SubscriptionList: React.FC = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Grant Free Trial Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            <span className="font-headline font-bold text-base">Grant Merchant Free Trial</span>
+          </div>
+        }
+        open={isTrialModalOpen}
+        onCancel={() => setIsTrialModalOpen(false)}
+        footer={null}
+        destroyOnHidden
+        centered
+      >
+        <div className="pt-4 flex flex-col gap-5">
+          <div>
+            <label className="font-headline text-xs font-bold text-outline uppercase tracking-wider mb-2 block">
+              Select Merchant / Store <span className="text-red-500">*</span>
+            </label>
+            <Select
+              className="w-full h-10 rounded-xl"
+              placeholder="Search or select merchant by Name or ID"
+              showSearch
+              value={trialMerchantId || undefined}
+              onChange={(val) => setTrialMerchantId(val)}
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              options={merchantOptions}
+              loading={merchantSelectProps.loading}
+            />
+          </div>
+
+          <div>
+            <label className="font-headline text-xs font-bold text-outline uppercase tracking-wider mb-2 block">
+              Trial Duration (Days)
+            </label>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {[
+                { label: '7 Days (Default)', value: '7' },
+                { label: '14 Days', value: '14' },
+                { label: '30 Days', value: '30' },
+                { label: '60 Days', value: '60' },
+                { label: 'Custom Days', value: 'custom' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTrialPreset(opt.value as any)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                    trialPreset === opt.value
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'bg-black/5 text-on-surface hover:bg-black/10 border-transparent'
+                  }`}
+                  style={trialPreset === opt.value ? { backgroundColor: '#f59e0b', borderColor: '#f59e0b' } : {}}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {trialPreset === 'custom' && (
+              <div className="mt-2">
+                <label className="text-xs text-on-surface-variant mb-1 block font-medium">Enter Number of Custom Trial Days:</label>
+                <Input
+                  type="number"
+                  min={1}
+                  max={365}
+                  value={trialCustomDays}
+                  onChange={(e) => setTrialCustomDays(parseInt(e.target.value, 10) || 1)}
+                  placeholder="e.g. 45"
+                  className="rounded-xl h-10 border-black/10 font-bold"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Expiry Preview Box */}
+          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col gap-1.5">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Trial Provisioning Summary</span>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-on-surface font-medium">Subscription Status:</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">Trialing</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-on-surface font-medium">Duration:</span>
+              <span className="text-xs font-bold text-on-surface">{getCalculatedDays()} Days</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-on-surface font-medium">Trial Expiry Date:</span>
+              <span className="text-xs font-bold text-amber-900">
+                {dayjs().add(getCalculatedDays(), 'day').format('MMMM D, YYYY (hh:mm A)')}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-2">
+            <Button onClick={() => setIsTrialModalOpen(false)}>Cancel</Button>
+            <Button
+              type="primary"
+              onClick={handleTrialSubmit}
+              loading={isCreating}
+              className="rounded-xl font-bold border-none"
+              style={{ backgroundColor: '#f59e0b' }}
+            >
+              Grant Free Trial
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );
