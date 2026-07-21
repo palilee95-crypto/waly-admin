@@ -64,39 +64,63 @@ export const SubscriptionList: React.FC = () => {
     }
     const days = getCalculatedDays();
     const expiryDate = dayjs().add(days, 'day');
+    const expiryStr = expiryDate.toISOString().replace('T', ' ').substring(0, 19);
 
-    const formattedValues = {
-      id: generatePbId(),
-      merchant: trialMerchantId,
-      plan: 'pro',
-      status: 'trialing',
-      current_period_end: expiryDate.toISOString().replace('T', ' ').substring(0, 19),
-      chipin_payment_id: `free_trial_admin_${Date.now()}`,
-      chipin_customer_email: 'free_trial@admin',
-    };
+    const existingSub = subscriptions.find((s: any) => s.merchant === trialMerchantId);
 
-    createSubscription({
-      resource: 'subscriptions',
-      values: formattedValues,
-      successNotification: () => {
-        message.success(`Granted ${days} days free trial successfully!`);
-        setIsTrialModalOpen(false);
-        tableQueryResult.refetch();
-        return {
-          message: 'Free Trial Granted',
-          description: `Merchant now has trial access until ${expiryDate.format('MMM D, YYYY')}.`,
-          type: 'success',
-        };
-      },
-      errorNotification: (err: any) => {
-        message.error(err?.message || 'Failed to grant free trial.');
-        return {
-          message: 'Grant Failed',
-          description: err?.message,
-          type: 'error',
-        };
-      }
-    });
+    if (existingSub) {
+      updateSubscription({
+        resource: 'subscriptions',
+        id: existingSub.id,
+        values: {
+          plan: 'pro',
+          status: 'trialing',
+          current_period_end: expiryStr,
+          chipin_payment_id: `free_trial_admin_${Date.now()}`,
+        },
+        successNotification: () => {
+          message.success(`Updated trial subscription (${days} days) successfully!`);
+          setIsTrialModalOpen(false);
+          tableQueryResult.refetch();
+          return {
+            message: 'Trial Updated',
+            description: `Merchant trial access updated until ${expiryDate.format('MMM D, YYYY')}.`,
+            type: 'success',
+          };
+        },
+        errorNotification: (err: any) => {
+          message.error(err?.message || 'Failed to update trial subscription.');
+          return { message: 'Update Failed', description: err?.message, type: 'error' };
+        }
+      });
+    } else {
+      createSubscription({
+        resource: 'subscriptions',
+        values: {
+          id: generatePbId(),
+          merchant: trialMerchantId,
+          plan: 'pro',
+          status: 'trialing',
+          current_period_end: expiryStr,
+          chipin_payment_id: `free_trial_admin_${Date.now()}`,
+          chipin_customer_email: 'free_trial@admin',
+        },
+        successNotification: () => {
+          message.success(`Granted ${days} days free trial successfully!`);
+          setIsTrialModalOpen(false);
+          tableQueryResult.refetch();
+          return {
+            message: 'Free Trial Granted',
+            description: `Merchant now has trial access until ${expiryDate.format('MMM D, YYYY')}.`,
+            type: 'success',
+          };
+        },
+        errorNotification: (err: any) => {
+          message.error(err?.message || 'Failed to grant free trial.');
+          return { message: 'Grant Failed', description: err?.message, type: 'error' };
+        }
+      });
+    }
   };
 
   React.useEffect(() => {
@@ -111,13 +135,14 @@ export const SubscriptionList: React.FC = () => {
   // 1. Subscriptions Table
   const { tableQueryResult } = useTable<any>({
     resource: 'subscriptions',
-    pagination: { pageSize: 10 },
+    pagination: { pageSize: 100 },
     meta: {
       expand: ['merchant'],
     },
   });
 
   const { mutate: createSubscription, isLoading: isCreating } = useCreate();
+  const { mutate: updateSubscription, isLoading: isUpdating } = useUpdate();
   const { mutate: deleteSubscription } = useDelete();
 
   const { selectProps: merchantSelectProps } = useSelect<any>({
@@ -145,34 +170,56 @@ export const SubscriptionList: React.FC = () => {
   };
 
   const handleCreateSubmit = (values: any) => {
-    const formattedValues = {
-      id: generatePbId(),
-      ...values,
-      current_period_end: values.current_period_end ? values.current_period_end.toISOString().replace('T', ' ').substring(0, 19) : null,
-    };
+    const formattedEnd = values.current_period_end ? values.current_period_end.toISOString().replace('T', ' ').substring(0, 19) : null;
+    const existingSub = subscriptions.find((s: any) => s.merchant === values.merchant);
 
-    createSubscription({
-      resource: 'subscriptions',
-      values: formattedValues,
-      successNotification: () => {
-        message.success('Manual billing created successfully');
-        setIsModalOpen(false);
-        tableQueryResult.refetch();
-        return {
-          message: 'Billing Created',
-          description: 'The manual billing has been successfully provisioned.',
-          type: 'success',
-        };
-      },
-      errorNotification: (err: any) => {
-        message.error(err?.message || 'Failed to create subscription record.');
-        return {
-          message: 'Creation Failed',
-          description: err?.message || 'Check inputs.',
-          type: 'error',
-        };
-      }
-    });
+    if (existingSub) {
+      updateSubscription({
+        resource: 'subscriptions',
+        id: existingSub.id,
+        values: {
+          ...values,
+          current_period_end: formattedEnd,
+        },
+        successNotification: () => {
+          message.success('Subscription billing updated successfully');
+          setIsModalOpen(false);
+          tableQueryResult.refetch();
+          return {
+            message: 'Billing Updated',
+            description: 'Existing subscription record updated.',
+            type: 'success',
+          };
+        },
+        errorNotification: (err: any) => {
+          message.error(err?.message || 'Failed to update billing record.');
+          return { message: 'Update Failed', description: err?.message, type: 'error' };
+        }
+      });
+    } else {
+      createSubscription({
+        resource: 'subscriptions',
+        values: {
+          id: generatePbId(),
+          ...values,
+          current_period_end: formattedEnd,
+        },
+        successNotification: () => {
+          message.success('Manual billing created successfully');
+          setIsModalOpen(false);
+          tableQueryResult.refetch();
+          return {
+            message: 'Billing Created',
+            description: 'The manual billing has been successfully provisioned.',
+            type: 'success',
+          };
+        },
+        errorNotification: (err: any) => {
+          message.error(err?.message || 'Failed to create subscription record.');
+          return { message: 'Creation Failed', description: err?.message, type: 'error' };
+        }
+      });
+    }
   };
 
   const handleDelete = (id: string, merchantName: string) => {
