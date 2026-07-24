@@ -132,12 +132,27 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
     return currentPath.startsWith('/' + route.split('/')[1]);
   };
 
+  // Primary bottom navigation items for mobile
+  const bottomNavItems = role === 'sales_agent'
+    ? [
+        { name: 'Home', icon: 'dashboard', route: '/sales-dashboard' },
+        { name: 'Prospects', icon: 'person_add', route: '/sales-dashboard/prospects' },
+        { name: 'Directory', icon: 'storefront', route: '/sales-dashboard/merchants' },
+        { name: 'Analytics', icon: 'trending_up', route: '/sales-dashboard/analytics' },
+      ]
+    : [
+        { name: 'Home', icon: 'dashboard', route: '/dashboard' },
+        { name: 'Merchants', icon: 'storefront', route: '/merchants' },
+        { name: 'Users', icon: 'group', route: '/users' },
+        { name: 'Analytics', icon: 'trending_up', route: '/analytics' },
+      ];
+
   return (
-    <div className="flex w-screen h-screen overflow-hidden">
-      {/* SideNavBar exactly like code.html - Hidden on mobile, visible on medium screens and up */}
+    <div className="flex w-screen h-screen overflow-hidden select-none">
+      {/* Desktop SideNavBar - Hidden on mobile, visible on md screens and up */}
       <aside className="fixed left-4 top-4 bottom-4 w-20 rounded-xl bg-inverse-surface backdrop-blur-2xl shadow-xl hidden md:flex flex-col items-center py-base space-y-stack-md z-50">
         <div className="mb-8 mt-2 flex items-center justify-center">
-          <Link to="/dashboard" className="hover:opacity-80">
+          <Link to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'} className="hover:opacity-80">
             <img src="/icon.png" alt="Risev Logo Icon" className="w-12 h-12 object-contain rounded-xl" />
           </Link>
         </div>
@@ -164,14 +179,14 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
 
         <div className="mt-auto flex flex-col items-center space-y-4 pb-4">
           <button 
-            className="w-12 h-12 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="w-12 h-12 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
             title="Help Support"
           >
             <span className="material-symbols-outlined">help</span>
           </button>
           <button
             onClick={() => logout()}
-            className="w-12 h-12 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+            className="w-12 h-12 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 rounded-lg transition-colors border-none bg-transparent cursor-pointer"
             title="Sign Out"
           >
             <span className="material-symbols-outlined">logout</span>
@@ -179,30 +194,35 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </aside>
 
-      {/* Mobile Drawer menu using Ant Design */}
+      {/* Mobile Navigation Drawer - Always opens when triggered */}
       <Drawer
         placement="left"
         onClose={() => setIsMobileMenuOpen(false)}
         open={isMobileMenuOpen}
         closable={false}
-        width={280}
-        styles={{ body: { padding: 0, backgroundColor: '#1e222b' } }}
+        width={290}
+        zIndex={99999}
+        styles={{ body: { padding: 0, backgroundColor: '#0f172a' } }}
       >
-        <div className="flex flex-col h-full text-white p-6 bg-[#1e222b]">
-          <div className="flex items-center justify-between mb-8 mt-2">
-            <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)} className="flex items-center gap-2">
+        <div className="flex flex-col h-full text-white p-6 bg-[#0f172a]">
+          <div className="flex items-center justify-between mb-6 mt-1 pb-4 border-b border-white/10">
+            <Link 
+              to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'} 
+              onClick={() => setIsMobileMenuOpen(false)} 
+              className="flex items-center gap-2.5"
+            >
               <img src="/icon.png" alt="Risev Logo" className="w-10 h-10 object-contain rounded-xl" />
-              <span className="font-headline font-black text-lg tracking-wider text-white">RISEV</span>
+              <span className="font-headline font-black text-xl tracking-wider text-white">RISEV</span>
             </Link>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
               className="text-white/60 hover:text-white bg-transparent border-none cursor-pointer flex items-center justify-center p-2 rounded-full hover:bg-white/10 transition-colors"
             >
-              <span className="material-symbols-outlined">close</span>
+              <span className="material-symbols-outlined text-[20px]">close</span>
             </button>
           </div>
           
-          <nav className="flex-1 flex flex-col space-y-2 overflow-y-auto custom-scroll">
+          <nav className="flex-1 flex flex-col space-y-1.5 overflow-y-auto custom-scroll">
             {menuItems.map((item) => {
               const active = isActive(item.route);
               return (
@@ -210,13 +230,13 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
                   key={item.name}
                   to={item.route}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-200 ${
+                  className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 ${
                     active
-                      ? 'bg-primary-container text-white shadow-[0_0_15px_rgba(46,91,255,0.4)]'
-                      : 'text-white/60 hover:text-white hover:bg-white/5'
+                      ? 'bg-primary text-white font-bold shadow-lg shadow-primary/30'
+                      : 'text-white/70 hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <span className="material-symbols-outlined">{item.icon}</span>
+                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
                   <span className="font-headline text-sm font-semibold">{item.name}</span>
                 </Link>
               );
@@ -224,46 +244,48 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
           </nav>
           
           <div className="mt-auto pt-4 border-t border-white/10 flex flex-col space-y-2">
-            <button 
-              className="flex items-center gap-4 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 bg-transparent border-none text-left w-full cursor-pointer"
-              title="Help Support"
-            >
-              <span className="material-symbols-outlined">help</span>
-              <span className="font-headline text-sm font-semibold text-white/60">Help Support</span>
-            </button>
+            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl mb-2">
+              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
+                {identity?.name?.substring(0, 2).toUpperCase() || 'AD'}
+              </div>
+              <div className="text-left overflow-hidden">
+                <p className="text-xs font-bold text-white truncate">{identity?.name || 'Administrator'}</p>
+                <p className="text-[10px] text-white/60 uppercase tracking-wider">{identity?.role?.replace('_', ' ') || 'User'}</p>
+              </div>
+            </div>
+
             <button
               onClick={() => {
                 logout();
                 setIsMobileMenuOpen(false);
               }}
-              className="flex items-center gap-4 px-4 py-3 rounded-xl text-white/60 hover:text-white hover:bg-white/5 bg-transparent border-none text-left w-full cursor-pointer"
-              title="Sign Out"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 bg-transparent border-none text-left w-full cursor-pointer transition-colors font-headline text-sm font-bold"
             >
-              <span className="material-symbols-outlined">logout</span>
-              <span className="font-headline text-sm font-semibold text-white/60">Sign Out</span>
+              <span className="material-symbols-outlined text-[20px]">logout</span>
+              <span>Sign Out</span>
             </button>
           </div>
         </div>
       </Drawer>
 
       {/* Main Content Canvas - Left margin collapses on mobile */}
-      <main className="ml-0 md:ml-28 flex-1 h-screen overflow-y-auto custom-scroll px-4 md:px-8 md:pr-container-padding flex flex-col">
-        {/* TopNavBar exactly like code.html */}
-        <header className="flex justify-between items-center h-20 w-full sticky top-0 z-40 bg-white/60 backdrop-blur-xl border-b border-white/20 px-4">
-          <div className="flex items-center gap-2 mt-2">
+      <main className="ml-0 md:ml-28 flex-1 h-screen overflow-y-auto custom-scroll px-3 sm:px-6 md:px-8 md:pr-container-padding flex flex-col pb-20 md:pb-6">
+        {/* Responsive Sticky Header */}
+        <header className="flex justify-between items-center h-16 sm:h-20 w-full sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-black/5 dark:border-white/10 px-2 sm:px-4">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 rounded-full hover:bg-surface-container-high/50 transition-all relative border-none bg-transparent cursor-pointer flex items-center justify-center md:hidden mr-1"
-              title="Open Menu"
+              className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center md:hidden mr-1"
+              title="Open Navigation Menu"
             >
-              <span className="material-symbols-outlined text-on-surface-variant">menu</span>
+              <span className="material-symbols-outlined text-on-surface text-[24px]">menu</span>
             </button>
-            <Link to="/dashboard" className="flex items-center hover:opacity-90">
-              <img src="/logo.png" alt="Risev Logo" className="h-12 object-contain" />
+            <Link to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'} className="flex items-center hover:opacity-90">
+              <img src="/logo.png" alt="Risev Logo" className="h-9 sm:h-12 object-contain" />
             </Link>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4">
             <div 
               onClick={() => setIsSearchOpen(true)}
               className="relative hidden lg:block cursor-pointer"
@@ -278,36 +300,33 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
             </div>
             <button
               onClick={() => setIsSearchOpen(true)}
-              className="p-2 rounded-full hover:bg-surface-container-high/50 transition-all relative border-none bg-transparent cursor-pointer flex items-center justify-center lg:hidden"
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center lg:hidden"
               title="Search Portal"
             >
-              <span className="material-symbols-outlined text-on-surface-variant">search</span>
+              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
             </button>
             <button 
               onClick={() => setIsDark(prev => !prev)}
-              className="p-2 rounded-full hover:bg-surface-container-high/50 transition-all relative border-none bg-transparent cursor-pointer flex items-center justify-center"
+              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center"
               title="Toggle Dark/Light Mode"
             >
-              <span className="material-symbols-outlined text-on-surface-variant">
+              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
                 {isDark ? 'light_mode' : 'dark_mode'}
               </span>
             </button>
-            <button className="p-2 rounded-full hover:bg-surface-container-high/50 transition-all relative border-none bg-transparent cursor-pointer flex items-center justify-center">
-              <span className="material-symbols-outlined text-on-surface-variant">notifications</span>
-            </button>
             
-            <div className="flex items-center gap-3 pl-2 border-l border-black/10">
-              <div className="w-10 h-10 rounded-full bg-surface-container-highest overflow-hidden border border-white">
+            <div className="flex items-center gap-2 sm:gap-3 pl-2 border-l border-black/10 dark:border-white/10">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 overflow-hidden border border-white dark:border-slate-700 flex items-center justify-center shrink-0">
                 {identity?.avatar ? (
                   <img className="w-full h-full object-cover" src={identity.avatar} alt="Avatar" />
                 ) : (
-                  <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
+                  <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs sm:text-sm">
                     {identity?.name?.substring(0, 2).toUpperCase() || 'AD'}
                   </div>
                 )}
               </div>
               <div className="hidden sm:block text-left">
-                <p className="font-body text-body-sm font-semibold text-on-surface leading-tight">{identity?.name || 'Administrator'}</p>
+                <p className="font-body text-body-sm font-semibold text-on-surface leading-tight truncate max-w-[120px]">{identity?.name || 'Administrator'}</p>
                 <p className="font-body text-[10px] text-on-surface-variant uppercase tracking-wider">{identity?.role?.replace('_', ' ') || 'Operations'}</p>
               </div>
             </div>
@@ -315,13 +334,45 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         </header>
 
         {/* Inner Page View */}
-        <div className="flex-1 px-4 py-6">
+        <div className="flex-1 px-1 sm:px-4 py-4 sm:py-6">
           {children}
         </div>
 
         {/* Footer Spacer */}
-        <div className="h-10"></div>
+        <div className="h-14 md:h-10"></div>
       </main>
+
+      {/* Mobile App Bottom Tab Bar - Mobile Native App Feel */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-t border-black/10 dark:border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl">
+        {bottomNavItems.map((item) => {
+          const active = isActive(item.route);
+          return (
+            <Link
+              key={item.name}
+              to={item.route}
+              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
+                active
+                  ? 'text-primary font-bold'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+              }`}
+            >
+              <span className={`material-symbols-outlined text-[22px] ${active ? 'scale-110' : ''}`}>
+                {item.icon}
+              </span>
+              <span className="text-[10px] font-headline mt-0.5">{item.name}</span>
+            </Link>
+          );
+        })}
+
+        {/* 5th Mobile Tab: Open Full Menu Drawer */}
+        <button
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-transparent border-none cursor-pointer"
+        >
+          <span className="material-symbols-outlined text-[22px]">menu</span>
+          <span className="text-[10px] font-headline mt-0.5">Menu</span>
+        </button>
+      </nav>
 
       {/* Global Command Palette / Search Modal */}
       <Modal
