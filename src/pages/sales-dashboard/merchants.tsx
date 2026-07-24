@@ -1,15 +1,24 @@
 import React, { useState } from 'react';
 import { Input } from 'antd';
 import { useSalesData } from './useSalesData';
+import type { ReferredMerchant } from './useSalesData';
+import { WhatsAppDrawer } from './components/WhatsAppDrawer';
 
 export const SalesMerchantsPage: React.FC = () => {
-  const { merchantsList } = useSalesData();
+  const { merchantsList, referralLink, identity } = useSalesData();
   const [searchQuery, setSearchQuery] = useState('');
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [selectedMerchant, setSelectedMerchant] = useState<ReferredMerchant | null>(null);
 
   const filteredList = merchantsList.filter(m => 
     m.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
     m.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const openOutreachDrawer = (merchant: ReferredMerchant) => {
+    setSelectedMerchant(merchant);
+    setDrawerVisible(true);
+  };
 
   return (
     <div className="flex flex-col gap-6 text-left">
@@ -44,6 +53,7 @@ export const SalesMerchantsPage: React.FC = () => {
                   <th className="pb-3 text-xs font-semibold text-on-surface-variant">Total Transactions</th>
                   <th className="pb-3 text-xs font-semibold text-on-surface-variant">Sales Generated</th>
                   <th className="pb-3 text-xs font-semibold text-on-surface-variant">Commission Earned</th>
+                  <th className="pb-3 text-xs font-semibold text-on-surface-variant text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-black/5 dark:divide-white/5">
@@ -57,6 +67,15 @@ export const SalesMerchantsPage: React.FC = () => {
                     <td className="py-4 text-sm text-on-surface font-semibold">{m.totalTransactions}</td>
                     <td className="py-4 text-sm text-on-surface font-semibold">RM {m.totalSales.toLocaleString()}</td>
                     <td className="py-4 text-sm text-[#10B981] font-bold">RM {m.commission.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="py-4 text-right">
+                      <button
+                        onClick={() => openOutreachDrawer(m)}
+                        className="bg-[#25D366] hover:bg-[#20BA5A] text-white px-3 py-1.5 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center gap-1.5 ml-auto"
+                      >
+                        <span className="material-symbols-outlined text-[14px]">chat</span>
+                        Outreach
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -64,6 +83,14 @@ export const SalesMerchantsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      <WhatsAppDrawer
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        merchant={selectedMerchant}
+        referralLink={referralLink}
+        agentName={identity?.name}
+      />
     </div>
   );
 };

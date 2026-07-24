@@ -5,7 +5,7 @@ import type { ReferredMerchant } from './useSalesData';
 import { WhatsAppDrawer } from './components/WhatsAppDrawer';
 
 export const SalesDormantPage: React.FC = () => {
-  const { dormantMerchants, referralLink } = useSalesData();
+  const { dormantMerchants, referralLink, identity } = useSalesData();
   const [searchQuery, setSearchQuery] = useState('');
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [selectedMerchant, setSelectedMerchant] = useState<ReferredMerchant | null>(null);
@@ -82,6 +82,7 @@ export const SalesDormantPage: React.FC = () => {
         onClose={() => setDrawerVisible(false)}
         merchant={selectedMerchant}
         referralLink={referralLink}
+        agentName={identity?.name}
       />
     </div>
   );

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { message, Modal } from 'antd';
 import { useSalesData } from './useSalesData';
 import { WhatsAppConnectCard } from './components/WhatsAppConnectCard';
+import { WhatsAppDrawer } from './components/WhatsAppDrawer';
 
 export const SalesDashboardPage: React.FC = () => {
   const {
@@ -27,6 +28,7 @@ export const SalesDashboardPage: React.FC = () => {
   } = useSalesData();
 
   const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   // Copy/Share Functions
   const handleCopyLink = () => {
@@ -83,11 +85,11 @@ export const SalesDashboardPage: React.FC = () => {
                 Show QR
               </button>
               <button
-                onClick={() => handleShareWhatsApp()}
+                onClick={() => setDrawerVisible(true)}
                 className="bg-[#25D366] hover:bg-[#20BA5A] text-white px-4 py-2 rounded-xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
               >
-                <span className="material-symbols-outlined text-[16px]">share</span>
-                Share to WhatsApp
+                <span className="material-symbols-outlined text-[16px]">chat</span>
+                Pitch Templates & WhatsApp
               </button>
             </div>
           </div>
@@ -286,6 +288,14 @@ export const SalesDashboardPage: React.FC = () => {
           Copy Referral Link
         </button>
       </Modal>
+
+      <WhatsAppDrawer
+        visible={drawerVisible}
+        onClose={() => setDrawerVisible(false)}
+        merchant={null}
+        referralLink={referralLink}
+        agentName={identity?.name}
+      />
     </div>
   );
 };

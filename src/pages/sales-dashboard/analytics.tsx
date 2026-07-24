@@ -34,7 +34,7 @@ export const SalesAnalyticsPage: React.FC = () => {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                 <XAxis dataKey="name" stroke="#747688" fontSize={11} tickLine={false} />
-                <YAxis stroke="#747688" fontSize={11} tickLine={false} />
+                <YAxis stroke="#747688" fontSize={11} tickLine={false} allowDecimals={false} />
                 <ChartTooltip />
                 <Area type="monotone" dataKey="Sales" stroke="#0040e0" strokeWidth={2} fillOpacity={1} fill="url(#colorSales)" />
               </AreaChart>
@@ -48,7 +48,7 @@ export const SalesAnalyticsPage: React.FC = () => {
               <LineChart data={clickActivityData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                 <XAxis dataKey="date" stroke="#747688" fontSize={11} tickLine={false} />
-                <YAxis stroke="#747688" fontSize={11} tickLine={false} />
+                <YAxis stroke="#747688" fontSize={11} tickLine={false} allowDecimals={false} />
                 <ChartTooltip />
                 <Line type="monotone" dataKey="clicks" stroke="#10B981" strokeWidth={3} dot={{ r: 4 }} activeDot={{ r: 6 }} />
               </LineChart>

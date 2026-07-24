@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { Input, message, Modal } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Input, message, Modal, Select } from 'antd';
 import { useSalesData } from './useSalesData';
 import type { ReferredMerchant } from './useSalesData';
 import { WhatsAppDrawer } from './components/WhatsAppDrawer';
+import { PITCH_TEMPLATES, renderTemplateText } from './data/templates';
 import { pb } from '../../lib/pocketbase';
 
 export const SalesProspectsPage: React.FC = () => {
@@ -15,6 +16,33 @@ export const SalesProspectsPage: React.FC = () => {
   const [createModalVisible, setCreateModalVisible] = useState(false);
   const [prospectPhone, setProspectPhone] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+
+  // Template Picker inside Create Prospect Modal
+  const [modalLanguage, setModalLanguage] = useState<'bm' | 'en'>('bm');
+  const [modalTemplateId, setModalTemplateId] = useState<string>('bm_fb_pitch');
+  const [prospectMessage, setProspectMessage] = useState<string>('');
+
+  // Filter templates for modal by selected language
+  const modalTemplates = PITCH_TEMPLATES.filter((t) => t.language === modalLanguage);
+
+  useEffect(() => {
+    const currentTmpl = PITCH_TEMPLATES.find((t) => t.id === modalTemplateId) || modalTemplates[0];
+    if (currentTmpl) {
+      const rendered = renderTemplateText(currentTmpl.text, {
+        referralLink,
+        agentName: identity?.name,
+      });
+      setProspectMessage(rendered);
+    }
+  }, [modalTemplateId, modalLanguage, referralLink, identity]);
+
+  const handleModalLanguageChange = (lang: 'bm' | 'en') => {
+    setModalLanguage(lang);
+    const firstInLang = PITCH_TEMPLATES.find((t) => t.language === lang);
+    if (firstInLang) {
+      setModalTemplateId(firstInLang.id);
+    }
+  };
 
   const filteredProspects = inactiveProspects.filter(m =>
     m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -42,7 +70,10 @@ export const SalesProspectsPage: React.FC = () => {
     try {
       const res = await pb.send('/api/risev/agent/create-prospect', {
         method: 'POST',
-        body: { phone: prospectPhone.trim() },
+        body: {
+          phone: prospectPhone.trim(),
+          message: prospectMessage,
+        },
         requestKey: null,
       });
 
@@ -62,8 +93,6 @@ export const SalesProspectsPage: React.FC = () => {
     }
   };
 
-  const messagePreview = `Hey! I'm ${identity?.name || 'RISEV Agent'} from RISEV. Deploy Loyalty Stamps for your shop to boost your repeat customer rates. Register here: ${referralLink}`;
-
   return (
     <div className="flex flex-col gap-6 text-left">
       <div className="mb-2">
@@ -79,7 +108,8 @@ export const SalesProspectsPage: React.FC = () => {
               placeholder="Search prospects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              style={{ width: '100%', sm: { width: 220 }, borderRadius: 10 }}
+              style={{ borderRadius: 10 }}
+              className="w-full sm:w-[220px]"
               prefix={<span className="material-symbols-outlined text-[16px] text-outline">search</span>}
             />
             <button
@@ -137,6 +167,7 @@ export const SalesProspectsPage: React.FC = () => {
         onClose={() => setDrawerVisible(false)}
         merchant={selectedMerchant}
         referralLink={referralLink}
+        agentName={identity?.name}
       />
 
       {/* Create Prospect Modal */}
@@ -149,9 +180,10 @@ export const SalesProspectsPage: React.FC = () => {
         }}
         footer={null}
         width="90%"
-        style={{ maxWidth: 480 }}
+        style={{ maxWidth: 500 }}
         centered
         styles={{ body: { padding: '0' } }}
+        closeIcon={null}
       >
         {/* Custom Header */}
         <div className="flex items-center justify-between p-5 border-b border-black/5 dark:border-white/5">
@@ -161,7 +193,7 @@ export const SalesProspectsPage: React.FC = () => {
             </div>
             <div>
               <h3 className="font-headline font-bold text-on-surface text-base">Create New Prospect</h3>
-              <p className="text-xs text-on-surface-variant">Send a referral link via WhatsApp</p>
+              <p className="text-xs text-on-surface-variant">Send a pitch template & referral link via WhatsApp</p>
             </div>
           </div>
           <button
@@ -187,26 +219,75 @@ export const SalesProspectsPage: React.FC = () => {
               style={{ borderRadius: 12 }}
               prefix={<span className="material-symbols-outlined text-[18px] text-outline">phone</span>}
             />
-            <p className="text-xs text-on-surface-variant mt-1.5">
-              Enter the prospect's WhatsApp number. A referral link will be sent automatically.
-            </p>
           </div>
 
-          {/* WhatsApp Chat Bubble Preview */}
-          <div className="flex flex-col gap-1.5">
-            <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">Message Preview</p>
-            <div className="bg-[#e5ddd5] dark:bg-[#1f2c34] rounded-2xl p-3 overflow-hidden">
-              <div className="flex flex-col gap-1">
-                {/* Sender bubble */}
-                <div className="self-start max-w-[85%] bg-[#ffffff] dark:bg-[#202c33] rounded-2xl rounded-tl-sm px-3 py-2 shadow-sm">
-                  <p className="text-[10px] font-bold text-[#075E54] dark:text-[#86d3a3] mb-0.5">RISEV Agent</p>
-                  <p className="text-xs text-on-surface leading-relaxed font-body break-words">{messagePreview}</p>
-                  <p className="text-[9px] text-on-surface-variant/60 text-right mt-1">
-                    {new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </p>
-                </div>
+          {/* Pitch Template Selector & Language Switcher */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                Select Pitch Template
+              </label>
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => handleModalLanguageChange('bm')}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all border-none cursor-pointer ${
+                    modalLanguage === 'bm'
+                      ? 'bg-primary text-white'
+                      : 'bg-black/5 text-slate-600 hover:bg-black/10'
+                  }`}
+                >
+                  🇲🇾 BM
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleModalLanguageChange('en')}
+                  className={`px-2 py-0.5 rounded text-[10px] font-bold transition-all border-none cursor-pointer ${
+                    modalLanguage === 'en'
+                      ? 'bg-primary text-white'
+                      : 'bg-black/5 text-slate-600 hover:bg-black/10'
+                  }`}
+                >
+                  🇬🇧 EN
+                </button>
               </div>
             </div>
+
+            <Select
+              value={modalTemplateId}
+              onChange={(val) => setModalTemplateId(val)}
+              style={{ width: '100%', borderRadius: 10 }}
+              options={modalTemplates.map((t) => ({
+                value: t.id,
+                label: t.title,
+              }))}
+            />
+          </div>
+
+          {/* WhatsApp Chat Bubble & Editable Message Body */}
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center justify-between">
+              <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+                Message Body (Editable)
+              </p>
+              <span className="text-[9px] text-slate-400 font-mono">{prospectMessage.length} chars</span>
+            </div>
+            
+            <Input.TextArea
+              value={prospectMessage}
+              onChange={(e) => setProspectMessage(e.target.value)}
+              rows={6}
+              style={{
+                borderRadius: 12,
+                fontSize: '12px',
+                lineHeight: '1.6',
+                fontFamily: 'sans-serif',
+                backgroundColor: '#fafafa',
+              }}
+            />
+            <p className="text-[10px] text-slate-400">
+              Feel free to tweak any text above before sending.
+            </p>
           </div>
 
           {/* Subtle Warning */}
