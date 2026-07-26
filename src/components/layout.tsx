@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLogout, useGetIdentity } from '@refinedev/core';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Modal, Input, Drawer } from 'antd';
+import { CreateProspectModal } from './CreateProspectModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -17,6 +18,7 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isCreateProspectOpen, setIsCreateProspectOpen] = useState(false);
 
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
@@ -342,35 +344,65 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         <div className="h-14 md:h-10"></div>
       </main>
 
-      {/* Mobile App Bottom Tab Bar - Mobile Native App Feel */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 dark:bg-slate-900/90 backdrop-blur-2xl border-t border-black/10 dark:border-white/10 px-2 py-1.5 flex items-center justify-around shadow-2xl">
-        {bottomNavItems.map((item) => {
-          const active = isActive(item.route);
-          return (
-            <Link
-              key={item.name}
-              to={item.route}
-              className={`flex flex-col items-center justify-center py-1 px-3 rounded-xl transition-all ${
-                active
-                  ? 'text-primary font-bold'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-              }`}
-            >
-              <span className={`material-symbols-outlined text-[22px] ${active ? 'scale-110' : ''}`}>
-                {item.icon}
-              </span>
-              <span className="text-[10px] font-headline mt-0.5">{item.name}</span>
-            </Link>
-          );
-        })}
+      {/* Mobile & Responsive Floating Bottom Navigation Bar (Matching code.html design) */}
+      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[432px] z-50 flex justify-around items-center px-2 py-1.5 bg-primary/95 backdrop-blur-md shadow-2xl rounded-full border border-white/10 text-on-primary">
+        {/* Home */}
+        <Link
+          to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'}
+          className={`flex flex-col items-center justify-center p-2 hover:opacity-80 transition-opacity ${
+            isActive(role === 'sales_agent' ? '/sales-dashboard' : '/dashboard')
+              ? 'text-secondary-container font-bold'
+              : 'text-on-primary-container'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[22px]">home</span>
+          <span className="text-[10px] font-label-sm mt-0.5">Home</span>
+        </Link>
 
-        {/* 5th Mobile Tab: Open Full Menu Drawer */}
+        {/* Leaderboard / Ranking */}
+        <Link
+          to={role === 'sales_agent' ? '/sales-dashboard/leaderboard' : '/merchants'}
+          className={`flex flex-col items-center justify-center p-2 hover:opacity-80 transition-opacity ${
+            isActive(role === 'sales_agent' ? '/sales-dashboard/leaderboard' : '/merchants')
+              ? 'text-secondary-container font-bold'
+              : 'text-on-primary-container'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[22px]">{role === 'sales_agent' ? 'leaderboard' : 'storefront'}</span>
+          <span className="text-[10px] font-label-sm mt-0.5">{role === 'sales_agent' ? 'Leaderboard' : 'Merchants'}</span>
+        </Link>
+
+        {/* Central FAB: Create Prospect Modal Trigger (User requested middle button feature) */}
+        <div className="relative -mt-9">
+          <button
+            onClick={() => setIsCreateProspectOpen(true)}
+            title="Create Prospect"
+            className="w-14 h-14 rounded-full bg-secondary-container text-on-secondary-container shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-transform duration-200 border-4 border-primary bg-transparent cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-2xl font-bold">person_add</span>
+          </button>
+        </div>
+
+        {/* Earnings / Subscriptions */}
+        <Link
+          to={role === 'sales_agent' ? '/sales-dashboard/earnings' : '/subscriptions'}
+          className={`flex flex-col items-center justify-center p-2 hover:opacity-80 transition-opacity ${
+            isActive(role === 'sales_agent' ? '/sales-dashboard/earnings' : '/subscriptions')
+              ? 'text-secondary-container font-bold'
+              : 'text-on-primary-container'
+          }`}
+        >
+          <span className="material-symbols-outlined text-[22px]">{role === 'sales_agent' ? 'account_balance_wallet' : 'credit_card'}</span>
+          <span className="text-[10px] font-label-sm mt-0.5">{role === 'sales_agent' ? 'Earnings' : 'Billing'}</span>
+        </Link>
+
+        {/* Menu / Drawer Toggle */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center justify-center py-1 px-3 rounded-xl text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-transparent border-none cursor-pointer"
+          className="flex flex-col items-center justify-center text-on-primary-container p-2 hover:opacity-80 transition-opacity bg-transparent border-none cursor-pointer"
         >
           <span className="material-symbols-outlined text-[22px]">menu</span>
-          <span className="text-[10px] font-headline mt-0.5">Menu</span>
+          <span className="text-[10px] font-label-sm mt-0.5">Menu</span>
         </button>
       </nav>
 
@@ -430,6 +462,12 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       </Modal>
+
+      {/* Global Create Prospect Modal (wired to navbar central button) */}
+      <CreateProspectModal
+        open={isCreateProspectOpen}
+        onClose={() => setIsCreateProspectOpen(false)}
+      />
     </div>
   );
 };

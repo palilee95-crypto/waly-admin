@@ -33,13 +33,13 @@ import { SalesLeaderboardPage } from './pages/sales-dashboard/leaderboard';
 import { SubscriptionList } from './pages/subscriptions/list';
 
 
-// Theme Configuration matching code.html tokens
+// Theme Configuration matching code.html tokens (Geometric Precision)
 const customTheme = {
   token: {
-    colorPrimary: '#0040e0',
-    colorBgContainer: 'rgba(255, 255, 255, 0.6)',
-    borderRadius: 16,
-    fontFamily: "'Hanken Grotesk', sans-serif",
+    colorPrimary: '#006d37',
+    colorBgContainer: '#ffffff',
+    borderRadius: 20,
+    fontFamily: "'Poppins', 'Hanken Grotesk', sans-serif",
     fontSize: 14,
   },
 };
