@@ -38,8 +38,8 @@ export const SalesDashboardPage: React.FC = () => {
 
   return (
     <div className="flex flex-col gap-5 text-left w-full pb-20 overflow-x-hidden">
-      {/* 1. Top Section (Gradient Hero - 100% Edge-to-Edge, matching screen.png) */}
-      <section className="bg-gradient-to-b from-[#002d1e] to-[#1a4333] text-white pt-8 sm:pt-10 pb-16 rounded-t-none rounded-b-[2rem] relative shadow-lg w-full px-5 sm:px-8 border-b border-white/10">
+      {/* 1. Top Section (Gradient Hero - Dynamic Island & Safe Area Supported) */}
+      <section className="bg-gradient-to-b from-[#002d1e] to-[#1a4333] text-white pt-14 sm:pt-16 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))] pb-16 rounded-t-none rounded-b-[2rem] relative shadow-lg w-full px-5 sm:px-8 border-b border-white/10">
         <div className="max-w-[1280px] mx-auto">
         {/* Top AppBar */}
         <header className="flex justify-between items-center w-full mb-6">

@@ -20,7 +20,7 @@ export const SalesCardPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 text-left max-w-[1000px] mx-auto pb-20">
+    <div className="flex flex-col gap-6 text-left max-w-[1000px] mx-auto pb-20 pt-12 sm:pt-14 pt-[max(3rem,calc(env(safe-area-inset-top)+1rem))]">
       {/* 1. Header Navigation Bar */}
       <div className="flex items-center justify-between px-1 pt-2">
         <div className="flex items-center gap-3">

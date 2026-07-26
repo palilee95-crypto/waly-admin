@@ -346,8 +346,8 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         <div className="h-14 md:h-10"></div>
       </main>
 
-      {/* Mobile & Responsive Floating Bottom Navigation Bar (Mathematically centered 5-column grid) */}
-      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[432px] z-50 grid grid-cols-5 items-center justify-items-center px-1 py-1.5 bg-[#002d1e]/95 backdrop-blur-md shadow-2xl rounded-full border border-white/10 text-white">
+      {/* Mobile & Responsive Floating Bottom Navigation Bar (Mathematically centered 5-column grid with iOS Safe Area) */}
+      <nav className="md:hidden fixed bottom-6 bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+0.75rem))] left-1/2 -translate-x-1/2 w-[92%] max-w-[432px] z-50 grid grid-cols-5 items-center justify-items-center px-1 py-1.5 bg-[#002d1e]/95 backdrop-blur-md shadow-2xl rounded-full border border-white/10 text-white">
         {/* Col 1: Home */}
         <Link
           to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'}
