@@ -3,7 +3,6 @@ import { useLogout, useGetIdentity } from '@refinedev/core';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Modal, Input, Drawer } from 'antd';
 import { CreateProspectModal } from './CreateProspectModal';
-import { SalesCardModal } from './SalesCardModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -20,7 +19,6 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreateProspectOpen, setIsCreateProspectOpen] = useState(false);
-  const [isSalesCardOpen, setIsSalesCardOpen] = useState(false);
 
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
@@ -376,15 +374,15 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
           <span className="text-[10px] font-medium mt-0.5 truncate">{role === 'sales_agent' ? 'Leaderboard' : 'Merchants'}</span>
         </Link>
 
-        {/* Col 3: Central FAB (Exact 50% Mathematical Center - Opens Sales Card) */}
+        {/* Col 3: Central FAB (Navigates to My Referral Card Page) */}
         <div className="flex items-center justify-center w-full relative -mt-8 z-10">
-          <button
-            onClick={() => setIsSalesCardOpen(true)}
+          <Link
+            to={role === 'sales_agent' ? '/sales-dashboard/card' : '/merchants'}
             title="My Sales Card"
             className="w-14 h-14 rounded-full bg-[#6bfe9c] text-[#002d1e] shadow-[0_8px_25px_rgba(107,254,156,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 border-4 border-[#002d1e] cursor-pointer"
           >
             <span className="material-symbols-outlined text-2xl font-extrabold">style</span>
-          </button>
+          </Link>
         </div>
 
         {/* Col 4: Earnings / Billing */}
@@ -471,12 +469,6 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
       <CreateProspectModal
         open={isCreateProspectOpen}
         onClose={() => setIsCreateProspectOpen(false)}
-      />
-
-      {/* Official Sales Card Modal */}
-      <SalesCardModal
-        open={isSalesCardOpen}
-        onClose={() => setIsSalesCardOpen(false)}
       />
     </div>
   );

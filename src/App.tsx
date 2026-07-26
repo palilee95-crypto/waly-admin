@@ -30,6 +30,7 @@ import { SalesDormantPage } from './pages/sales-dashboard/dormant';
 import { SalesEarningsPage } from './pages/sales-dashboard/earnings';
 import { SalesAnalyticsPage } from './pages/sales-dashboard/analytics';
 import { SalesLeaderboardPage } from './pages/sales-dashboard/leaderboard';
+import { SalesCardPage } from './pages/sales-dashboard/card';
 import { SubscriptionList } from './pages/subscriptions/list';
 
 
@@ -130,6 +131,7 @@ export const App: React.FC = () => {
                 <Route path="/sales-dashboard/earnings" element={<SalesEarningsPage />} />
                 <Route path="/sales-dashboard/analytics" element={<SalesAnalyticsPage />} />
                 <Route path="/sales-dashboard/leaderboard" element={<SalesLeaderboardPage />} />
+                <Route path="/sales-dashboard/card" element={<SalesCardPage />} />
                 
                 {/* Merchants */}
                 <Route path="/merchants" element={<MerchantList />} />
