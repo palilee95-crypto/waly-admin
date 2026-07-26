@@ -3,6 +3,7 @@ import { useLogout, useGetIdentity } from '@refinedev/core';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 import { Modal, Input, Drawer } from 'antd';
 import { CreateProspectModal } from './CreateProspectModal';
+import { SalesCardModal } from './SalesCardModal';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -19,6 +20,7 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreateProspectOpen, setIsCreateProspectOpen] = useState(false);
+  const [isSalesCardOpen, setIsSalesCardOpen] = useState(false);
 
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem('theme') === 'dark';
@@ -271,72 +273,74 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
       </Drawer>
 
       {/* Main Content Canvas - Left margin collapses on mobile */}
-      <main className="ml-0 md:ml-28 flex-1 h-screen overflow-y-auto custom-scroll px-3 sm:px-6 md:px-8 md:pr-container-padding flex flex-col pb-20 md:pb-6">
-        {/* Responsive Sticky Header */}
-        <header className="flex justify-between items-center h-16 sm:h-20 w-full sticky top-0 z-40 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-b border-black/5 dark:border-white/10 px-2 sm:px-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center md:hidden mr-1"
-              title="Open Navigation Menu"
-            >
-              <span className="material-symbols-outlined text-on-surface text-[24px]">menu</span>
-            </button>
-            <Link to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'} className="flex items-center hover:opacity-90">
-              <img src="/logo.png" alt="Risev Logo" className="h-9 sm:h-12 object-contain" />
-            </Link>
-          </div>
+      <main className={`ml-0 md:ml-28 flex-1 h-screen overflow-y-auto custom-scroll flex flex-col pb-20 md:pb-6 ${currentPath === '/sales-dashboard' ? 'bg-[#002d1e]' : ''}`}>
+        {/* Responsive Header (Scrolls away naturally with page content) */}
+        {currentPath !== '/sales-dashboard' && (
+          <header className="flex justify-between items-center h-16 sm:h-20 w-full bg-white dark:bg-slate-900 border-b border-black/5 dark:border-white/10 px-2 sm:px-4 shrink-0">
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center md:hidden mr-1"
+                title="Open Navigation Menu"
+              >
+                <span className="material-symbols-outlined text-on-surface text-[24px]">menu</span>
+              </button>
+              <Link to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'} className="flex items-center hover:opacity-90">
+                <img src="/logo.png" alt="Risev Logo" className="h-9 sm:h-12 object-contain" />
+              </Link>
+            </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div 
-              onClick={() => setIsSearchOpen(true)}
-              className="relative hidden lg:block cursor-pointer"
-            >
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-              <input
-                className="pl-10 pr-4 py-2 bg-white/40 border-none rounded-full w-64 text-body-sm transition-all outline-none cursor-pointer"
-                placeholder="Search portal... (Ctrl+K)"
-                readOnly
-                type="text"
-              />
-            </div>
-            <button
-              onClick={() => setIsSearchOpen(true)}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center lg:hidden"
-              title="Search Portal"
-            >
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
-            </button>
-            <button 
-              onClick={() => setIsDark(prev => !prev)}
-              className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center"
-              title="Toggle Dark/Light Mode"
-            >
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                {isDark ? 'light_mode' : 'dark_mode'}
-              </span>
-            </button>
-            
-            <div className="flex items-center gap-2 sm:gap-3 pl-2 border-l border-black/10 dark:border-white/10">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 overflow-hidden border border-white dark:border-slate-700 flex items-center justify-center shrink-0">
-                {identity?.avatar ? (
-                  <img className="w-full h-full object-cover" src={identity.avatar} alt="Avatar" />
-                ) : (
-                  <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs sm:text-sm">
-                    {identity?.name?.substring(0, 2).toUpperCase() || 'AD'}
-                  </div>
-                )}
+            <div className="flex items-center gap-2 sm:gap-4">
+              <div 
+                onClick={() => setIsSearchOpen(true)}
+                className="relative hidden lg:block cursor-pointer"
+              >
+                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
+                <input
+                  className="pl-10 pr-4 py-2 bg-white/40 border-none rounded-full w-64 text-body-sm transition-all outline-none cursor-pointer"
+                  placeholder="Search portal... (Ctrl+K)"
+                  readOnly
+                  type="text"
+                />
               </div>
-              <div className="hidden sm:block text-left">
-                <p className="font-body text-body-sm font-semibold text-on-surface leading-tight truncate max-w-[120px]">{identity?.name || 'Administrator'}</p>
-                <p className="font-body text-[10px] text-on-surface-variant uppercase tracking-wider">{identity?.role?.replace('_', ' ') || 'Operations'}</p>
+              <button
+                onClick={() => setIsSearchOpen(true)}
+                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center lg:hidden"
+                title="Search Portal"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
+              </button>
+              <button 
+                onClick={() => setIsDark(prev => !prev)}
+                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center"
+                title="Toggle Dark/Light Mode"
+              >
+                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
+                  {isDark ? 'light_mode' : 'dark_mode'}
+                </span>
+              </button>
+              
+              <div className="flex items-center gap-2 sm:gap-3 pl-2 border-l border-black/10 dark:border-white/10">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 overflow-hidden border border-white dark:border-slate-700 flex items-center justify-center shrink-0">
+                  {identity?.avatar ? (
+                    <img className="w-full h-full object-cover" src={identity.avatar} alt="Avatar" />
+                  ) : (
+                    <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs sm:text-sm">
+                      {identity?.name?.substring(0, 2).toUpperCase() || 'AD'}
+                    </div>
+                  )}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <p className="font-body text-body-sm font-semibold text-on-surface leading-tight truncate max-w-[120px]">{identity?.name || 'Administrator'}</p>
+                  <p className="font-body text-[10px] text-on-surface-variant uppercase tracking-wider">{identity?.role?.replace('_', ' ') || 'Operations'}</p>
+                </div>
               </div>
             </div>
-          </div>
-        </header>
+          </header>
+        )}
 
         {/* Inner Page View */}
-        <div className="flex-1 px-1 sm:px-4 py-4 sm:py-6">
+        <div className={`flex-1 w-full ${currentPath === '/sales-dashboard' ? 'p-0 m-0' : 'px-1 sm:px-4 py-4 sm:py-6'}`}>
           {children}
         </div>
 
@@ -344,65 +348,65 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         <div className="h-14 md:h-10"></div>
       </main>
 
-      {/* Mobile & Responsive Floating Bottom Navigation Bar (Matching code.html design) */}
-      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[432px] z-50 flex justify-around items-center px-2 py-2 bg-[#002d1e]/95 backdrop-blur-md shadow-2xl rounded-full border border-white/10 text-white">
-        {/* Home */}
+      {/* Mobile & Responsive Floating Bottom Navigation Bar (Mathematically centered 5-column grid) */}
+      <nav className="md:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[92%] max-w-[432px] z-50 grid grid-cols-5 items-center justify-items-center px-1 py-1.5 bg-[#002d1e]/95 backdrop-blur-md shadow-2xl rounded-full border border-white/10 text-white">
+        {/* Col 1: Home */}
         <Link
           to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'}
-          className={`flex flex-col items-center justify-center p-1.5 transition-all ${
+          className={`flex flex-col items-center justify-center w-full py-1 transition-all ${
             isActive(role === 'sales_agent' ? '/sales-dashboard' : '/dashboard')
               ? 'text-[#6bfe9c] font-bold scale-105'
               : 'text-[#85af9b] hover:text-white'
           }`}
         >
           <span className="material-symbols-outlined text-[22px]">home</span>
-          <span className="text-[10px] font-medium mt-0.5">Home</span>
+          <span className="text-[10px] font-medium mt-0.5 truncate">Home</span>
         </Link>
 
-        {/* Leaderboard / Ranking */}
+        {/* Col 2: Leaderboard / Merchants */}
         <Link
           to={role === 'sales_agent' ? '/sales-dashboard/leaderboard' : '/merchants'}
-          className={`flex flex-col items-center justify-center p-1.5 transition-all ${
+          className={`flex flex-col items-center justify-center w-full py-1 transition-all ${
             isActive(role === 'sales_agent' ? '/sales-dashboard/leaderboard' : '/merchants')
               ? 'text-[#6bfe9c] font-bold scale-105'
               : 'text-[#85af9b] hover:text-white'
           }`}
         >
           <span className="material-symbols-outlined text-[22px]">{role === 'sales_agent' ? 'leaderboard' : 'storefront'}</span>
-          <span className="text-[10px] font-medium mt-0.5">{role === 'sales_agent' ? 'Leaderboard' : 'Merchants'}</span>
+          <span className="text-[10px] font-medium mt-0.5 truncate">{role === 'sales_agent' ? 'Leaderboard' : 'Merchants'}</span>
         </Link>
 
-        {/* Central FAB: Create Prospect Modal Trigger (Pops UP out of navbar) */}
-        <div className="relative -mt-9 z-10 shrink-0">
+        {/* Col 3: Central FAB (Exact 50% Mathematical Center - Opens Sales Card) */}
+        <div className="flex items-center justify-center w-full relative -mt-8 z-10">
           <button
-            onClick={() => setIsCreateProspectOpen(true)}
-            title="Create Prospect"
+            onClick={() => setIsSalesCardOpen(true)}
+            title="My Sales Card"
             className="w-14 h-14 rounded-full bg-[#6bfe9c] text-[#002d1e] shadow-[0_8px_25px_rgba(107,254,156,0.4)] flex items-center justify-center hover:scale-110 active:scale-95 transition-all duration-200 border-4 border-[#002d1e] cursor-pointer"
           >
-            <span className="material-symbols-outlined text-2xl font-extrabold">person_add</span>
+            <span className="material-symbols-outlined text-2xl font-extrabold">style</span>
           </button>
         </div>
 
-        {/* Earnings / Subscriptions */}
+        {/* Col 4: Earnings / Billing */}
         <Link
           to={role === 'sales_agent' ? '/sales-dashboard/earnings' : '/subscriptions'}
-          className={`flex flex-col items-center justify-center p-1.5 transition-all ${
+          className={`flex flex-col items-center justify-center w-full py-1 transition-all ${
             isActive(role === 'sales_agent' ? '/sales-dashboard/earnings' : '/subscriptions')
               ? 'text-[#6bfe9c] font-bold scale-105'
               : 'text-[#85af9b] hover:text-white'
           }`}
         >
           <span className="material-symbols-outlined text-[22px]">{role === 'sales_agent' ? 'account_balance_wallet' : 'credit_card'}</span>
-          <span className="text-[10px] font-medium mt-0.5">{role === 'sales_agent' ? 'Earnings' : 'Billing'}</span>
+          <span className="text-[10px] font-medium mt-0.5 truncate">{role === 'sales_agent' ? 'Earnings' : 'Billing'}</span>
         </Link>
 
-        {/* Menu / Drawer Toggle */}
+        {/* Col 5: Menu */}
         <button
           onClick={() => setIsMobileMenuOpen(true)}
-          className="flex flex-col items-center justify-center text-[#85af9b] hover:text-white p-1.5 transition-all bg-transparent border-none cursor-pointer"
+          className="flex flex-col items-center justify-center w-full text-[#85af9b] hover:text-white py-1 transition-all bg-transparent border-none cursor-pointer"
         >
           <span className="material-symbols-outlined text-[22px]">menu</span>
-          <span className="text-[10px] font-medium mt-0.5">Menu</span>
+          <span className="text-[10px] font-medium mt-0.5 truncate">Menu</span>
         </button>
       </nav>
 
@@ -463,10 +467,16 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         </div>
       </Modal>
 
-      {/* Global Create Prospect Modal (wired to navbar central button) */}
+      {/* Global Create Prospect Modal */}
       <CreateProspectModal
         open={isCreateProspectOpen}
         onClose={() => setIsCreateProspectOpen(false)}
+      />
+
+      {/* Official Sales Card Modal */}
+      <SalesCardModal
+        open={isSalesCardOpen}
+        onClose={() => setIsSalesCardOpen(false)}
       />
     </div>
   );

@@ -15,6 +15,15 @@ export const CreateProspectModal: React.FC<CreateProspectModalProps> = ({
   onClose,
   onSuccess,
 }) => {
+  if (!open) return null;
+  return <CreateProspectModalContent open={open} onClose={onClose} onSuccess={onSuccess} />;
+};
+
+const CreateProspectModalContent: React.FC<CreateProspectModalProps> = ({
+  open,
+  onClose,
+  onSuccess,
+}) => {
   const { referralLink, identity } = useSalesData();
 
   const [prospectPhone, setProspectPhone] = useState('');
