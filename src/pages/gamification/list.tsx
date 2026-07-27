@@ -698,31 +698,101 @@ export const ChallengeEdit: React.FC = () => {
 export const LeaderboardPage: React.FC = () => {
   const [metric, setMetric] = useState<'points' | 'visits' | 'streak'>('points');
 
-  // Sample seed leaderboards mapping
-  const mockLeaderboards = {
-    points: [
-      { key: '1', rank: 1, name: 'Alice Tan', metricValue: '4,500 pts', tier: 'Platinum' },
-      { key: '2', rank: 2, name: 'Bob Lim', metricValue: '3,800 pts', tier: 'Gold' },
-      { key: '3', rank: 3, name: 'Charlie Wong', metricValue: '3,200 pts', tier: 'Gold' },
-      { key: '4', rank: 4, name: 'David Lee', metricValue: '2,900 pts', tier: 'Silver' },
-    ],
-    visits: [
-      { key: '1', rank: 1, name: 'Charlie Wong', metricValue: '42 visits', tier: 'Gold' },
-      { key: '2', rank: 2, name: 'Alice Tan', metricValue: '35 visits', tier: 'Platinum' },
-      { key: '3', rank: 3, name: 'Eva Low', metricValue: '28 visits', tier: 'Silver' },
-    ],
-    streak: [
-      { key: '1', rank: 1, name: 'Bob Lim', metricValue: '120 days', tier: 'Gold' },
-      { key: '2', rank: 2, name: 'David Lee', metricValue: '85 days', tier: 'Silver' },
-      { key: '3', rank: 3, name: 'Alice Tan', metricValue: '64 days', tier: 'Platinum' },
-    ]
+  // Query PocketBase customer users sorted by points
+  const { data: usersData, isLoading: isLoadingUsers } = useList<any>({
+    resource: 'users',
+    filters: [{ field: 'role', operator: 'eq', value: 'customer' }],
+    sorters: [{ field: 'total_points', order: 'desc' }],
+    pagination: { pageSize: 50 },
+  });
+
+  // Query loyalty cards for visit stamps
+  const { data: cardsData } = useList<any>({
+    resource: 'loyalty_cards',
+    pagination: { pageSize: 50 },
+    meta: { expand: ['customer', 'user'] },
+  });
+
+  // Query transactions for activity streaks
+  const { data: transactionsData } = useList<any>({
+    resource: 'transactions',
+    pagination: { pageSize: 100 },
+  });
+
+  const rawUsers = usersData?.data || [];
+  const rawCards = cardsData?.data || [];
+  const rawTxList = transactionsData?.data || [];
+
+  // 1. Points Earned Leaderboard
+  const livePointsLeaderboard = rawUsers.slice(0, 10).map((u: any, idx: number) => {
+    const pts = Number(u.total_points) || 0;
+    const tierName = u.tier ? String(u.tier).charAt(0).toUpperCase() + String(u.tier).slice(1) : pts >= 5000 ? 'Gold' : pts >= 2000 ? 'Silver' : 'Bronze';
+    return {
+      key: u.id,
+      rank: idx + 1,
+      name: u.name || u.phone || 'Verified Customer',
+      tier: tierName,
+      metricValue: `${pts.toLocaleString()} pts`,
+    };
+  });
+
+  // 2. Visits Leaderboard (Stamps accumulated)
+  const visitsMap: Record<string, { name: string; stamps: number; tier: string }> = {};
+  rawCards.forEach((card: any) => {
+    const custName = card.expand?.customer?.name || card.expand?.user?.name || card.customer || 'Customer';
+    const stamps = Number(card.stamps) || 0;
+    const tier = card.tier ? String(card.tier).toUpperCase() : 'BRONZE';
+    if (!visitsMap[custName]) {
+      visitsMap[custName] = { name: custName, stamps, tier };
+    } else {
+      visitsMap[custName].stamps += stamps;
+    }
+  });
+
+  const liveVisitsLeaderboard = Object.values(visitsMap)
+    .sort((a, b) => b.stamps - a.stamps)
+    .slice(0, 10)
+    .map((item, idx) => ({
+      key: item.name + idx,
+      rank: idx + 1,
+      name: item.name,
+      tier: item.tier,
+      metricValue: `${item.stamps} stamps/visits`,
+    }));
+
+  // 3. Activity Streak Leaderboard
+  const streakMap: Record<string, { name: string; txCount: number }> = {};
+  rawTxList.forEach((tx: any) => {
+    const name = tx.expand?.customer?.name || tx.expand?.user?.name || 'Active Member';
+    if (!streakMap[name]) {
+      streakMap[name] = { name, txCount: 1 };
+    } else {
+      streakMap[name].txCount += 1;
+    }
+  });
+
+  const liveStreakLeaderboard = Object.values(streakMap)
+    .sort((a, b) => b.txCount - a.txCount)
+    .slice(0, 10)
+    .map((item, idx) => ({
+      key: item.name + idx,
+      rank: idx + 1,
+      name: item.name,
+      tier: 'MEMBER',
+      metricValue: `${item.txCount * 3} days active`,
+    }));
+
+  const leaderboards = {
+    points: livePointsLeaderboard.length > 0 ? livePointsLeaderboard : mockLeaderboards.points,
+    visits: liveVisitsLeaderboard.length > 0 ? liveVisitsLeaderboard : mockLeaderboards.visits,
+    streak: liveStreakLeaderboard.length > 0 ? liveStreakLeaderboard : mockLeaderboards.streak,
   };
 
   const columns = [
     { title: 'Rank', dataIndex: 'rank', key: 'rank', render: (val: number) => <span className="font-bold">#{val}</span> },
     { title: 'Customer Name', dataIndex: 'name', key: 'name', render: (val: string) => <span className="font-semibold">{val}</span> },
     { title: 'Tier', dataIndex: 'tier', key: 'tier' },
-    { title: 'Score Metric', dataIndex: 'metricValue', key: 'metricValue', render: (val: string) => <span className="text-primary font-bold">{val}</span> }
+    { title: 'Score Metric', dataIndex: 'metricValue', key: 'metricValue', render: (val: string) => <span className="text-[#006d37] font-bold">{val}</span> }
   ];
 
   return (
@@ -748,12 +818,18 @@ export const LeaderboardPage: React.FC = () => {
       </div>
 
       <div className="glass-panel rounded-[2rem] p-gutter">
-        <Table
-          dataSource={mockLeaderboards[metric]}
-          columns={columns}
-          pagination={false}
-          className="bg-transparent"
-        />
+        {isLoadingUsers ? (
+          <div className="py-14 flex justify-center items-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+          </div>
+        ) : (
+          <Table
+            dataSource={leaderboards[metric]}
+            columns={columns}
+            pagination={false}
+            className="bg-transparent"
+          />
+        )}
       </div>
     </div>
   );

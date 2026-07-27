@@ -57,14 +57,123 @@ const mockTopMerchants = [
 export const PlatformAnalytics: React.FC = () => {
   const [range, setRange] = useState<'7d' | '30d' | '90d' | 'custom'>('30d');
 
-  // Try fetching counts from pocketbase collections
-  const { data: merchantsData } = useList<any>({ resource: 'merchants', pagination: { pageSize: 1 } });
-  const { data: usersData } = useList<any>({ resource: 'users', pagination: { pageSize: 1 } });
-  const { data: campaignsData } = useList<any>({ resource: 'campaigns', pagination: { pageSize: 1 } });
+  // Fetch collections from PocketBase
+  const { data: merchantsData } = useList<any>({ resource: 'merchants', pagination: { pageSize: 100 } });
+  const { data: usersData } = useList<any>({ resource: 'users', pagination: { pageSize: 200 } });
+  const { data: campaignsData } = useList<any>({ resource: 'campaigns', pagination: { pageSize: 50 } });
+  const { data: transactionsData } = useList<any>({ resource: 'transactions', pagination: { pageSize: 200 }, sorters: [{ field: 'created', order: 'desc' }] });
+  const { data: redemptionsData } = useList<any>({ resource: 'redemptions', pagination: { pageSize: 200 } });
 
-  const totalMerchants = merchantsData?.total || 1980;
-  const totalUsers = usersData?.total || 42500;
-  const activeCampaigns = campaignsData?.total || 8;
+  const totalMerchants = merchantsData?.total || (merchantsData?.data?.length || 0);
+  const totalUsers = usersData?.total || (usersData?.data?.length || 0);
+  const activeCampaigns = campaignsData?.total || (campaignsData?.data?.length || 0);
+
+  const rawTxList = transactionsData?.data || [];
+  const rawUserList = usersData?.data || [];
+  const rawMerchantList = merchantsData?.data || [];
+
+  // 1. Dynamic Points Flow (Earned vs Redeemed by date)
+  const pointsFlowMap: Record<string, { earned: number; redeemed: number }> = {};
+  rawTxList.forEach((tx: any) => {
+    const dateStr = String(tx.created).substring(5, 10); // MM-DD
+    if (!pointsFlowMap[dateStr]) {
+      pointsFlowMap[dateStr] = { earned: 0, redeemed: 0 };
+    }
+    const points = Number(tx.points) || 0;
+    if (tx.type?.toLowerCase() === 'earn' || tx.type?.toLowerCase() === 'issue') {
+      pointsFlowMap[dateStr].earned += points;
+    } else {
+      pointsFlowMap[dateStr].redeemed += points;
+    }
+  });
+
+  const computedPointsFlow = Object.keys(pointsFlowMap)
+    .sort()
+    .slice(-7)
+    .map((date) => ({
+      date,
+      earned: pointsFlowMap[date].earned,
+      redeemed: pointsFlowMap[date].redeemed,
+    }));
+
+  const pointsFlowData = computedPointsFlow.length > 0 ? computedPointsFlow : mockPointsFlowData;
+
+  // 2. Dynamic DAU/MAU Trend Data
+  const dailyActiveUserMap: Record<string, Set<string>> = {};
+  rawTxList.forEach((tx: any) => {
+    const dateStr = String(tx.created).substring(5, 10);
+    if (!dailyActiveUserMap[dateStr]) {
+      dailyActiveUserMap[dateStr] = new Set();
+    }
+    if (tx.customer) dailyActiveUserMap[dateStr].add(tx.customer);
+    if (tx.user) dailyActiveUserMap[dateStr].add(tx.user);
+  });
+
+  const computedDauMau = Object.keys(dailyActiveUserMap)
+    .sort()
+    .slice(-7)
+    .map((date) => ({
+      date,
+      dau: dailyActiveUserMap[date].size || 1,
+      mau: Math.max(totalUsers, dailyActiveUserMap[date].size * 3),
+    }));
+
+  const dauMauData = computedDauMau.length > 0 ? computedDauMau : mockDauMauData;
+
+  // 3. Customer Tier Distribution
+  const tierCounts: Record<string, number> = { Bronze: 0, Silver: 0, Gold: 0, Platinum: 0 };
+  rawUserList.forEach((u: any) => {
+    const pts = Number(u.total_points) || 0;
+    const tierName = u.tier
+      ? String(u.tier).charAt(0).toUpperCase() + String(u.tier).slice(1)
+      : pts >= 10000
+      ? 'Platinum'
+      : pts >= 5000
+      ? 'Gold'
+      : pts >= 2000
+      ? 'Silver'
+      : 'Bronze';
+
+    if (tierCounts[tierName] !== undefined) {
+      tierCounts[tierName]++;
+    } else {
+      tierCounts.Bronze++;
+    }
+  });
+
+  const computedTierData = [
+    { name: 'Bronze', value: tierCounts.Bronze || 1, color: '#cd7f32' },
+    { name: 'Silver', value: tierCounts.Silver || 0, color: '#c0c0c0' },
+    { name: 'Gold', value: tierCounts.Gold || 0, color: '#ffd700' },
+    { name: 'Platinum', value: tierCounts.Platinum || 0, color: '#e5e4e2' },
+  ];
+
+  const tierData = (rawUserList.length > 0) ? computedTierData : mockTierData;
+
+  // 4. New User Registrations
+  const regMap: Record<string, number> = {};
+  rawUserList.forEach((u: any) => {
+    const dateStr = String(u.created).substring(5, 10);
+    regMap[dateStr] = (regMap[dateStr] || 0) + 1;
+  });
+
+  const computedRegistrations = Object.keys(regMap)
+    .sort()
+    .slice(-7)
+    .map((date) => ({ date, newUsers: regMap[date] }));
+
+  const registrationsData = computedRegistrations.length > 0 ? computedRegistrations : mockRegistrations;
+
+  // 5. Top Merchants Benchmark Table
+  const computedTopMerchants = rawMerchantList.slice(0, 5).map((m: any, idx: number) => ({
+    key: m.id || String(idx + 1),
+    name: m.name || 'Merchant Store',
+    category: m.category || 'Retail',
+    pointsIssued: Number(m.total_sales) || 0,
+    txCount: Number(m.total_transactions) || 0,
+  }));
+
+  const topMerchantsData = computedTopMerchants.length > 0 ? computedTopMerchants : mockTopMerchants;
 
   const handleExportCSV = () => {
     message.loading({ content: 'Exporting analytics to CSV...', key: 'export' });
@@ -174,7 +283,7 @@ export const PlatformAnalytics: React.FC = () => {
           <h3 className="font-headline text-sm font-bold text-on-surface mb-6">Points Flow (Earned vs Redeemed)</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={mockPointsFlowData}>
+              <BarChart data={pointsFlowData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                 <XAxis dataKey="date" stroke="#747688" fontSize={11} tickLine={false} />
                 <YAxis stroke="#747688" fontSize={11} tickLine={false} axisLine={false} />
@@ -194,7 +303,7 @@ export const PlatformAnalytics: React.FC = () => {
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
-                  data={mockTierData}
+                  data={tierData}
                   cx="50%"
                   cy="50%"
                   innerRadius={60}
@@ -202,7 +311,7 @@ export const PlatformAnalytics: React.FC = () => {
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {mockTierData.map((entry, index) => (
+                  {tierData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -211,11 +320,11 @@ export const PlatformAnalytics: React.FC = () => {
             </ResponsiveContainer>
           </div>
           <div className="flex justify-between items-center px-4 mt-4">
-            {mockTierData.map((t) => (
+            {tierData.map((t) => (
               <div key={t.name} className="flex flex-col items-center">
                 <span className="w-2.5 h-2.5 rounded-full mb-1" style={{ backgroundColor: t.color }}></span>
                 <span className="text-[10px] text-outline font-semibold uppercase">{t.name}</span>
-                <span className="text-xs font-bold text-on-surface">{(t.value / 1000).toFixed(1)}k</span>
+                <span className="text-xs font-bold text-on-surface">{t.value}</span>
               </div>
             ))}
           </div>
@@ -226,7 +335,7 @@ export const PlatformAnalytics: React.FC = () => {
           <h3 className="font-headline text-sm font-bold text-on-surface mb-6">Active Users Trend (DAU vs MAU)</h3>
           <div className="h-72">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockDauMauData}>
+              <AreaChart data={dauMauData}>
                 <defs>
                   <linearGradient id="colorDau" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#0040e0" stopOpacity={0.2}/>
@@ -250,7 +359,7 @@ export const PlatformAnalytics: React.FC = () => {
           <h3 className="font-headline text-sm font-bold text-on-surface mb-6">New Customer Registrations</h3>
           <div className="h-48">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={mockRegistrations}>
+              <AreaChart data={registrationsData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
                 <XAxis dataKey="date" stroke="#747688" fontSize={11} tickLine={false} />
                 <YAxis stroke="#747688" fontSize={11} tickLine={false} axisLine={false} />
@@ -264,7 +373,7 @@ export const PlatformAnalytics: React.FC = () => {
 
       {/* Top Merchants List Section */}
       <div className="glass-panel rounded-[2rem] p-gutter text-left">
-        <h3 className="font-headline text-sm font-bold text-on-surface mb-6">Top 5 Merchants (Last 30 Days)</h3>
+        <h3 className="font-headline text-sm font-bold text-on-surface mb-6">Top Merchants Benchmark</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -272,31 +381,31 @@ export const PlatformAnalytics: React.FC = () => {
                 <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Rank</th>
                 <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Merchant Name</th>
                 <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Category</th>
-                <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Points Issued</th>
+                <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Volume / Points</th>
                 <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold text-right">Transactions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-black/5 font-body">
-              {mockTopMerchants.map((merchant, idx) => (
+              {topMerchantsData.map((merchant, idx) => (
                 <tr key={merchant.key} className="group hover:bg-white/40 transition-colors">
                   <td className="py-5 font-bold text-sm text-on-surface">#{idx + 1}</td>
                   <td className="py-5">
                     <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-xs">
+                      <div className="w-9 h-9 rounded-lg bg-[#006d37]/10 flex items-center justify-center text-[#006d37] font-bold text-xs">
                         {merchant.name.substring(0, 2).toUpperCase()}
                       </div>
                       <span className="font-headline text-sm font-semibold text-on-surface">{merchant.name}</span>
                     </div>
                   </td>
                   <td className="py-5 text-sm text-on-surface">{merchant.category}</td>
-                  <td className="py-5 text-sm font-bold text-primary">{merchant.pointsIssued.toLocaleString()} pts</td>
+                  <td className="py-5 text-sm font-bold text-[#006d37]">{merchant.pointsIssued.toLocaleString()}</td>
                   <td className="py-5 text-sm text-on-surface-variant text-right">{merchant.txCount.toLocaleString()} txs</td>
                 </tr>
               ))}
             </tbody>
-            </table>
-          </div>
+          </table>
         </div>
+      </div>
 
       </div>
     </div>

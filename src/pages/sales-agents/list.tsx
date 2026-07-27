@@ -11,12 +11,37 @@ export const SalesAgentList: React.FC = () => {
   // Modal states
   const [isOnboardModalOpen, setIsOnboardModalOpen] = useState(false);
   const [isPayoutModalOpen, setIsPayoutModalOpen] = useState(false);
+  const [isTierRatesModalOpen, setIsTierRatesModalOpen] = useState(false);
+  const [isEditAgentModalOpen, setIsEditAgentModalOpen] = useState(false);
   const [selectedAgent, setSelectedAgent] = useState<any>(null);
   const [payoutAmount, setPayoutAmount] = useState<number>(0);
 
   const [form] = Form.useForm();
+  const [tierRatesForm] = Form.useForm();
+  const [editAgentForm] = Form.useForm();
+
   const { mutate: createAgent } = useCreate();
   const { mutate: updateAgent } = useUpdate();
+  const { mutate: updateSettings } = useUpdate();
+
+  // Query global pricing_settings for tier commission rates
+  const { tableQueryResult: settingsQueryResult } = useTable<any>({
+    resource: 'pricing_settings',
+    pagination: { pageSize: 1 },
+  });
+
+  const settingsRecord = settingsQueryResult?.data?.data?.[0] || {
+    id: 'pricesettings01',
+    agent_tier_1_rate: 10,
+    agent_tier_2_rate: 15,
+    agent_tier_3_rate: 20,
+  };
+
+  const tierRates = {
+    tier_1: Number(settingsRecord.agent_tier_1_rate) || 10,
+    tier_2: Number(settingsRecord.agent_tier_2_rate) || 15,
+    tier_3: Number(settingsRecord.agent_tier_3_rate) || 20,
+  };
 
   const { tableQueryResult } = useTable<any>({
     resource: 'sales_agents',
@@ -178,6 +203,7 @@ export const SalesAgentList: React.FC = () => {
           ...values,
           referral_code: generatedCode,
           status: 'active',
+          commission_tier: values.commission_tier || 'tier_1',
           acquired_stores: 0,
           total_sales_revenue: 0,
           total_commission_earned: 0,
@@ -201,6 +227,66 @@ export const SalesAgentList: React.FC = () => {
     );
   };
 
+  // Submit Tier Commission Rates Form (Updates pricing_settings record)
+  const handleSaveTierRates = (values: any) => {
+    updateSettings(
+      {
+        resource: 'pricing_settings',
+        id: settingsRecord.id || 'pricesettings01',
+        values: {
+          agent_tier_1_rate: values.agent_tier_1_rate,
+          agent_tier_2_rate: values.agent_tier_2_rate,
+          agent_tier_3_rate: values.agent_tier_3_rate,
+        },
+        successNotification: () => ({
+          message: 'Tier Commission Rates Saved',
+          description: `Tier 1: ${values.agent_tier_1_rate}%, Tier 2: ${values.agent_tier_2_rate}%, Tier 3: ${values.agent_tier_3_rate}%`,
+          type: 'success',
+        }),
+      },
+      {
+        onSuccess: () => {
+          setIsTierRatesModalOpen(false);
+        },
+      }
+    );
+  };
+
+  // Open Edit Agent Modal
+  const handleOpenEditAgent = (agent: any) => {
+    setSelectedAgent(agent);
+    editAgentForm.setFieldsValue({
+      name: agent.name,
+      email: agent.email,
+      phone: agent.phone,
+      commission_tier: agent.commission_tier || 'tier_1',
+      status: agent.status || 'active',
+    });
+    setIsEditAgentModalOpen(true);
+  };
+
+  // Submit Edit Agent Form
+  const handleSaveEditAgent = (values: any) => {
+    if (!selectedAgent) return;
+    updateAgent(
+      {
+        resource: 'sales_agents',
+        id: selectedAgent.id,
+        values,
+        successNotification: () => ({
+          message: 'Agent Profile Updated',
+          description: `Updated ${selectedAgent.name}'s tier to ${values.commission_tier.replace('_', ' ').toUpperCase()}`,
+          type: 'success',
+        }),
+      },
+      {
+        onSuccess: () => {
+          setIsEditAgentModalOpen(false);
+        },
+      }
+    );
+  };
+
   return (
     <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
       
@@ -218,19 +304,36 @@ export const SalesAgentList: React.FC = () => {
           </h1>
           
           <p className="text-xs sm:text-sm text-[#85af9b] max-w-md mb-5 font-medium leading-relaxed">
-            Monitor agent partner networks, acquired merchant stores, commission earnings, and payouts.
+            Monitor agent partner networks, acquired merchant stores, commission earnings, and tier rates.
           </p>
 
-          <button
-            onClick={() => {
-              form.resetFields();
-              setIsOnboardModalOpen(true);
-            }}
-            className="inline-flex items-center gap-2 bg-[#6bfe9c] text-[#002d1e] font-black text-xs px-5 py-2.5 rounded-full hover:scale-105 transition-all shadow-lg border-none cursor-pointer"
-          >
-            <span className="material-symbols-outlined text-[18px]">person_add</span>
-            <span>+ Onboard New Agent</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                form.resetFields();
+                setIsOnboardModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 bg-[#6bfe9c] text-[#002d1e] font-black text-xs px-5 py-2.5 rounded-full hover:scale-105 transition-all shadow-lg border-none cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">person_add</span>
+              <span>+ Onboard New Agent</span>
+            </button>
+
+            <button
+              onClick={() => {
+                tierRatesForm.setFieldsValue({
+                  agent_tier_1_rate: tierRates.tier_1,
+                  agent_tier_2_rate: tierRates.tier_2,
+                  agent_tier_3_rate: tierRates.tier_3,
+                });
+                setIsTierRatesModalOpen(true);
+              }}
+              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-black text-xs px-4 py-2.5 rounded-full transition-all border border-white/20 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[18px]">settings</span>
+              <span>Configure Tier Rates (%</span>
+            </button>
+          </div>
 
         </div>
       </section>
@@ -444,6 +547,15 @@ export const SalesAgentList: React.FC = () => {
 
                         <button
                           type="button"
+                          onClick={() => handleOpenEditAgent(agent)}
+                          className="bg-slate-200 hover:bg-slate-300 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white px-3 py-1.5 rounded-xl text-[11px] font-black border-none cursor-pointer flex items-center gap-1"
+                        >
+                          <span>Edit Tier</span>
+                          <span className="material-symbols-outlined text-xs">edit</span>
+                        </button>
+
+                        <button
+                          type="button"
                           onClick={() => navigate('/sales-dashboard')}
                           className="bg-[#006d37]/10 hover:bg-[#006d37]/20 text-[#006d37] dark:text-[#6bfe9c] px-3 py-1.5 rounded-xl text-[11px] font-black border border-[#006d37]/20 cursor-pointer"
                         >
@@ -477,7 +589,7 @@ export const SalesAgentList: React.FC = () => {
           form={form}
           layout="vertical"
           onFinish={handleOnboardSubmit}
-          initialValues={{ commission_rate: 10 }}
+          initialValues={{ commission_tier: 'tier_1' }}
           className="pt-3 flex flex-col gap-3"
         >
           <Form.Item name="name" label="Full Name" rules={[{ required: true, message: 'Full name required' }]}>
@@ -492,8 +604,12 @@ export const SalesAgentList: React.FC = () => {
             <Input className="h-10 rounded-xl" placeholder="e.g. +60 12-345 6789" />
           </Form.Item>
 
-          <Form.Item name="commission_rate" label="Commission Rate (%)" rules={[{ required: true }]}>
-            <InputNumber className="w-full h-10 rounded-xl" min={1} max={50} addonAfter="%" />
+          <Form.Item name="commission_tier" label="Commission Tier" rules={[{ required: true }]}>
+            <Select className="h-10 rounded-xl">
+              <Select.Option value="tier_1">Tier 1 ({tierRates.tier_1}%)</Select.Option>
+              <Select.Option value="tier_2">Tier 2 ({tierRates.tier_2}%)</Select.Option>
+              <Select.Option value="tier_3">Tier 3 ({tierRates.tier_3}%)</Select.Option>
+            </Select>
           </Form.Item>
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-black/5 mt-2">
@@ -502,6 +618,107 @@ export const SalesAgentList: React.FC = () => {
             </Button>
             <Button type="primary" htmlType="submit" className="h-10 bg-[#006d37] text-white rounded-xl font-black border-none">
               Generate Code & Save
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* Configure Global Tier Commission Rates Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 pt-1">
+            <span className="material-symbols-outlined text-[#006d37]">settings</span>
+            <span className="font-black text-base text-on-surface dark:text-white">Configure Sales Agent Tier Rates</span>
+          </div>
+        }
+        open={isTierRatesModalOpen}
+        onCancel={() => setIsTierRatesModalOpen(false)}
+        footer={null}
+      >
+        <Form
+          form={tierRatesForm}
+          layout="vertical"
+          onFinish={handleSaveTierRates}
+          className="pt-3 flex flex-col gap-3"
+        >
+          <p className="text-xs text-on-surface-variant mb-2">
+            Set global commission percentages for agent tiers stored directly in PocketBase <code className="bg-slate-100 px-1 rounded">pricing_settings</code>.
+          </p>
+
+          <Form.Item name="agent_tier_1_rate" label="Tier 1 Commission Rate (%)" rules={[{ required: true }]}>
+            <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} addonAfter="%" placeholder="e.g. 7" />
+          </Form.Item>
+
+          <Form.Item name="agent_tier_2_rate" label="Tier 2 Commission Rate (%)" rules={[{ required: true }]}>
+            <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} addonAfter="%" placeholder="e.g. 12" />
+          </Form.Item>
+
+          <Form.Item name="agent_tier_3_rate" label="Tier 3 Commission Rate (%)" rules={[{ required: true }]}>
+            <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} addonAfter="%" placeholder="e.g. 20" />
+          </Form.Item>
+
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-black/5 mt-2">
+            <Button onClick={() => setIsTierRatesModalOpen(false)} className="h-10 rounded-xl font-bold">
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" className="h-10 bg-[#006d37] text-white rounded-xl font-black border-none">
+              Save Global Rates
+            </Button>
+          </div>
+        </Form>
+      </Modal>
+
+      {/* Edit Agent Tier & Status Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 pt-1">
+            <span className="material-symbols-outlined text-[#006d37]">edit</span>
+            <span className="font-black text-base text-on-surface dark:text-white">Edit Agent Profile & Tier</span>
+          </div>
+        }
+        open={isEditAgentModalOpen}
+        onCancel={() => setIsEditAgentModalOpen(false)}
+        footer={null}
+      >
+        <Form
+          form={editAgentForm}
+          layout="vertical"
+          onFinish={handleSaveEditAgent}
+          className="pt-3 flex flex-col gap-3"
+        >
+          <Form.Item name="name" label="Full Name" rules={[{ required: true }]}>
+            <Input className="h-10 rounded-xl" />
+          </Form.Item>
+
+          <Form.Item name="email" label="Email Address" rules={[{ required: true, type: 'email' }]}>
+            <Input className="h-10 rounded-xl" />
+          </Form.Item>
+
+          <Form.Item name="phone" label="Phone Number">
+            <Input className="h-10 rounded-xl" />
+          </Form.Item>
+
+          <Form.Item name="commission_tier" label="Assigned Commission Tier" rules={[{ required: true }]}>
+            <Select className="h-10 rounded-xl">
+              <Select.Option value="tier_1">Tier 1 ({tierRates.tier_1}%)</Select.Option>
+              <Select.Option value="tier_2">Tier 2 ({tierRates.tier_2}%)</Select.Option>
+              <Select.Option value="tier_3">Tier 3 ({tierRates.tier_3}%)</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item name="status" label="Account Status" rules={[{ required: true }]}>
+            <Select className="h-10 rounded-xl">
+              <Select.Option value="active">Active</Select.Option>
+              <Select.Option value="inactive">Inactive</Select.Option>
+            </Select>
+          </Form.Item>
+
+          <div className="flex items-center justify-end gap-2 pt-4 border-t border-black/5 mt-2">
+            <Button onClick={() => setIsEditAgentModalOpen(false)} className="h-10 rounded-xl font-bold">
+              Cancel
+            </Button>
+            <Button type="primary" htmlType="submit" className="h-10 bg-[#006d37] text-white rounded-xl font-black border-none">
+              Update Agent Record
             </Button>
           </div>
         </Form>
@@ -552,3 +769,4 @@ export const SalesAgentList: React.FC = () => {
     </div>
   );
 };
+

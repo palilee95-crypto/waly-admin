@@ -70,6 +70,26 @@ export const useSalesData = () => {
     pagination: { pageSize: 50 },
   });
 
+  // 2d. Query global pricing_settings for dynamic tier commission rates
+  const { data: settingsData } = useList<any>({
+    resource: 'pricing_settings',
+    pagination: { pageSize: 1 },
+  });
+
+  const settingsRecord = settingsData?.data?.[0] || {};
+  const t1Rate = Number(settingsRecord.agent_tier_1_rate) || 10;
+  const t2Rate = Number(settingsRecord.agent_tier_2_rate) || 15;
+  const t3Rate = Number(settingsRecord.agent_tier_3_rate) || 20;
+
+  const formatTierLabel = (tierKey?: string) => {
+    if (!tierKey) return `Tier 1 (${t1Rate}%)`;
+    const key = String(tierKey).toLowerCase();
+    if (key.includes('tier_1') || key.includes('tier 1')) return `Tier 1 (${t1Rate}%)`;
+    if (key.includes('tier_2') || key.includes('tier 2')) return `Tier 2 (${t2Rate}%)`;
+    if (key.includes('tier_3') || key.includes('tier 3')) return `Tier 3 (${t3Rate}%)`;
+    return `Tier 1 (${t1Rate}%)`;
+  };
+
   const referralCode = identity?.referral_code || 'RISEV_AGENT_100';
   const merchantAppUrl = import.meta.env.VITE_MERCHANT_APP_URL || 'https://waly-five.vercel.app';
   const referralLink = `${merchantAppUrl}/?ref=${referralCode}`;
@@ -176,7 +196,7 @@ export const useSalesData = () => {
       sales: agent.total_sales || (isCurrent ? totalSalesRevenue : 0),
       customers: agent.merchants_count || (isCurrent ? merchantsList.length : 0),
       commission: agent.lifetime_earnings || (isCurrent ? totalEarned : 0),
-      tier: agent.commission_tier ? String(agent.commission_tier).replace('_', ' ').replace('tier ', 'Tier ') : 'Tier 1 (10%)',
+      tier: formatTierLabel(agent.commission_tier),
       isCurrentUser: isCurrent,
     };
   });
@@ -188,7 +208,7 @@ export const useSalesData = () => {
       sales: totalSalesRevenue,
       customers: merchantsList.length,
       commission: totalEarned,
-      tier: identity?.commission_tier ? String(identity.commission_tier).replace('_', ' ').replace('tier ', 'Tier ') : 'Tier 1 (10%)',
+      tier: formatTierLabel(identity?.commission_tier),
       isCurrentUser: true,
     }
   ];
