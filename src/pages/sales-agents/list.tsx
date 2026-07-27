@@ -35,12 +35,39 @@ export const SalesAgentList: React.FC = () => {
     agent_tier_1_rate: 10,
     agent_tier_2_rate: 15,
     agent_tier_3_rate: 20,
+    agent_tier_1_min_merchants: 0,
+    agent_tier_2_min_merchants: 15,
+    agent_tier_3_min_merchants: 30,
   };
 
   const tierRates = {
     tier_1: Number(settingsRecord.agent_tier_1_rate) || 10,
     tier_2: Number(settingsRecord.agent_tier_2_rate) || 15,
     tier_3: Number(settingsRecord.agent_tier_3_rate) || 20,
+  };
+
+  const tierThresholds = {
+    tier_1: Number(settingsRecord.agent_tier_1_min_merchants) || 0,
+    tier_2: Number(settingsRecord.agent_tier_2_min_merchants) || 15,
+    tier_3: Number(settingsRecord.agent_tier_3_min_merchants) || 30,
+  };
+
+  // Helper to dynamically calculate agent tier based on active acquired merchant count or manual assignment
+  const getAgentTierInfo = (acquiredCount: number, manualTier?: string) => {
+    if (manualTier && manualTier !== 'auto') {
+      const key = manualTier.toLowerCase();
+      if (key.includes('3')) return { key: 'tier_3', name: `Tier 3 (${tierRates.tier_3}%)`, rate: tierRates.tier_3, min: tierThresholds.tier_3 };
+      if (key.includes('2')) return { key: 'tier_2', name: `Tier 2 (${tierRates.tier_2}%)`, rate: tierRates.tier_2, min: tierThresholds.tier_2 };
+      return { key: 'tier_1', name: `Tier 1 (${tierRates.tier_1}%)`, rate: tierRates.tier_1, min: tierThresholds.tier_1 };
+    }
+
+    if (acquiredCount >= tierThresholds.tier_3) {
+      return { key: 'tier_3', name: `Tier 3 (${tierRates.tier_3}%)`, rate: tierRates.tier_3, min: tierThresholds.tier_3 };
+    }
+    if (acquiredCount >= tierThresholds.tier_2) {
+      return { key: 'tier_2', name: `Tier 2 (${tierRates.tier_2}%)`, rate: tierRates.tier_2, min: tierThresholds.tier_2 };
+    }
+    return { key: 'tier_1', name: `Tier 1 (${tierRates.tier_1}%)`, rate: tierRates.tier_1, min: tierThresholds.tier_1 };
   };
 
   const { tableQueryResult } = useTable<any>({
@@ -227,7 +254,7 @@ export const SalesAgentList: React.FC = () => {
     );
   };
 
-  // Submit Tier Commission Rates Form (Updates pricing_settings record)
+  // Submit Tier Commission Rates & Merchant Requirements Form
   const handleSaveTierRates = (values: any) => {
     updateSettings(
       {
@@ -237,10 +264,13 @@ export const SalesAgentList: React.FC = () => {
           agent_tier_1_rate: values.agent_tier_1_rate,
           agent_tier_2_rate: values.agent_tier_2_rate,
           agent_tier_3_rate: values.agent_tier_3_rate,
+          agent_tier_1_min_merchants: values.agent_tier_1_min_merchants,
+          agent_tier_2_min_merchants: values.agent_tier_2_min_merchants,
+          agent_tier_3_min_merchants: values.agent_tier_3_min_merchants,
         },
         successNotification: () => ({
-          message: 'Tier Commission Rates Saved',
-          description: `Tier 1: ${values.agent_tier_1_rate}%, Tier 2: ${values.agent_tier_2_rate}%, Tier 3: ${values.agent_tier_3_rate}%`,
+          message: 'Tier Rates & Requirements Saved',
+          description: `Tier 1 (${values.agent_tier_1_rate}%, ${values.agent_tier_1_min_merchants}+ stores) | Tier 2 (${values.agent_tier_2_rate}%, ${values.agent_tier_2_min_merchants}+ stores) | Tier 3 (${values.agent_tier_3_rate}%, ${values.agent_tier_3_min_merchants}+ stores)`,
           type: 'success',
         }),
       },
@@ -259,7 +289,7 @@ export const SalesAgentList: React.FC = () => {
       name: agent.name,
       email: agent.email,
       phone: agent.phone,
-      commission_tier: agent.commission_tier || 'tier_1',
+      commission_tier: agent.commission_tier || 'auto',
       status: agent.status || 'active',
     });
     setIsEditAgentModalOpen(true);
@@ -275,7 +305,7 @@ export const SalesAgentList: React.FC = () => {
         values,
         successNotification: () => ({
           message: 'Agent Profile Updated',
-          description: `Updated ${selectedAgent.name}'s tier to ${values.commission_tier.replace('_', ' ').toUpperCase()}`,
+          description: `Updated ${selectedAgent.name}'s tier configuration.`,
           type: 'success',
         }),
       },
@@ -304,7 +334,7 @@ export const SalesAgentList: React.FC = () => {
           </h1>
           
           <p className="text-xs sm:text-sm text-[#85af9b] max-w-md mb-5 font-medium leading-relaxed">
-            Monitor agent partner networks, acquired merchant stores, commission earnings, and tier rates.
+            Monitor agent partner networks, acquired merchant stores, commission earnings, and tier rules.
           </p>
 
           <div className="flex items-center gap-3">
@@ -325,13 +355,16 @@ export const SalesAgentList: React.FC = () => {
                   agent_tier_1_rate: tierRates.tier_1,
                   agent_tier_2_rate: tierRates.tier_2,
                   agent_tier_3_rate: tierRates.tier_3,
+                  agent_tier_1_min_merchants: tierThresholds.tier_1,
+                  agent_tier_2_min_merchants: tierThresholds.tier_2,
+                  agent_tier_3_min_merchants: tierThresholds.tier_3,
                 });
                 setIsTierRatesModalOpen(true);
               }}
               className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white font-black text-xs px-4 py-2.5 rounded-full transition-all border border-white/20 cursor-pointer"
             >
               <span className="material-symbols-outlined text-[18px]">settings</span>
-              <span>Configure Tier Rates (%</span>
+              <span>Configure Tiers & Rules</span>
             </button>
           </div>
 
@@ -623,12 +656,12 @@ export const SalesAgentList: React.FC = () => {
         </Form>
       </Modal>
 
-      {/* Configure Global Tier Commission Rates Modal */}
+      {/* Configure Global Tier Commission Rates & Requirements Modal */}
       <Modal
         title={
           <div className="flex items-center gap-2 pt-1">
             <span className="material-symbols-outlined text-[#006d37]">settings</span>
-            <span className="font-black text-base text-on-surface dark:text-white">Configure Sales Agent Tier Rates</span>
+            <span className="font-black text-base text-on-surface dark:text-white">Configure Sales Agent Tiers & Rules</span>
           </div>
         }
         open={isTierRatesModalOpen}
@@ -642,27 +675,54 @@ export const SalesAgentList: React.FC = () => {
           className="pt-3 flex flex-col gap-3"
         >
           <p className="text-xs text-on-surface-variant mb-2">
-            Set global commission percentages for agent tiers stored directly in PocketBase <code className="bg-slate-100 px-1 rounded">pricing_settings</code>.
+            Set global commission percentages and minimum acquired merchant requirements for sales agent tiers.
           </p>
 
-          <Form.Item name="agent_tier_1_rate" label="Tier 1 Commission Rate (%)" rules={[{ required: true }]}>
-            <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} addonAfter="%" placeholder="e.g. 7" />
-          </Form.Item>
+          {/* Tier 1 Box */}
+          <div className="bg-[#f8faf9] p-3 rounded-2xl border border-slate-200 flex flex-col gap-2">
+            <h4 className="text-xs font-black text-[#006d37] uppercase tracking-wider mb-0">Tier 1 Configuration</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <Form.Item name="agent_tier_1_rate" label="Commission Rate (%)" rules={[{ required: true }]} className="mb-0">
+                <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} suffix="%" placeholder="e.g. 7" />
+              </Form.Item>
+              <Form.Item name="agent_tier_1_min_merchants" label="Min Merchants Req." rules={[{ required: true }]} className="mb-0">
+                <InputNumber className="w-full h-10 rounded-xl font-bold" min={0} max={1000} placeholder="e.g. 0" />
+              </Form.Item>
+            </div>
+          </div>
 
-          <Form.Item name="agent_tier_2_rate" label="Tier 2 Commission Rate (%)" rules={[{ required: true }]}>
-            <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} addonAfter="%" placeholder="e.g. 12" />
-          </Form.Item>
+          {/* Tier 2 Box */}
+          <div className="bg-[#f8faf9] p-3 rounded-2xl border border-slate-200 flex flex-col gap-2">
+            <h4 className="text-xs font-black text-[#006d37] uppercase tracking-wider mb-0">Tier 2 Configuration</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <Form.Item name="agent_tier_2_rate" label="Commission Rate (%)" rules={[{ required: true }]} className="mb-0">
+                <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} suffix="%" placeholder="e.g. 12" />
+              </Form.Item>
+              <Form.Item name="agent_tier_2_min_merchants" label="Min Merchants Req." rules={[{ required: true }]} className="mb-0">
+                <InputNumber className="w-full h-10 rounded-xl font-bold" min={0} max={1000} placeholder="e.g. 15" />
+              </Form.Item>
+            </div>
+          </div>
 
-          <Form.Item name="agent_tier_3_rate" label="Tier 3 Commission Rate (%)" rules={[{ required: true }]}>
-            <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} addonAfter="%" placeholder="e.g. 20" />
-          </Form.Item>
+          {/* Tier 3 Box */}
+          <div className="bg-[#f8faf9] p-3 rounded-2xl border border-slate-200 flex flex-col gap-2">
+            <h4 className="text-xs font-black text-[#006d37] uppercase tracking-wider mb-0">Tier 3 Configuration</h4>
+            <div className="grid grid-cols-2 gap-2">
+              <Form.Item name="agent_tier_3_rate" label="Commission Rate (%)" rules={[{ required: true }]} className="mb-0">
+                <InputNumber className="w-full h-10 rounded-xl font-bold" min={1} max={100} suffix="%" placeholder="e.g. 20" />
+              </Form.Item>
+              <Form.Item name="agent_tier_3_min_merchants" label="Min Merchants Req." rules={[{ required: true }]} className="mb-0">
+                <InputNumber className="w-full h-10 rounded-xl font-bold" min={0} max={1000} placeholder="e.g. 30" />
+              </Form.Item>
+            </div>
+          </div>
 
           <div className="flex items-center justify-end gap-2 pt-4 border-t border-black/5 mt-2">
             <Button onClick={() => setIsTierRatesModalOpen(false)} className="h-10 rounded-xl font-bold">
               Cancel
             </Button>
             <Button type="primary" htmlType="submit" className="h-10 bg-[#006d37] text-white rounded-xl font-black border-none">
-              Save Global Rates
+              Save Rules & Rates
             </Button>
           </div>
         </Form>
