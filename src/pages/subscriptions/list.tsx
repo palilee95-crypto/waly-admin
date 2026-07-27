@@ -385,198 +385,195 @@ export const SubscriptionList: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      {/* Page Header */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="font-headline text-2xl font-bold text-on-surface">Billing & Subscriptions</h2>
-          <p className="font-body text-body-lg text-on-surface-variant">Manage manual and automated merchant subscriptions</p>
-        </div>
-        {(activeTab === 'subscriptions' || activeTab === 'free_trials') && (
-          <div className="flex gap-2">
+    <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
+      
+      {/* 1. Forest Green Hero Header */}
+      <section className="relative z-10 bg-gradient-to-b from-[#002d1e] via-[#003825] to-[#1a4333] text-white pt-14 sm:pt-16 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))] pb-24 sm:pb-28 rounded-none w-full px-5 sm:px-8">
+        <div className="max-w-[1100px] mx-auto flex flex-col items-center text-center relative">
+          
+          <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
+            SUBSCRIPTION & BILLING CONTROL
+          </span>
+
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
+            Billing & Subscriptions
+          </h1>
+          
+          <p className="text-xs sm:text-sm text-[#85af9b] max-w-md mb-5 font-medium leading-relaxed">
+            Grant trial passes, configure pricing tiers, manage promo vouchers, and view merchant billing.
+          </p>
+
+          <div className="flex items-center gap-2">
             <button
               onClick={() => handleOpenTrialModal()}
-              className="bg-amber-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all border-none flex items-center gap-2 cursor-pointer shadow-sm"
-              style={{ backgroundColor: '#f59e0b' }}
+              className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs px-4 py-2.5 rounded-full transition-all shadow-md border-none cursor-pointer"
             >
-              <PlusOutlined /> Grant Free Trial
+              <span className="material-symbols-outlined text-base">card_giftcard</span>
+              <span>+ Grant Free Trial</span>
             </button>
             <button
               onClick={handleOpenCreateModal}
-              className="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all border-none flex items-center gap-2 cursor-pointer"
-              style={{ backgroundColor: '#0040e0' }}
+              className="inline-flex items-center gap-1.5 bg-[#6bfe9c] text-[#002d1e] font-black text-xs px-4 py-2.5 rounded-full hover:scale-105 transition-all shadow-md border-none cursor-pointer"
             >
-              <PlusOutlined /> Create Billing
+              <span className="material-symbols-outlined text-base">add</span>
+              <span>+ Create Billing</span>
             </button>
           </div>
-        )}
-        {activeTab === 'promo_codes' && (
-          <button
-            onClick={handleOpenPromoModal}
-            className="bg-primary text-white px-4 py-2.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all border-none flex items-center gap-2 cursor-pointer"
-            style={{ backgroundColor: '#0040e0' }}
-          >
-            <PlusOutlined /> Create Promo Code
-          </button>
-        )}
-      </div>
 
-      {/* Navigation Tabs */}
-      <div className="flex gap-2 border-b border-black/5 pb-2">
-        <button
-          onClick={() => setActiveTab('subscriptions')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border-none cursor-pointer ${
-            activeTab === 'subscriptions'
-              ? 'bg-primary text-white'
-              : 'bg-black/5 text-on-surface-variant hover:bg-black/10'
-          }`}
-          style={activeTab === 'subscriptions' ? { backgroundColor: '#0040e0' } : {}}
-        >
-          All Subscriptions
-        </button>
-        <button
-          onClick={() => setActiveTab('free_trials')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border-none cursor-pointer flex items-center gap-2 ${
-            activeTab === 'free_trials'
-              ? 'bg-amber-500 text-white'
-              : 'bg-black/5 text-on-surface-variant hover:bg-black/10'
-          }`}
-          style={activeTab === 'free_trials' ? { backgroundColor: '#f59e0b' } : {}}
-        >
-          🎁 Free Trials
-          {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length > 0 && (
-            <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
-              {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('pricing')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border-none cursor-pointer ${
-            activeTab === 'pricing'
-              ? 'bg-primary text-white'
-              : 'bg-black/5 text-on-surface-variant hover:bg-black/10'
-          }`}
-          style={activeTab === 'pricing' ? { backgroundColor: '#0040e0' } : {}}
-        >
-          Pricing Settings
-        </button>
-        <button
-          onClick={() => setActiveTab('promo_codes')}
-          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border-none cursor-pointer ${
-            activeTab === 'promo_codes'
-              ? 'bg-primary text-white'
-              : 'bg-black/5 text-on-surface-variant hover:bg-black/10'
-          }`}
-          style={activeTab === 'promo_codes' ? { backgroundColor: '#0040e0' } : {}}
-        >
-          Promo Codes
-        </button>
-      </div>
+        </div>
+      </section>
 
-      {/* Subscriptions Tab */}
-      {activeTab === 'subscriptions' && (
-        <div className="glass-panel rounded-[2rem] p-gutter overflow-hidden flex flex-col">
-          {tableQueryResult.isLoading ? (
-            <div className="py-20 flex justify-center items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      {/* 2. Main Content Canvas */}
+      <div className="relative z-20 bg-[#fcf9f8] dark:bg-[#00150e] pt-0 pb-28">
+        <div className="max-w-[1100px] mx-auto w-full px-3 sm:px-6">
+          
+          {/* Main Bento Container (Overlapping Hero) */}
+          <div className="-mt-16 relative z-30 bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+            
+            {/* Filter Tabs Bar */}
+            <div 
+              className="flex items-center gap-2 overflow-x-auto pb-3 mb-4 border-b border-surface-variant dark:border-white/10"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              <button
+                onClick={() => setActiveTab('subscriptions')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
+                  activeTab === 'subscriptions'
+                    ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                    : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                }`}
+              >
+                All Subscriptions ({subscriptions.length})
+              </button>
+
+              <button
+                onClick={() => setActiveTab('free_trials')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'free_trials'
+                    ? 'bg-amber-500 text-white border-amber-500 shadow-md'
+                    : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                }`}
+              >
+                <span>🎁 Free Trials</span>
+                {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length > 0 && (
+                  <span className="bg-white/25 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length}
+                  </span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('pricing')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
+                  activeTab === 'pricing'
+                    ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                    : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                }`}
+              >
+                Pricing Settings
+              </button>
+
+              <button
+                onClick={() => setActiveTab('promo_codes')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border cursor-pointer ${
+                  activeTab === 'promo_codes'
+                    ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                    : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                }`}
+              >
+                Promo Codes
+              </button>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-black/5">
-                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Merchant</th>
-                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Plan</th>
-                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Status</th>
-                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Payment Reference</th>
-                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Customer Email</th>
-                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Expiry Date</th>
-                    <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-black/5 font-body">
-                  {subscriptions.length === 0 ? (
-                    <tr>
-                      <td colSpan={7} className="py-10 text-center text-on-surface-variant text-sm">
-                        No active or past subscriptions found.
-                      </td>
-                    </tr>
-                  ) : (
-                    subscriptions.map((sub) => (
-                      <tr key={sub.id} className="group hover:bg-white/40 transition-colors">
-                        <td className="py-5">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                              {(sub.expand?.merchant?.name || 'M').substring(0, 2).toUpperCase()}
-                            </div>
-                            <div>
-                              <p className="font-headline text-sm font-semibold text-on-surface">
-                                {sub.expand?.merchant ? (
-                                  <Link
-                                    to={`/merchants/${sub.merchant}`}
-                                    className="text-primary hover:underline"
-                                    style={{ color: '#0040e0' }}
-                                  >
-                                    {sub.expand.merchant.name}
-                                  </Link>
-                                ) : (
-                                  sub.merchant || 'Unknown Merchant'
+
+            {/* Subscriptions Tab View */}
+            {activeTab === 'subscriptions' && (
+              <div>
+                {tableQueryResult.isLoading ? (
+                  <div className="py-20 flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+                  </div>
+                ) : subscriptions.length === 0 ? (
+                  <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
+                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">credit_card</span>
+                    <p className="text-xs font-bold text-on-surface dark:text-white">No active or past merchant subscriptions found.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
+                    {subscriptions.map((sub) => {
+                      const expiryInfo = getDaysRemaining(sub.current_period_end);
+                      return (
+                        <div
+                          key={sub.id}
+                          className="bg-[#f8faf9] dark:bg-[#001f15] rounded-2xl p-4 border border-surface-variant dark:border-[#004d30] flex flex-col justify-between shadow-sm hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-[#006d37]/10 text-[#006d37] dark:bg-[#6bfe9c]/15 dark:text-[#6bfe9c] flex items-center justify-center font-black text-sm shrink-0 border border-[#006d37]/15">
+                                  {(sub.expand?.merchant?.name || 'M').substring(0, 2).toUpperCase()}
+                                </div>
+                                <div className="text-left">
+                                  <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c] transition-colors leading-tight">
+                                    {sub.expand?.merchant?.name || `Merchant ID: ${sub.merchant}`}
+                                  </h4>
+                                  <span className="text-[10px] font-bold text-on-surface-variant dark:text-[#85af9b] uppercase">
+                                    Plan: {sub.plan || 'Pro'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Status Pill */}
+                              <div>
+                                {sub.status === 'active' && (
+                                  <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border border-[#6bfe9c]/30">
+                                    ACTIVE
+                                  </span>
                                 )}
-                              </p>
-                              <p className="text-[10px] text-on-surface-variant">ID: {sub.merchant}</p>
+                                {sub.status === 'trialing' && (
+                                  <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                    TRIALING
+                                  </span>
+                                )}
+                                {sub.status === 'canceled' && (
+                                  <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
+                                    CANCELED
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Details Row */}
+                            <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-3">
+                              <span className="text-slate-500 font-mono text-[10px] truncate max-w-[150px]">
+                                Ref: {sub.chipin_payment_id || 'manual'}
+                              </span>
+                              <span className={`font-bold ${expiryInfo.isExpired ? 'text-red-500' : 'text-[#006d37] dark:text-[#6bfe9c]'}`}>
+                                {expiryInfo.label}
+                              </span>
                             </div>
                           </div>
-                        </td>
-                        <td className="py-5 text-sm text-on-surface">
-                          <span className="capitalize font-semibold">{sub.plan || 'pro'}</span>
-                        </td>
-                        <td className="py-5">
-                          {sub.status === 'active' && (
-                            <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Active</span>
-                          )}
-                          {sub.status === 'trialing' && (
-                            <span className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">Trialing</span>
-                          )}
-                          {sub.status === 'canceled' && (
-                            <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">Canceled</span>
-                          )}
-                          {sub.status === 'past_due' && (
-                            <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold">Past Due</span>
-                          )}
-                          {sub.status === 'unpaid' && (
-                            <span className="px-3 py-1 rounded-full bg-red-100 text-red-700 text-[10px] font-bold">Unpaid</span>
-                          )}
-                        </td>
-                        <td className="py-5 text-sm text-on-surface">
-                          <span className="font-mono text-xs">{sub.chipin_payment_id || 'Manual Admin Billing'}</span>
-                        </td>
-                        <td className="py-5 text-sm text-on-surface-variant">
-                          {sub.chipin_customer_email || 'N/A'}
-                        </td>
-                        <td className="py-5 text-sm text-on-surface-variant">
-                          {sub.current_period_end ? new Date(sub.current_period_end).toLocaleDateString() : 'Never'}
-                        </td>
-                        <td className="py-5 text-right">
-                          <button
-                            onClick={() => handleDelete(sub.id, sub.expand?.merchant?.name)}
-                            className="text-error hover:text-red-700 font-bold text-xs hover:underline bg-transparent border-none cursor-pointer flex items-center gap-1 ml-auto"
-                            style={{ color: '#ef4444' }}
-                          >
-                            <DeleteOutlined /> Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
 
-      {/* Free Trials Tab */}
+                          {/* Actions */}
+                          <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-variant dark:border-white/10">
+                            <button
+                              onClick={() => {
+                                handleOpenTrialModal(sub.merchant);
+                              }}
+                              className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 px-3 py-1.5 rounded-xl text-[11px] font-bold border border-amber-500/20 cursor-pointer"
+                            >
+                              Extend Trial
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {/* Free Trials Tab View */}
       {activeTab === 'free_trials' && (
         <div className="glass-panel rounded-[2rem] p-gutter overflow-hidden flex flex-col">
           {tableQueryResult.isLoading ? (
@@ -868,14 +865,13 @@ export const SubscriptionList: React.FC = () => {
                           </button>
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
+                    )))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
 
       {/* Create Manual Billing Modal */}
       <Modal
@@ -1043,9 +1039,18 @@ export const SubscriptionList: React.FC = () => {
       {/* Grant Free Trial Modal */}
       <Modal
         title={
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-            <span className="font-headline font-bold text-base">Grant Merchant Free Trial</span>
+          <div className="flex items-center gap-2 pt-1">
+            <div className="w-8 h-8 rounded-xl bg-[#006d37]/10 dark:bg-[#6bfe9c]/15 text-[#006d37] dark:text-[#6bfe9c] flex items-center justify-center font-black text-sm shrink-0">
+              🎁
+            </div>
+            <div>
+              <h3 className="font-black text-base text-on-surface dark:text-white mb-0 leading-tight">
+                Grant Merchant Free Trial
+              </h3>
+              <p className="text-[11px] text-on-surface-variant dark:text-[#85af9b] font-normal">
+                Provision trial passes for new or existing merchants
+              </p>
+            </div>
           </div>
         }
         open={isTrialModalOpen}
@@ -1053,14 +1058,15 @@ export const SubscriptionList: React.FC = () => {
         footer={null}
         destroyOnHidden
         centered
+        width={480}
       >
-        <div className="pt-4 flex flex-col gap-5">
+        <div className="pt-2 flex flex-col gap-4">
           <div>
-            <label className="font-headline text-xs font-bold text-outline uppercase tracking-wider mb-2 block">
-              Select Merchant / Store <span className="text-red-500">*</span>
+            <label className="text-[10px] font-black uppercase text-[#006d37] dark:text-[#6bfe9c] tracking-wider mb-1.5 block">
+              SELECT MERCHANT / STORE <span className="text-red-500">*</span>
             </label>
             <Select
-              className="w-full h-10 rounded-xl"
+              className="w-full h-11 rounded-2xl"
               placeholder="Search or select merchant by Name or ID"
               showSearch
               value={trialMerchantId || undefined}
@@ -1074,10 +1080,10 @@ export const SubscriptionList: React.FC = () => {
           </div>
 
           <div>
-            <label className="font-headline text-xs font-bold text-outline uppercase tracking-wider mb-2 block">
-              Trial Duration (Days)
+            <label className="text-[10px] font-black uppercase text-[#006d37] dark:text-[#6bfe9c] tracking-wider mb-1.5 block">
+              TRIAL DURATION (DAYS)
             </label>
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mb-2">
               {[
                 { label: '7 Days (Default)', value: '7' },
                 { label: '14 Days', value: '14' },
@@ -1089,12 +1095,11 @@ export const SubscriptionList: React.FC = () => {
                   key={opt.value}
                   type="button"
                   onClick={() => setTrialPreset(opt.value as any)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${
                     trialPreset === opt.value
-                      ? 'bg-amber-500 text-white border-amber-500'
-                      : 'bg-black/5 text-on-surface hover:bg-black/10 border-transparent'
+                      ? 'bg-[#006d37] text-white border-[#006d37] shadow-sm'
+                      : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-700 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
                   }`}
-                  style={trialPreset === opt.value ? { backgroundColor: '#f59e0b', borderColor: '#f59e0b' } : {}}
                 >
                   {opt.label}
                 </button>
@@ -1103,7 +1108,9 @@ export const SubscriptionList: React.FC = () => {
 
             {trialPreset === 'custom' && (
               <div className="mt-2">
-                <label className="text-xs text-on-surface-variant mb-1 block font-medium">Enter Number of Custom Trial Days:</label>
+                <label className="text-xs text-on-surface-variant dark:text-[#85af9b] mb-1 block font-bold">
+                  Enter Number of Custom Trial Days:
+                </label>
                 <Input
                   type="number"
                   min={1}
@@ -1111,45 +1118,60 @@ export const SubscriptionList: React.FC = () => {
                   value={trialCustomDays}
                   onChange={(e) => setTrialCustomDays(parseInt(e.target.value, 10) || 1)}
                   placeholder="e.g. 45"
-                  className="rounded-xl h-10 border-black/10 font-bold"
+                  className="rounded-xl h-10 border-slate-200 font-bold"
                 />
               </div>
             )}
           </div>
 
           {/* Expiry Preview Box */}
-          <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex flex-col gap-1.5">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800">Trial Provisioning Summary</span>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-on-surface font-medium">Subscription Status:</span>
-              <span className="px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-700 text-[10px] font-bold">Trialing</span>
+          <div className="p-4 rounded-2xl bg-[#002d1e] text-white border border-[#004d30] flex flex-col gap-2 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#6bfe9c]">TRIAL PROVISIONING SUMMARY</span>
+              <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-[#6bfe9c]/20 text-[#6bfe9c] border border-[#6bfe9c]/30">
+                PRO TRIALING
+              </span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-on-surface font-medium">Duration:</span>
-              <span className="text-xs font-bold text-on-surface">{getCalculatedDays()} Days</span>
+            
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[#85af9b]">Duration:</span>
+              <span className="font-black text-white">{getCalculatedDays()} Days</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-xs text-on-surface font-medium">Trial Expiry Date:</span>
-              <span className="text-xs font-bold text-amber-900">
+
+            <div className="flex justify-between items-center text-xs pt-1 border-t border-white/10">
+              <span className="text-[#85af9b]">Trial Expiry Date:</span>
+              <span className="font-black text-[#6bfe9c]">
                 {dayjs().add(getCalculatedDays(), 'day').format('MMMM D, YYYY (hh:mm A)')}
               </span>
             </div>
           </div>
 
-          <div className="flex justify-end gap-2 pt-2">
-            <Button onClick={() => setIsTrialModalOpen(false)}>Cancel</Button>
-            <Button
-              type="primary"
-              onClick={handleTrialSubmit}
-              loading={isCreating}
-              className="rounded-xl font-bold border-none"
-              style={{ backgroundColor: '#f59e0b' }}
+          {/* Modal Action Buttons */}
+          <div className="flex justify-end gap-2 pt-2 border-t border-surface-variant dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => setIsTrialModalOpen(false)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-transparent text-slate-600 dark:text-[#85af9b] hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer transition-all"
             >
-              Grant Free Trial
-            </Button>
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleTrialSubmit}
+              disabled={isCreating}
+              className="px-5 py-2 rounded-xl text-xs font-black bg-[#006d37] hover:bg-[#004d27] text-white border-none cursor-pointer transition-all shadow-md active:scale-95 flex items-center gap-1.5"
+            >
+              <span>Grant Free Trial</span>
+              <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
           </div>
         </div>
       </Modal>
+
+          </div>
+        </div>
+      </div>
+
     </div>
   );
 };

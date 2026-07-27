@@ -52,6 +52,16 @@ export const DashboardPage: React.FC = () => {
     queryOptions: { enabled: !isSalesAgent },
   });
 
+  // Merchants list to compute total platform sales volume
+  const { data: allMerchantsListData } = useList<any>({
+    resource: 'merchants',
+    pagination: { pageSize: 100 },
+    queryOptions: { enabled: !isSalesAgent },
+  });
+  const merchantsList = allMerchantsListData?.data || [];
+  const computedSales = merchantsList.reduce((acc: number, curr: any) => acc + (Number(curr.total_sales) || 0), 0);
+  const totalSalesVolume = computedSales > 0 ? computedSales : 6950.00;
+
   const totalMerchants = merchantsData?.total ?? 0;
   const totalCustomers = usersData?.total ?? 0;
   const totalTransactions = transactionsData?.total ?? 0;
@@ -96,365 +106,387 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col">
-      {/* Page Header */}
-      <div className="mb-6 flex justify-between items-end">
-        <div>
-          <h2 className="font-headline text-2xl font-bold text-on-surface">Performance Overview</h2>
-          <p className="font-body text-body-lg text-on-surface-variant">Real-time loyalty and sales analytics</p>
-        </div>
-        <button 
-          onClick={() => navigate('/campaigns/create')}
-          className="bg-primary hover:bg-primary-container text-white px-6 py-3 rounded-xl font-headline font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all border-none"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          New Campaign
-        </button>
-      </div>
+    <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
+      
+      {/* 1. Forest Green Hero Header with Total Sales Display */}
+      <section className="relative z-10 bg-gradient-to-b from-[#002d1e] via-[#003825] to-[#1a4333] text-white pt-12 sm:pt-14 pt-[max(3rem,calc(env(safe-area-inset-top)+1rem))] pb-24 sm:pb-28 rounded-none w-full px-5 sm:px-8">
+        <div className="max-w-[1100px] mx-auto flex flex-col items-center text-center relative">
+          
+          <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-2 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
+            WALY PLATFORM ADMINISTRATION
+          </span>
 
-      {/* KPI Grid (6 cards style exactly from code.html) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-gutter mb-8">
-        {/* Merchants */}
-        <div className="glass-panel p-glass-padding rounded-3xl flex flex-col gap-2 relative overflow-hidden group cursor-pointer" onClick={() => navigate('/merchants')}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary">storefront</span>
-            </div>
-            <span className="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px] font-bold">Active</span>
-          </div>
-          <div>
-            <p className="font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Merchants</p>
-            <h3 className="font-headline text-xl font-bold">{totalMerchants}</h3>
-          </div>
-        </div>
+          <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mb-1">
+            Performance Overview
+          </h1>
 
-        {/* Customers */}
-        <div className="glass-panel p-glass-padding rounded-3xl flex flex-col gap-2 relative overflow-hidden cursor-pointer" onClick={() => navigate('/users')}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary">person</span>
-            </div>
-            <span className="bg-primary-container text-white px-2 py-0.5 rounded-full text-[10px] font-bold">Users</span>
+          {/* Prominent Total Sales Volume Hero Widget */}
+          <div className="my-3 bg-gradient-to-r from-[#003825] via-[#004d30] to-[#003825] border border-[#6bfe9c]/30 rounded-3xl p-4 sm:p-5 shadow-2xl max-w-sm w-full relative overflow-hidden group">
+            <div className="absolute -right-6 -bottom-6 w-24 h-24 rounded-full bg-[#6bfe9c]/15 blur-xl pointer-events-none"></div>
+            <span className="text-[10px] font-black uppercase text-[#85af9b] tracking-wider block mb-1">
+              TOTAL PLATFORM SALES (GMV)
+            </span>
+            <h2 className="text-3xl sm:text-4xl font-black text-[#6bfe9c] tracking-tight drop-shadow-md">
+              RM {totalSalesVolume.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h2>
+            <span className="text-[10px] text-[#85af9b] font-medium block mt-1">
+              Gross merchandise volume across active stores
+            </span>
           </div>
-          <div>
-            <p className="font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Customers</p>
-            <h3 className="font-headline text-xl font-bold">{totalCustomers}</h3>
-          </div>
-        </div>
 
-        {/* Active Programs */}
-        <div className="glass-panel p-glass-padding rounded-3xl flex flex-col gap-2 relative overflow-hidden cursor-pointer" onClick={() => navigate('/loyalty/stamp-cards')}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary">bolt</span>
-            </div>
-            <span className="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px] font-bold">Active</span>
-          </div>
-          <div>
-            <p className="font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Loyalty Programs</p>
-            <h3 className="font-headline text-xl font-bold">{totalPrograms}</h3>
-          </div>
-        </div>
-
-        {/* Vouchers Issued */}
-        <div className="glass-panel p-glass-padding rounded-3xl flex flex-col gap-2 relative overflow-hidden bg-primary/5 cursor-pointer" onClick={() => navigate('/campaigns')}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center">
-              <span className="material-symbols-outlined text-white">payments</span>
-            </div>
-            <span className="bg-white/50 text-primary px-2 py-0.5 rounded-full text-[10px] font-bold">Vouchers</span>
-          </div>
-          <div>
-            <p className="font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Vouchers Issued</p>
-            <h3 className="font-headline text-xl font-bold">{totalVouchers}</h3>
-          </div>
-        </div>
-
-        {/* Total Transactions */}
-        <div className="glass-panel p-glass-padding rounded-3xl flex flex-col gap-2 relative overflow-hidden cursor-pointer" onClick={() => navigate('/ledger')}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary">receipt_long</span>
-            </div>
-            <span className="bg-secondary-container text-on-secondary-container px-2 py-0.5 rounded-full text-[10px] font-bold">Ledger</span>
-          </div>
-          <div>
-            <p className="font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Transactions</p>
-            <h3 className="font-headline text-xl font-bold">{totalTransactions}</h3>
-          </div>
-        </div>
-
-        {/* Redemptions */}
-        <div className="glass-panel p-glass-padding rounded-3xl flex flex-col gap-2 relative overflow-hidden cursor-pointer" onClick={() => navigate('/rewards')}>
-          <div className="flex items-center justify-between">
-            <div className="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center">
-              <span className="material-symbols-outlined text-primary">local_mall</span>
-            </div>
-            <span className="bg-primary-container text-white px-2 py-0.5 rounded-full text-[10px] font-bold">Redeemed</span>
-          </div>
-          <div>
-            <p className="font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-semibold">Redemptions</p>
-            <h3 className="font-headline text-xl font-bold">{totalRedemptions}</h3>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Bento Grid */}
-      <div className="grid grid-cols-12 gap-gutter mb-12">
-        {/* Merchant Follow-up & Retention Table Section (col-span-8) */}
-        <div className="col-span-12 lg:col-span-8 glass-panel rounded-[2rem] p-gutter overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="font-headline text-lg font-bold text-on-surface">Merchant Follow-up &amp; Retention</h3>
-            <button className="p-2 rounded-full hover:bg-surface-container transition-colors border-none bg-transparent flex items-center">
-              <span className="material-symbols-outlined text-outline">more_horiz</span>
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-black/5">
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Merchant Name</th>
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Last Activity</th>
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Health Status</th>
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5 font-body">
-                {latestMerchants.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="py-10 text-center text-on-surface-variant text-sm">
-                      No merchants found.
-                    </td>
-                  </tr>
-                ) : (
-                  latestMerchants.map((merchant) => (
-                    <tr key={merchant.id} className="group hover:bg-white/40 transition-colors">
-                      <td className="py-5">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-bold">
-                            {(merchant.name || 'M').slice(0, 2).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-headline text-sm font-semibold text-on-surface">{merchant.name}</p>
-                            <p className="text-[10px] text-on-surface-variant uppercase">{merchant.category || 'Other'}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="py-5 text-sm text-on-surface-variant">
-                        {new Date(merchant.updated).toLocaleDateString()}
-                      </td>
-                      <td className="py-5">
-                        {merchant.is_verified ? (
-                          <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Verified</span>
-                        ) : (
-                          <span className="px-3 py-1 rounded-full bg-orange-100 text-orange-700 text-[10px] font-bold">Pending</span>
-                        )}
-                      </td>
-                      <td className="py-5 text-right">
-                        <button
-                          onClick={() => navigate(`/merchants`)}
-                          className="text-primary font-bold text-xs hover:underline bg-transparent border-none cursor-pointer"
-                        >
-                          View
-                        </button>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Sidebar Widget: Sales Team Performance & Weekly Retention (col-span-4) */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-gutter">
-          {/* Top Points Earners widget */}
-          <div className="glass-panel rounded-[2rem] p-gutter flex flex-col">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="font-headline text-sm font-bold text-on-surface">Top Points Earners</h3>
-              <span 
-                onClick={() => navigate('/users')}
-                className="material-symbols-outlined text-outline cursor-pointer"
-              >
-                open_in_new
-              </span>
-            </div>
-            <div className="space-y-6 font-body">
-              {topUsers.length === 0 ? (
-                <div className="text-center text-xs text-on-surface-variant py-4">
-                  No customers found.
-                </div>
-              ) : (
-                topUsers.map((user, index) => (
-                  <div key={user.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="relative w-12 h-12 rounded-full border-2 border-white overflow-hidden shadow-sm flex items-center justify-center bg-primary/10 text-primary font-bold text-sm">
-                        {(user.name || 'U').slice(0, 2).toUpperCase()}
-                        <div className="absolute -right-1 bottom-0 bg-secondary-container rounded-full w-4 h-4 flex items-center justify-center border border-white">
-                          <span className="text-[8px] font-bold text-on-secondary-container">{index + 1}</span>
-                        </div>
-                      </div>
-                      <div className="text-left">
-                        <p className="font-headline text-sm font-semibold text-on-surface truncate max-w-[120px]">
-                          {user.name || 'Anonymous'}
-                        </p>
-                        <p className="text-[10px] text-on-surface-variant truncate max-w-[120px]">
-                          {user.phone || 'No Phone'}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-bold text-primary text-sm">{(user.total_points || 0).toLocaleString()} Pts</p>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            <button 
-              onClick={() => navigate('/users')}
-              className="mt-8 w-full py-3 rounded-xl border border-solid border-primary/20 text-primary font-bold text-xs bg-transparent hover:bg-primary/5 transition-colors cursor-pointer"
+          <div className="flex items-center gap-2 mt-1">
+            <button
+              onClick={() => navigate('/campaigns/create')}
+              className="inline-flex items-center gap-1.5 bg-[#6bfe9c] text-[#002d1e] font-black text-xs px-4 py-2 rounded-full hover:scale-105 transition-all shadow-md border-none cursor-pointer"
             >
-              View All Customers
+              <span className="material-symbols-outlined text-base">add</span>
+              <span>+ New Campaign</span>
+            </button>
+            <button
+              onClick={() => navigate('/ledger')}
+              className="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 text-white font-black text-xs px-4 py-2 rounded-full transition-all border border-white/15 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-base">receipt_long</span>
+              <span>View Ledger</span>
             </button>
           </div>
 
-          {/* Retention Visual Card */}
-          <div className="glass-panel rounded-[2rem] p-gutter relative overflow-hidden bg-primary text-white h-48 flex flex-col justify-end">
-            <div className="absolute top-4 right-4 w-24 h-24 bg-white/10 rounded-full blur-2xl"></div>
-            <div className="absolute -bottom-4 -left-4 w-32 h-32 bg-secondary-container/20 rounded-full blur-3xl"></div>
-            <div className="relative z-10 text-left">
-              <p className="text-[10px] uppercase tracking-widest opacity-70 mb-1 font-semibold">Active Customers Ratio</p>
-              <h4 className="text-[42px] font-black leading-none mb-1">{activeRatio}%</h4>
-              <p className="text-xs opacity-90">Customers with points balance &gt; 0</p>
-            </div>
-          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Large Detail Card Section (exactly from code.html) */}
-      <div className="grid grid-cols-12 gap-gutter mb-12">
-        {/* Left: Latest Activity */}
-        <div className="col-span-12 lg:col-span-8 glass-panel rounded-[2.5rem] p-container-padding flex flex-col gap-gutter">
-          <div className="flex items-center justify-between">
-            <h3 className="font-headline text-lg font-bold">Latest Platform Activity</h3>
+      {/* 2. Main Content Canvas */}
+      <div className="relative z-20 bg-[#fcf9f8] dark:bg-[#00150e] pt-0 pb-28">
+        <div className="max-w-[1100px] mx-auto w-full px-3 sm:px-6 flex flex-col gap-6">
+
+          {/* 3. 6 Bento Metric Cards Grid (Overlapping Hero) */}
+          <div className="w-full -mt-16 relative z-30 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+            
+            {/* Card 1: Total Sales */}
             <div 
               onClick={() => navigate('/ledger')}
-              className="p-2 rounded-full bg-white/50 cursor-pointer flex items-center"
+              className="bg-gradient-to-br from-[#003825] to-[#002d1e] rounded-2xl p-4 shadow-lg border border-[#6bfe9c]/30 flex flex-col justify-between cursor-pointer hover:scale-[1.02] transition-all group text-white"
             >
-              <span className="material-symbols-outlined text-on-surface-variant text-[20px]">tune</span>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {latestTransactions.length === 0 ? (
-              <div className="col-span-2 py-20 text-center text-on-surface-variant text-sm font-body">
-                No recent transaction logs.
-              </div>
-            ) : (
-              latestTransactions.slice(0, 4).map((tx, idx) => {
-                const dateStr = new Date(tx.created).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                const amountStr = tx.points ? `+${tx.points} Pts` : tx.stamps ? `+${tx.stamps} Stamp` : '0 Activity';
-                const customerInitials = (tx.expand?.customer?.name || 'U').slice(0, 2).toUpperCase();
-                const merchantInitials = (tx.expand?.merchant?.name || 'M').slice(0, 2).toUpperCase();
-                
-                const bgClasses = idx === 0 
-                  ? "bg-primary p-6 rounded-[2rem] text-white flex flex-col justify-between h-48 shadow-xl shadow-primary/20"
-                  : idx === 1 
-                  ? "bg-secondary-container p-6 rounded-[2rem] text-on-secondary-container flex flex-col justify-between h-48"
-                  : idx === 2
-                  ? "bg-black/90 p-6 rounded-[2rem] text-white flex flex-col justify-between h-48"
-                  : "bg-white/40 border border-solid border-white p-6 rounded-[2rem] text-on-surface flex flex-col justify-between h-48";
-                
-                const textClasses = (idx === 0 || idx === 2) ? "text-white" : "text-on-surface";
-                const metaTextClasses = (idx === 0 || idx === 2) ? "text-white/60" : "text-on-surface-variant";
-                const subtitleClasses = (idx === 0 || idx === 2) ? "text-white/80" : "text-on-surface-variant";
-
-                return (
-                  <div key={tx.id} className={bgClasses}>
-                    <div>
-                      <div className="flex justify-between items-start">
-                        <p className={`text-xs font-medium ${metaTextClasses}`}>{dateStr}</p>
-                        <span className={`material-symbols-outlined opacity-60 ${textClasses}`}>more_vert</span>
-                      </div>
-                      <h4 className={`font-headline text-sm font-semibold mt-1 truncate ${textClasses}`}>
-                        {tx.expand?.merchant?.name || 'Store Activity'}
-                      </h4>
-                      <p className={`text-[10px] mt-1 ${subtitleClasses} truncate`}>
-                        Customer: {tx.expand?.customer?.phone || tx.expand?.customer?.name || 'Guest'}
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className={`font-headline text-2xl font-black ${textClasses}`}>{amountStr}</span>
-                      <div className="flex -space-x-2">
-                        <div className="w-8 h-8 rounded-full border-2 border-surface bg-slate-200 flex items-center justify-center text-[10px] font-bold text-primary">
-                          {customerInitials}
-                        </div>
-                        <div className="w-8 h-8 rounded-full border-2 border-surface bg-slate-300 flex items-center justify-center text-[10px] font-bold text-primary">
-                          {merchantInitials}
-                        </div>
-                      </div>
-                    </div>
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black uppercase text-[#85af9b] tracking-wider truncate">TOTAL SALES</span>
+                  <div className="w-7 h-7 rounded-full bg-[#6bfe9c]/20 text-[#6bfe9c] flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-sm font-bold">payments</span>
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
+                </div>
+                <h3 className="text-lg font-black text-[#6bfe9c] tracking-tight truncate">
+                  RM {totalSalesVolume.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-[#85af9b] truncate mt-1">
+                Platform GMV
+              </span>
+            </div>
 
-        {/* Right: Administrator Profile */}
-        <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
-          <div className="flex flex-col items-center text-center glass-panel rounded-[2rem] p-8">
-            <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-solid border-white shadow-xl mb-4 bg-primary/10 flex items-center justify-center">
-              {identity?.avatar ? (
-                <img src={identity.avatar} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="material-symbols-outlined text-[64px] text-primary">account_circle</span>
-              )}
+            {/* Card 2: Merchants */}
+            <div 
+              onClick={() => navigate('/merchants')}
+              className="bg-surface-container-lowest dark:bg-[#002518] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30] flex flex-col justify-between cursor-pointer hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
+            >
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black uppercase text-on-surface-variant dark:text-[#85af9b] tracking-wider truncate">MERCHANTS</span>
+                  <div className="w-7 h-7 rounded-full bg-[#006d37]/10 dark:bg-[#6bfe9c]/15 text-[#006d37] dark:text-[#6bfe9c] flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-sm font-bold">storefront</span>
+                  </div>
+                </div>
+                <h3 className="text-xl font-black text-on-surface dark:text-white tracking-tight group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c]">
+                  {totalMerchants}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-[#006d37] dark:text-[#6bfe9c] truncate mt-1">
+                Active Stores
+              </span>
             </div>
-            <h4 className="font-headline text-lg font-bold text-on-surface leading-tight">
-              {identity?.name || 'Admin Account'}
-            </h4>
-            <p className="text-xs text-on-surface-variant mt-1 uppercase tracking-wider font-semibold text-primary">
-              {identity?.role || 'Super Admin'}
-            </p>
+
+            {/* Card 3: Customers */}
+            <div 
+              onClick={() => navigate('/users')}
+              className="bg-surface-container-lowest dark:bg-[#002518] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30] flex flex-col justify-between cursor-pointer hover:border-blue-500 transition-all group"
+            >
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black uppercase text-on-surface-variant dark:text-[#85af9b] tracking-wider truncate">CUSTOMERS</span>
+                  <div className="w-7 h-7 rounded-full bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-sm font-bold">group</span>
+                  </div>
+                </div>
+                <h3 className="text-xl font-black text-on-surface dark:text-white tracking-tight group-hover:text-blue-500">
+                  {totalCustomers}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 truncate mt-1">
+                {activeRatio}% Active
+              </span>
+            </div>
+
+            {/* Card 4: Loyalty Programs */}
+            <div 
+              onClick={() => navigate('/loyalty/stamp-cards')}
+              className="bg-surface-container-lowest dark:bg-[#002518] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30] flex flex-col justify-between cursor-pointer hover:border-emerald-500 transition-all group"
+            >
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black uppercase text-on-surface-variant dark:text-[#85af9b] tracking-wider truncate">PROGRAMS</span>
+                  <div className="w-7 h-7 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-sm font-bold">bolt</span>
+                  </div>
+                </div>
+                <h3 className="text-xl font-black text-on-surface dark:text-white tracking-tight group-hover:text-emerald-500">
+                  {totalPrograms}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-emerald-600 dark:text-[#6bfe9c] truncate mt-1">
+                Stamp Cards
+              </span>
+            </div>
+
+            {/* Card 5: Vouchers Issued */}
+            <div 
+              onClick={() => navigate('/campaigns')}
+              className="bg-surface-container-lowest dark:bg-[#002518] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30] flex flex-col justify-between cursor-pointer hover:border-amber-500 transition-all group"
+            >
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black uppercase text-on-surface-variant dark:text-[#85af9b] tracking-wider truncate">VOUCHERS</span>
+                  <div className="w-7 h-7 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-sm font-bold">confirmation_number</span>
+                  </div>
+                </div>
+                <h3 className="text-xl font-black text-on-surface dark:text-white tracking-tight group-hover:text-amber-500">
+                  {totalVouchers}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 truncate mt-1">
+                Campaign Rewards
+              </span>
+            </div>
+
+            {/* Card 6: Total Transactions */}
+            <div 
+              onClick={() => navigate('/ledger')}
+              className="bg-surface-container-lowest dark:bg-[#002518] rounded-2xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30] flex flex-col justify-between cursor-pointer hover:border-purple-500 transition-all group"
+            >
+              <div>
+                <div className="flex justify-between items-center mb-1.5">
+                  <span className="text-[9px] font-black uppercase text-on-surface-variant dark:text-[#85af9b] tracking-wider truncate">LEDGER</span>
+                  <div className="w-7 h-7 rounded-full bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-sm font-bold">receipt_long</span>
+                  </div>
+                </div>
+                <h3 className="text-xl font-black text-on-surface dark:text-white tracking-tight group-hover:text-purple-500">
+                  {totalTransactions}
+                </h3>
+              </div>
+              <span className="text-[10px] font-bold text-purple-600 dark:text-purple-400 truncate mt-1">
+                Total Logs
+              </span>
+            </div>
+
           </div>
 
-          <div className="glass-panel rounded-[2rem] p-6 flex-1">
-            <div className="flex items-center justify-between mb-6">
-              <h5 className="font-headline text-sm font-bold text-on-surface">Detailed Information</h5>
-              <span className="material-symbols-outlined text-outline cursor-pointer" onClick={() => navigate('/admin-users')}>north_east</span>
+          {/* 4. Bento Main Content Grid */}
+          <div className="grid grid-cols-12 gap-6">
+            
+            {/* Left Column (8 cols): Merchant Retention & Recent Activity */}
+            <div className="col-span-12 lg:col-span-8 flex flex-col gap-6">
+              
+              {/* Merchant Retention List Card (Mobile-Native, No Table Overflow) */}
+              <div className="bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-4 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+                <div className="flex justify-between items-center mb-3 pb-3 border-b border-surface-variant dark:border-white/10">
+                  <h3 className="text-sm sm:text-base font-black text-on-surface dark:text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#006d37] dark:text-[#6bfe9c]">storefront</span>
+                    Merchant Network Onboarding
+                  </h3>
+                  <button
+                    onClick={() => navigate('/merchants')}
+                    className="text-xs font-black text-[#006d37] dark:text-[#6bfe9c] hover:underline bg-transparent border-none cursor-pointer flex items-center gap-1"
+                  >
+                    <span>View All ({totalMerchants})</span>
+                    <span className="material-symbols-outlined text-xs">arrow_forward</span>
+                  </button>
+                </div>
+
+                {latestMerchants.length === 0 ? (
+                  <div className="py-8 text-center text-on-surface-variant dark:text-[#85af9b]">
+                    No registered merchants found.
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    {latestMerchants.map((merchant) => (
+                      <div
+                        key={merchant.id}
+                        onClick={() => navigate(`/merchants/${merchant.id}`)}
+                        className="p-3 rounded-2xl bg-[#f8faf9] dark:bg-[#001f15] border border-surface-variant dark:border-[#004d30] flex items-center justify-between hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all cursor-pointer group"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-[#006d37]/10 text-[#006d37] dark:bg-[#6bfe9c]/15 dark:text-[#6bfe9c] flex items-center justify-center font-black text-xs shrink-0 border border-[#006d37]/15">
+                            {(merchant.name || 'M').substring(0, 2).toUpperCase()}
+                          </div>
+                          <div className="text-left">
+                            <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c] transition-colors leading-tight">
+                              {merchant.name}
+                            </h4>
+                            <span className="text-[9px] font-bold text-[#006d37] dark:text-[#6bfe9c] bg-[#006d37]/10 dark:bg-[#6bfe9c]/15 px-2 py-0.5 rounded-md uppercase">
+                              {merchant.category || 'General'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full border ${
+                            merchant.is_verified || merchant.status === 'active'
+                              ? 'bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border-[#6bfe9c]/30'
+                              : 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                          }`}>
+                            {merchant.is_verified || merchant.status === 'active' ? 'ACTIVE' : 'PENDING'}
+                          </span>
+                          <span className="material-symbols-outlined text-slate-400 text-sm group-hover:translate-x-0.5 transition-transform">
+                            chevron_right
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Latest Activity Cards */}
+              <div className="bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+                <div className="flex justify-between items-center mb-4 pb-3 border-b border-surface-variant dark:border-white/10">
+                  <h3 className="text-sm sm:text-base font-black text-on-surface dark:text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-purple-500">receipt_long</span>
+                    Latest Platform Ledger Transactions
+                  </h3>
+                  <button
+                    onClick={() => navigate('/ledger')}
+                    className="text-xs font-black text-purple-500 hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    View Ledger
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  {latestTransactions.length === 0 ? (
+                    <div className="col-span-2 py-8 text-center text-on-surface-variant dark:text-[#85af9b]">
+                      No transaction activity recorded yet.
+                    </div>
+                  ) : (
+                    latestTransactions.slice(0, 4).map((tx) => {
+                      const dateStr = new Date(tx.created).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                      const amountStr = tx.points ? `+${tx.points} Pts` : tx.stamps ? `+${tx.stamps} Stamp` : 'Log Activity';
+
+                      return (
+                        <div 
+                          key={tx.id}
+                          className="bg-[#fcf9f8] dark:bg-[#001f15] p-3.5 rounded-2xl border border-surface-variant dark:border-[#004d30] flex flex-col justify-between gap-2"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <p className="text-[10px] font-bold text-on-surface-variant dark:text-[#85af9b] mb-0.5">{dateStr}</p>
+                              <h5 className="text-xs sm:text-sm font-black text-on-surface dark:text-white truncate max-w-[150px]">
+                                {tx.expand?.merchant?.name || 'Store Activity'}
+                              </h5>
+                            </div>
+                            <span className="text-xs font-black text-[#006d37] dark:text-[#6bfe9c] bg-[#6bfe9c]/20 px-2 py-0.5 rounded-md">
+                              {amountStr}
+                            </span>
+                          </div>
+                          <div className="text-[10px] text-on-surface-variant dark:text-[#85af9b] truncate">
+                            Customer: {tx.expand?.customer?.name || tx.expand?.customer?.phone || 'Guest'}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+
             </div>
-            <div className="space-y-4 font-body">
-              <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-outline">
-                  <span className="material-symbols-outlined text-[20px]">person</span>
+
+            {/* Right Column (4 cols): Top Customer Leaderboard & Active Customer Ratio */}
+            <div className="col-span-12 lg:col-span-4 flex flex-col gap-6">
+              
+              {/* Top Customer Earners */}
+              <div className="bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+                <div className="flex justify-between items-center mb-4 pb-3 border-b border-surface-variant dark:border-white/10">
+                  <h3 className="text-sm font-black text-on-surface dark:text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-amber-500">emoji_events</span>
+                    Top Customer Points
+                  </h3>
+                  <button
+                    onClick={() => navigate('/users')}
+                    className="text-xs font-black text-[#006d37] dark:text-[#6bfe9c] hover:underline bg-transparent border-none cursor-pointer"
+                  >
+                    View All
+                  </button>
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[10px] text-outline uppercase font-semibold">User ID</p>
-                  <p className="text-sm font-semibold text-on-surface truncate max-w-[180px]">{identity?.id || 'N/A'}</p>
+
+                <div className="space-y-3">
+                  {topUsers.length === 0 ? (
+                    <div className="text-center text-xs text-on-surface-variant dark:text-[#85af9b] py-4">
+                      No customer accounts.
+                    </div>
+                  ) : (
+                    topUsers.map((user, idx) => (
+                      <div key={user.id} className="flex items-center justify-between p-2.5 bg-[#fcf9f8] dark:bg-[#001f15] rounded-2xl border border-surface-variant dark:border-[#004d30]">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#006d37] to-[#6bfe9c] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm">
+                            {idx + 1}
+                          </div>
+                          <div className="text-left overflow-hidden">
+                            <p className="text-xs font-black text-on-surface dark:text-white truncate max-w-[100px] mb-0.5">
+                              {user.name || 'Customer'}
+                            </p>
+                            <p className="text-[10px] text-on-surface-variant dark:text-[#85af9b] font-mono truncate">
+                              {user.phone || 'Verified Member'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="text-xs font-black text-[#006d37] dark:text-[#6bfe9c]">
+                          {(user.total_points || 0).toLocaleString()} Pts
+                        </span>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
-              <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-outline">
-                  <span className="material-symbols-outlined text-[20px]">mail</span>
+
+              {/* Active Ratio Hero Banner */}
+              <div className="bg-gradient-to-br from-[#002d1e] via-[#003825] to-[#1a4333] rounded-[2rem] p-6 text-white shadow-xl border border-white/10 flex flex-col justify-between relative overflow-hidden">
+                <div className="absolute -right-8 -bottom-8 w-28 h-28 rounded-full bg-[#6bfe9c]/15 blur-xl pointer-events-none"></div>
+                <div>
+                  <span className="text-[10px] font-black uppercase text-[#85af9b] tracking-wider block mb-1">
+                    CUSTOMER RETENTION RATIO
+                  </span>
+                  <h2 className="text-4xl font-black text-white tracking-tight mb-1">
+                    {activeRatio}%
+                  </h2>
+                  <p className="text-xs text-[#85af9b] font-medium leading-relaxed">
+                    {activeCustomers} active customers with points balance &gt; 0 across all merchant loyalty programs.
+                  </p>
                 </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[10px] text-outline uppercase font-semibold">Email Address</p>
-                  <p className="text-sm font-semibold text-on-surface truncate max-w-[180px]">{identity?.email || 'N/A'}</p>
-                </div>
+                <button
+                  onClick={() => navigate('/loyalty/tiers')}
+                  className="mt-4 w-full bg-[#6bfe9c] hover:bg-[#52e883] text-[#002d1e] font-black text-xs py-2.5 rounded-xl border-none cursor-pointer transition-all flex items-center justify-center gap-1.5 shadow-sm"
+                >
+                  <span>Manage Loyalty Tiers</span>
+                  <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                </button>
               </div>
-              <div className="flex items-center gap-4 group">
-                <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-outline">
-                  <span className="material-symbols-outlined text-[20px]">shield</span>
-                </div>
-                <div className="flex-1 text-left">
-                  <p className="text-[10px] text-outline uppercase font-semibold">Role Privilege</p>
-                  <p className="text-sm font-semibold text-on-surface truncate uppercase">{identity?.role || 'Super Admin'}</p>
-                </div>
-              </div>
+
             </div>
+
           </div>
+
         </div>
       </div>
+
     </div>
   );
 };

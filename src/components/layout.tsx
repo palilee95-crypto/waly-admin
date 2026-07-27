@@ -77,6 +77,7 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         { title: 'Broadcast Composer', path: '/notifications/broadcast', category: 'Pages' },
         { title: 'Admin Accounts', path: '/admin-users', category: 'Pages' },
         { title: 'Audit Logs', path: '/admin-users/audit-logs', category: 'Pages' },
+        { title: 'Sales Agents Hub', path: '/sales-agents', category: 'Pages' },
       ];
 
   const filteredResults = searchQuery.trim() === ''
@@ -101,8 +102,8 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
   const menuItems = role === 'sales_agent'
     ? [
         { name: 'Overview', icon: 'dashboard', route: '/sales-dashboard' },
-        { name: 'Inactive Prospects', icon: 'person_add', route: '/sales-dashboard/prospects' },
-        { name: 'Referred Directory', icon: 'storefront', route: '/sales-dashboard/merchants' },
+        { name: 'Pending Leads', icon: 'person_add', route: '/sales-dashboard/prospects' },
+        { name: 'My Merchants', icon: 'storefront', route: '/sales-dashboard/merchants' },
         { name: 'Dormant Customers', icon: 'hourglass_empty', route: '/sales-dashboard/dormant' },
         { name: 'Commission Logs', icon: 'receipt_long', route: '/sales-dashboard/earnings' },
         { name: 'Analytics Charts', icon: 'trending_up', route: '/sales-dashboard/analytics' },
@@ -112,6 +113,7 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Dashboard', icon: 'dashboard', route: '/dashboard' },
         { name: 'Merchants', icon: 'storefront', route: '/merchants' },
         { name: 'Users', icon: 'group', route: '/users' },
+        { name: 'Sales Agents', icon: 'badge', route: '/sales-agents' },
         { name: 'Billing', icon: 'credit_card', route: '/subscriptions' },
         { name: 'Loyalty', icon: 'groups_3', route: '/loyalty/tiers' },
         { name: 'Rewards', icon: 'payments', route: '/rewards' },
@@ -138,8 +140,8 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
   const bottomNavItems = role === 'sales_agent'
     ? [
         { name: 'Home', icon: 'dashboard', route: '/sales-dashboard' },
-        { name: 'Prospects', icon: 'person_add', route: '/sales-dashboard/prospects' },
-        { name: 'Directory', icon: 'storefront', route: '/sales-dashboard/merchants' },
+        { name: 'Leads', icon: 'person_add', route: '/sales-dashboard/prospects' },
+        { name: 'Merchants', icon: 'storefront', route: '/sales-dashboard/merchants' },
         { name: 'Analytics', icon: 'trending_up', route: '/sales-dashboard/analytics' },
       ]
     : [
@@ -197,62 +199,102 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
       </aside>
 
       {/* Mobile Navigation Drawer - Always opens when triggered */}
+      {/* Mobile Side Menu Navigation Drawer */}
       <Drawer
         placement="left"
         onClose={() => setIsMobileMenuOpen(false)}
         open={isMobileMenuOpen}
         closable={false}
-        width={290}
+        width={310}
         zIndex={99999}
-        styles={{ body: { padding: 0, backgroundColor: '#0f172a' } }}
+        styles={{ body: { padding: 0, backgroundColor: '#00150e' } }}
       >
-        <div className="flex flex-col h-full text-white p-6 bg-[#0f172a]">
-          <div className="flex items-center justify-between mb-6 mt-1 pb-4 border-b border-white/10">
+        <div className="flex flex-col h-full text-white p-6 bg-gradient-to-b from-[#002d1e] via-[#001f15] to-[#00150e]">
+          
+          {/* Header Branding */}
+          <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10">
             <Link 
               to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'} 
               onClick={() => setIsMobileMenuOpen(false)} 
-              className="flex items-center gap-2.5"
+              className="flex items-center gap-3 group"
             >
-              <img src="/icon.png" alt="Risev Logo" className="w-10 h-10 object-contain rounded-xl" />
-              <span className="font-headline font-black text-xl tracking-wider text-white">RISEV</span>
+              <div className="w-11 h-11 rounded-2xl bg-[#002d1e] border border-[#6bfe9c]/30 p-1.5 flex items-center justify-center shadow-lg group-hover:scale-105 transition-all">
+                <img src="/icon.png" alt="Risev Logo" className="w-full h-full object-contain" />
+              </div>
+              <div className="text-left">
+                <span className="font-headline font-black text-xl tracking-wider text-white block leading-tight">RISEV</span>
+                <span className="text-[10px] font-bold text-[#6bfe9c] uppercase tracking-widest block">Partner Portal</span>
+              </div>
             </Link>
             <button
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-white/60 hover:text-white bg-transparent border-none cursor-pointer flex items-center justify-center p-2 rounded-full hover:bg-white/10 transition-colors"
+              className="text-white/60 hover:text-white bg-white/5 border border-white/10 cursor-pointer flex items-center justify-center w-9 h-9 rounded-full hover:bg-white/15 transition-all"
             >
-              <span className="material-symbols-outlined text-[20px]">close</span>
+              <span className="material-symbols-outlined text-[18px]">close</span>
             </button>
           </div>
           
-          <nav className="flex-1 flex flex-col space-y-1.5 overflow-y-auto custom-scroll">
-            {menuItems.map((item) => {
+          {/* Navigation Links */}
+          <nav className="flex-1 flex flex-col space-y-1.5 overflow-y-auto custom-scroll pr-1">
+            {menuItems.map((item, index) => {
               const active = isActive(item.route);
+
+              // Category Dividers for Sales Agent Portal
+              const showAcquisitionHeader = role === 'sales_agent' && index === 1;
+              const showFinanceHeader = role === 'sales_agent' && index === 4;
+
               return (
-                <Link
-                  key={item.name}
-                  to={item.route}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className={`flex items-center gap-3.5 px-4 py-3 rounded-xl transition-all duration-200 ${
-                    active
-                      ? 'bg-primary text-white font-bold shadow-lg shadow-primary/30'
-                      : 'text-white/70 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <span className="material-symbols-outlined text-[20px]">{item.icon}</span>
-                  <span className="font-headline text-sm font-semibold">{item.name}</span>
-                </Link>
+                <React.Fragment key={item.name}>
+                  {showAcquisitionHeader && (
+                    <div className="pt-4 pb-1 px-3 text-[10px] font-black uppercase text-[#85af9b] tracking-widest">
+                      ACQUISITIONS
+                    </div>
+                  )}
+                  {showFinanceHeader && (
+                    <div className="pt-4 pb-1 px-3 text-[10px] font-black uppercase text-[#85af9b] tracking-widest">
+                      REVENUE & ANALYTICS
+                    </div>
+                  )}
+                  <Link
+                    to={item.route}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center justify-between px-4 py-3 rounded-2xl transition-all duration-200 ${
+                      active
+                        ? 'bg-gradient-to-r from-[#003825] to-[#004d30] text-[#6bfe9c] font-black border border-[#6bfe9c]/30 shadow-lg shadow-[#002d1e]/50 translate-x-1'
+                        : 'text-white/70 hover:text-white hover:bg-white/5 font-semibold'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3.5">
+                      <span className={`material-symbols-outlined text-[20px] ${active ? 'text-[#6bfe9c]' : 'text-white/60'}`}>
+                        {item.icon}
+                      </span>
+                      <span className="font-headline text-sm">{item.name}</span>
+                    </div>
+                    {active && (
+                      <span className="w-2 h-2 rounded-full bg-[#6bfe9c] shadow-[0_0_8px_#6bfe9c]"></span>
+                    )}
+                  </Link>
+                </React.Fragment>
               );
             })}
           </nav>
           
-          <div className="mt-auto pt-4 border-t border-white/10 flex flex-col space-y-2">
-            <div className="flex items-center gap-3 p-3 bg-white/5 rounded-xl mb-2">
-              <div className="w-9 h-9 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold text-xs">
-                {identity?.name?.substring(0, 2).toUpperCase() || 'AD'}
+          {/* User Profile & Sign Out Footer */}
+          <div className="mt-auto pt-4 border-t border-white/10 flex flex-col space-y-3">
+            <div className="flex items-center gap-3 p-3 bg-white/5 border border-white/10 rounded-2xl shadow-inner">
+              <div className="relative">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#006d37] to-[#6bfe9c] p-0.5 shadow-md">
+                  <div className="w-full h-full bg-[#002d1e] rounded-[10px] flex items-center justify-center text-[#6bfe9c] font-black text-xs">
+                    {identity?.name?.substring(0, 2).toUpperCase() || 'HA'}
+                  </div>
+                </div>
+                <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-[#6bfe9c] border-2 border-[#00150e] rounded-full"></span>
               </div>
               <div className="text-left overflow-hidden">
-                <p className="text-xs font-bold text-white truncate">{identity?.name || 'Administrator'}</p>
-                <p className="text-[10px] text-white/60 uppercase tracking-wider">{identity?.role?.replace('_', ' ') || 'User'}</p>
+                <p className="text-xs font-black text-white truncate mb-0.5">{identity?.name || 'Hashiff'}</p>
+                <span className="text-[9px] font-bold text-[#6bfe9c] uppercase tracking-wider bg-[#6bfe9c]/10 px-2 py-0.5 rounded-md inline-block border border-[#6bfe9c]/20">
+                  {identity?.role?.replace('_', ' ') || 'Sales Agent'}
+                </span>
               </div>
             </div>
 
@@ -261,84 +303,19 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
                 logout();
                 setIsMobileMenuOpen(false);
               }}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 bg-transparent border-none text-left w-full cursor-pointer transition-colors font-headline text-sm font-bold"
+              className="flex items-center justify-center gap-2.5 px-4 py-3 rounded-2xl text-red-400 hover:text-red-300 hover:bg-red-500/15 bg-red-500/10 border border-red-500/20 text-center w-full cursor-pointer transition-all font-headline text-xs font-black"
             >
-              <span className="material-symbols-outlined text-[20px]">logout</span>
-              <span>Sign Out</span>
+              <span className="material-symbols-outlined text-[18px]">logout</span>
+              <span>Sign Out Account</span>
             </button>
           </div>
         </div>
       </Drawer>
 
       {/* Main Content Canvas - Left margin collapses on mobile */}
-      <main className={`ml-0 md:ml-28 flex-1 h-screen overflow-y-auto custom-scroll flex flex-col pb-20 md:pb-6 ${currentPath === '/sales-dashboard' ? 'bg-[#002d1e]' : ''}`}>
-        {/* Responsive Header (Scrolls away naturally with page content) */}
-        {currentPath !== '/sales-dashboard' && (
-          <header className="flex justify-between items-center h-16 sm:h-20 w-full bg-white dark:bg-slate-900 border-b border-black/5 dark:border-white/10 px-2 sm:px-4 shrink-0">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsMobileMenuOpen(true)}
-                className="p-2 rounded-xl hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center md:hidden mr-1"
-                title="Open Navigation Menu"
-              >
-                <span className="material-symbols-outlined text-on-surface text-[24px]">menu</span>
-              </button>
-              <Link to={role === 'sales_agent' ? '/sales-dashboard' : '/dashboard'} className="flex items-center hover:opacity-90">
-                <img src="/logo.png" alt="Risev Logo" className="h-9 sm:h-12 object-contain" />
-              </Link>
-            </div>
-
-            <div className="flex items-center gap-2 sm:gap-4">
-              <div 
-                onClick={() => setIsSearchOpen(true)}
-                className="relative hidden lg:block cursor-pointer"
-              >
-                <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-outline">search</span>
-                <input
-                  className="pl-10 pr-4 py-2 bg-white/40 border-none rounded-full w-64 text-body-sm transition-all outline-none cursor-pointer"
-                  placeholder="Search portal... (Ctrl+K)"
-                  readOnly
-                  type="text"
-                />
-              </div>
-              <button
-                onClick={() => setIsSearchOpen(true)}
-                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center lg:hidden"
-                title="Search Portal"
-              >
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">search</span>
-              </button>
-              <button 
-                onClick={() => setIsDark(prev => !prev)}
-                className="p-2 rounded-full hover:bg-black/5 dark:hover:bg-white/10 transition-all border-none bg-transparent cursor-pointer flex items-center justify-center"
-                title="Toggle Dark/Light Mode"
-              >
-                <span className="material-symbols-outlined text-on-surface-variant text-[20px]">
-                  {isDark ? 'light_mode' : 'dark_mode'}
-                </span>
-              </button>
-              
-              <div className="flex items-center gap-2 sm:gap-3 pl-2 border-l border-black/10 dark:border-white/10">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-primary/10 overflow-hidden border border-white dark:border-slate-700 flex items-center justify-center shrink-0">
-                  {identity?.avatar ? (
-                    <img className="w-full h-full object-cover" src={identity.avatar} alt="Avatar" />
-                  ) : (
-                    <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs sm:text-sm">
-                      {identity?.name?.substring(0, 2).toUpperCase() || 'AD'}
-                    </div>
-                  )}
-                </div>
-                <div className="hidden sm:block text-left">
-                  <p className="font-body text-body-sm font-semibold text-on-surface leading-tight truncate max-w-[120px]">{identity?.name || 'Administrator'}</p>
-                  <p className="font-body text-[10px] text-on-surface-variant uppercase tracking-wider">{identity?.role?.replace('_', ' ') || 'Operations'}</p>
-                </div>
-              </div>
-            </div>
-          </header>
-        )}
-
+      <main className="ml-0 md:ml-28 flex-1 h-screen overflow-y-auto custom-scroll flex flex-col pb-20 md:pb-6 bg-[#fcf9f8] dark:bg-[#00150e]">
         {/* Inner Page View */}
-        <div className={`flex-1 w-full ${currentPath === '/sales-dashboard' ? 'p-0 m-0' : 'px-1 sm:px-4 py-4 sm:py-6'}`}>
+        <div className="flex-1 w-full p-0 m-0">
           {children}
         </div>
 

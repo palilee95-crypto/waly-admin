@@ -36,7 +36,6 @@ export const LoginPage: React.FC = () => {
         passwordConfirm: values.confirmPassword,
       });
       setSuccessMsg('Account created successfully! Logging you in...');
-      // Auto-login
       login({ email: values.email, password: values.password });
     } catch (err: any) {
       setErrorMsg(err?.message || 'Registration failed. Please check details or try again.');
@@ -46,90 +45,121 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="w-screen h-screen flex items-center justify-center bg-cover bg-center select-none" style={{ background: 'linear-gradient(135deg, #f7f9fc 0%, #eef2f7 50%, #e6eaf1 100%)' }}>
-      <div className="glass-panel p-10 rounded-[2rem] w-full max-w-md shadow-2xl flex flex-col items-center">
-        {/* Logo Icon */}
-        <div className="w-16 h-16 rounded-2xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30 mb-4">
-          <span className="font-headline text-3xl text-white font-black">W</span>
-        </div>
-        
-        <h2 className="font-headline text-2xl font-bold text-on-surface mb-1">
-          {mode === 'login' ? 'WALY Admin' : 'Agent Registration'}
-        </h2>
-        <p className="font-body text-body-sm text-on-surface-variant mb-8 text-center">
-          {mode === 'login' 
-            ? 'Enter credentials to access the intelligence hub' 
-            : 'Join the WALY Sales Agent program and earn commissions'}
-        </p>
+    <div className="relative w-screen h-screen overflow-hidden flex items-center justify-center bg-gradient-to-b from-[#001f15] via-[#002d1e] to-[#00150e] text-white select-none px-4">
+      {/* Ambient background glowing mesh orbs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] rounded-full bg-[#6bfe9c]/15 blur-[120px] pointer-events-none animate-pulse" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[550px] h-[550px] rounded-full bg-[#006d37]/25 blur-[130px] pointer-events-none" />
 
+      {/* Main Glassmorphic Card Container */}
+      <div className="relative z-10 w-full max-w-[440px] p-7 sm:p-9 rounded-[2.5rem] bg-white/95 dark:bg-[#002518]/90 backdrop-blur-3xl border border-white/20 dark:border-[#004d30] shadow-[0_20px_60px_rgba(0,0,0,0.3)] flex flex-col items-center transition-all duration-300">
+        
+        {/* Brand Header */}
+        <div className="flex flex-col items-center mb-6 text-center w-full">
+          <div className="py-1 px-2 mb-2 flex items-center justify-center w-full overflow-hidden">
+            <img 
+              src="/risev-logo.png" 
+              alt="RISEV Logo" 
+              className="h-20 sm:h-24 object-contain filter drop-shadow-sm" 
+            />
+          </div>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#85af9b] max-w-[320px] font-medium leading-relaxed mb-0">
+            {mode === 'login' 
+              ? 'Enter your credentials to access the central intelligence & operations dashboard.' 
+              : 'Join the Sales Agent network and start managing merchant onboarding.'}
+          </p>
+        </div>
+
+        {/* Mode Switcher Segmented Control */}
+        <div className="w-full p-1.5 mb-6 rounded-2xl bg-slate-100 dark:bg-[#00170f] border border-slate-200 dark:border-[#004d30] grid grid-cols-2 gap-1">
+          <button
+            type="button"
+            onClick={() => { setMode('login'); setErrorMsg(null); setSuccessMsg(null); }}
+            className={`py-2 px-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer border-none ${
+              mode === 'login'
+                ? 'bg-[#006d37] text-white shadow-md'
+                : 'bg-transparent text-slate-500 dark:text-[#85af9b] hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">lock</span>
+            Sign In
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setMode('register'); setErrorMsg(null); setSuccessMsg(null); }}
+            className={`py-2 px-3 rounded-xl font-black text-xs sm:text-sm transition-all duration-200 flex items-center justify-center gap-1.5 cursor-pointer border-none ${
+              mode === 'register'
+                ? 'bg-[#006d37] text-white shadow-md'
+                : 'bg-transparent text-slate-500 dark:text-[#85af9b] hover:text-slate-900 dark:hover:text-white'
+            }`}
+          >
+            <span className="material-symbols-outlined text-[18px]">badge</span>
+            Register Agent
+          </button>
+        </div>
+
+        {/* Alert Banners */}
         {errorMsg && (
-          <div className="w-full bg-red-100 text-red-600 px-4 py-3 rounded-xl text-body-sm font-semibold mb-6 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">error</span>
-            {errorMsg}
+          <div className="w-full bg-red-500/15 border border-red-500/30 text-red-600 dark:text-red-400 px-4 py-3 rounded-2xl text-xs font-bold mb-4 flex items-start gap-2 shadow-sm">
+            <span className="material-symbols-outlined text-red-500 text-[18px] shrink-0 mt-0.5">error</span>
+            <span className="leading-snug">{errorMsg}</span>
           </div>
         )}
 
         {successMsg && (
-          <div className="w-full bg-green-100 text-green-600 px-4 py-3 rounded-xl text-body-sm font-semibold mb-6 flex items-center gap-2">
-            <span className="material-symbols-outlined text-[20px]">check_circle</span>
-            {successMsg}
+          <div className="w-full bg-[#6bfe9c]/15 border border-[#6bfe9c]/30 text-[#006d37] dark:text-[#6bfe9c] px-4 py-3 rounded-2xl text-xs font-bold mb-4 flex items-start gap-2 shadow-sm">
+            <span className="material-symbols-outlined text-[#006d37] dark:text-[#6bfe9c] text-[18px] shrink-0 mt-0.5">check_circle</span>
+            <span className="leading-snug">{successMsg}</span>
           </div>
         )}
 
+        {/* Forms */}
         {mode === 'login' ? (
           <Form
             name="login-form"
             layout="vertical"
             onFinish={onFinishLogin}
             requiredMark={false}
-            className="w-full"
+            className="w-full flex flex-col gap-1 text-left"
           >
             <Form.Item
               name="email"
               rules={[
-                { required: true, message: 'Please enter your email' },
-                { type: 'email', message: 'Please enter a valid email address' }
+                { required: true, message: 'Please enter your email address' },
+                { type: 'email', message: 'Please enter a valid email' }
               ]}
+              className="mb-4"
             >
               <Input 
-                prefix={<span className="material-symbols-outlined text-outline text-[20px] mr-2">mail</span>} 
+                prefix={<span className="material-symbols-outlined text-slate-400 dark:text-[#85af9b] text-[18px] mr-2">mail</span>} 
                 placeholder="Email Address" 
-                className="h-12 rounded-xl bg-white/40 border-none hover:bg-white/60 focus:bg-white/60 text-body-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                className="h-12 rounded-2xl bg-white dark:bg-[#00170f] border-slate-200 dark:border-[#004d30] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#85af9b] text-sm font-bold transition-all shadow-sm"
               />
             </Form.Item>
 
             <Form.Item
               name="password"
               rules={[{ required: true, message: 'Please enter your password' }]}
+              className="mb-2"
             >
               <Input.Password 
-                prefix={<span className="material-symbols-outlined text-outline text-[20px] mr-2">lock</span>} 
+                prefix={<span className="material-symbols-outlined text-slate-400 dark:text-[#85af9b] text-[18px] mr-2">lock</span>} 
                 placeholder="Password" 
-                className="h-12 rounded-xl bg-white/40 border-none hover:bg-white/60 focus:bg-white/60 text-body-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                className="h-12 rounded-2xl bg-white dark:bg-[#00170f] border-slate-200 dark:border-[#004d30] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#85af9b] text-sm font-bold transition-all shadow-sm"
               />
             </Form.Item>
 
-            <Form.Item className="mt-8 mb-2">
+            <Form.Item className="mt-5 mb-2">
               <Button
                 type="primary"
                 htmlType="submit"
                 loading={isLoading}
-                className="w-full h-12 bg-primary hover:bg-primary-container text-white rounded-xl font-bold text-title-md border-none flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                className="w-full h-12 bg-[#006d37] hover:bg-[#004d27] text-white rounded-2xl font-black text-sm border-none flex items-center justify-center gap-2 shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
               >
-                Sign In
+                {!isLoading && <span className="material-symbols-outlined text-[18px]">login</span>}
+                Sign In to Dashboard
               </Button>
             </Form.Item>
-
-            <div className="w-full text-center mt-4">
-              <span className="text-on-surface-variant text-body-sm">Become a sales representative? </span>
-              <button 
-                type="button"
-                onClick={() => { setMode('register'); setErrorMsg(null); setSuccessMsg(null); }}
-                className="text-primary font-bold hover:underline bg-transparent border-none p-0 cursor-pointer"
-              >
-                Register as Agent
-              </button>
-            </div>
           </Form>
         ) : (
           <Form
@@ -137,30 +167,32 @@ export const LoginPage: React.FC = () => {
             layout="vertical"
             onFinish={onFinishRegister}
             requiredMark={false}
-            className="w-full"
+            className="w-full flex flex-col gap-1 text-left"
           >
             <Form.Item
               name="name"
-              rules={[{ required: true, message: 'Please enter your Full Name' }]}
+              rules={[{ required: true, message: 'Please enter your full name' }]}
+              className="mb-3.5"
             >
               <Input 
-                prefix={<span className="material-symbols-outlined text-outline text-[20px] mr-2">person</span>} 
+                prefix={<span className="material-symbols-outlined text-slate-400 dark:text-[#85af9b] text-[18px] mr-2">person</span>} 
                 placeholder="Full Name" 
-                className="h-12 rounded-xl bg-white/40 border-none hover:bg-white/60 focus:bg-white/60 text-body-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                className="h-12 rounded-2xl bg-white dark:bg-[#00170f] border-slate-200 dark:border-[#004d30] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#85af9b] text-sm font-bold transition-all shadow-sm"
               />
             </Form.Item>
 
             <Form.Item
               name="email"
               rules={[
-                { required: true, message: 'Please enter your email' },
-                { type: 'email', message: 'Please enter a valid email address' }
+                { required: true, message: 'Please enter your email address' },
+                { type: 'email', message: 'Please enter a valid email' }
               ]}
+              className="mb-3.5"
             >
               <Input 
-                prefix={<span className="material-symbols-outlined text-outline text-[20px] mr-2">mail</span>} 
+                prefix={<span className="material-symbols-outlined text-slate-400 dark:text-[#85af9b] text-[18px] mr-2">mail</span>} 
                 placeholder="Email Address" 
-                className="h-12 rounded-xl bg-white/40 border-none hover:bg-white/60 focus:bg-white/60 text-body-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                className="h-12 rounded-2xl bg-white dark:bg-[#00170f] border-slate-200 dark:border-[#004d30] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#85af9b] text-sm font-bold transition-all shadow-sm"
               />
             </Form.Item>
 
@@ -170,48 +202,46 @@ export const LoginPage: React.FC = () => {
                 { required: true, message: 'Please set your password' },
                 { min: 8, message: 'Password must be at least 8 characters' }
               ]}
+              className="mb-3.5"
             >
               <Input.Password 
-                prefix={<span className="material-symbols-outlined text-outline text-[20px] mr-2">lock</span>} 
+                prefix={<span className="material-symbols-outlined text-slate-400 dark:text-[#85af9b] text-[18px] mr-2">lock</span>} 
                 placeholder="Password (Min 8 chars)" 
-                className="h-12 rounded-xl bg-white/40 border-none hover:bg-white/60 focus:bg-white/60 text-body-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                className="h-12 rounded-2xl bg-white dark:bg-[#00170f] border-slate-200 dark:border-[#004d30] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#85af9b] text-sm font-bold transition-all shadow-sm"
               />
             </Form.Item>
 
             <Form.Item
               name="confirmPassword"
               rules={[{ required: true, message: 'Please confirm your password' }]}
+              className="mb-2"
             >
               <Input.Password 
-                prefix={<span className="material-symbols-outlined text-outline text-[20px] mr-2">lock_reset</span>} 
+                prefix={<span className="material-symbols-outlined text-slate-400 dark:text-[#85af9b] text-[18px] mr-2">lock_reset</span>} 
                 placeholder="Confirm Password" 
-                className="h-12 rounded-xl bg-white/40 border-none hover:bg-white/60 focus:bg-white/60 text-body-sm focus:ring-2 focus:ring-primary/20 transition-all"
+                className="h-12 rounded-2xl bg-white dark:bg-[#00170f] border-slate-200 dark:border-[#004d30] text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-[#85af9b] text-sm font-bold transition-all shadow-sm"
               />
             </Form.Item>
 
-            <Form.Item className="mt-8 mb-2">
+            <Form.Item className="mt-5 mb-2">
               <Button
                 type="primary"
                 htmlType="submit"
                 loading={isRegistering || isLoading}
-                className="w-full h-12 bg-primary hover:bg-primary-container text-white rounded-xl font-bold text-title-md border-none flex items-center justify-center shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
+                className="w-full h-12 bg-[#006d37] hover:bg-[#004d27] text-white rounded-2xl font-black text-sm border-none flex items-center justify-center gap-2 shadow-lg hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
               >
-                Register Account
+                {!(isRegistering || isLoading) && <span className="material-symbols-outlined text-[18px]">how_to_reg</span>}
+                Create Agent Account
               </Button>
             </Form.Item>
-
-            <div className="w-full text-center mt-4">
-              <span className="text-on-surface-variant text-body-sm">Already have an agent account? </span>
-              <button 
-                type="button"
-                onClick={() => { setMode('login'); setErrorMsg(null); setSuccessMsg(null); }}
-                className="text-primary font-bold hover:underline bg-transparent border-none p-0 cursor-pointer"
-              >
-                Sign In
-              </button>
-            </div>
           </Form>
         )}
+
+        {/* Security Badge Footer */}
+        <div className="mt-5 pt-4 border-t border-slate-200 dark:border-white/10 w-full flex items-center justify-center gap-2 text-slate-400 dark:text-[#85af9b] text-xs font-bold">
+          <span className="material-symbols-outlined text-[16px] text-[#006d37] dark:text-[#6bfe9c]">verified_user</span>
+          <span>Protected by RISEV Security</span>
+        </div>
       </div>
     </div>
   );

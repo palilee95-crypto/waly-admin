@@ -92,142 +92,140 @@ export const WhatsAppDrawer: React.FC<WhatsAppDrawerProps> = ({
   return (
     <Drawer
       title={
-        <div className="flex items-center gap-2">
-          <span className="material-symbols-outlined text-[#25D366]">chat</span>
-          <span className="font-headline font-bold text-on-surface">WhatsApp Pitch & Outreach</span>
+        <div className="flex items-center gap-2.5 text-left">
+          <div className="w-8 h-8 rounded-full bg-[#25D366]/15 text-[#006d37] flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-lg font-bold">chat</span>
+          </div>
+          <div>
+            <span className="font-headline font-black text-base text-[#002d1e] block leading-tight">WhatsApp Pitch & Outreach</span>
+            <span className="text-[10px] font-bold text-[#006d37] uppercase tracking-wider block">Direct Prospect Messenger</span>
+          </div>
         </div>
       }
       placement="right"
       onClose={onClose}
       open={visible}
-      width={460}
+      width={440}
       styles={{
         body: {
           display: 'flex',
           flexDirection: 'column',
-          gap: '16px',
-          padding: '20px',
-          backgroundColor: '#fafafa',
+          gap: '12px',
+          padding: '16px',
+          backgroundColor: '#ffffff',
+          color: '#1e293b',
         },
+        header: {
+          borderBottom: '1px solid rgba(0,0,0,0.06)',
+          padding: '14px 18px',
+          backgroundColor: '#ffffff',
+          color: '#002d1e',
+        }
       }}
     >
-      {/* Recipient Header */}
-      <div className="bg-white p-4 rounded-2xl border border-black/5 shadow-sm text-left">
-        <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-wider mb-1">Target Recipient</p>
-        {merchant ? (
-          <div>
-            <h5 className="text-sm font-bold text-on-surface flex items-center gap-2">
-              {merchant.name}
-              <span className="bg-primary/10 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full">
-                {merchant.category}
-              </span>
-            </h5>
-            <p className="text-xs text-on-surface-variant mt-0.5 flex items-center gap-1 font-mono">
-              <span className="material-symbols-outlined text-[14px]">call</span>
-              {merchant.phone || 'No phone number added'}
-            </p>
+      {/* 1. Target Recipient Header Card */}
+      <div className="bg-[#f8faf9] p-3.5 rounded-2xl border border-[#006d37]/15 text-left relative overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#006d37] to-[#1a4333] text-white p-0.5 shadow-md shrink-0">
+              <div className="w-full h-full bg-[#002d1e] rounded-[10px] flex items-center justify-center text-[#6bfe9c] font-black text-xs">
+                {merchant?.name ? merchant.name.charAt(0) : 'P'}
+              </div>
+            </div>
+            <div>
+              <h5 className="text-sm font-black text-[#002d1e] flex items-center gap-1.5 mb-0.5">
+                {merchant?.name || 'General Prospect'}
+                {merchant?.category && (
+                  <span className="bg-[#006d37]/10 text-[#006d37] text-[10px] font-bold px-2 py-0.5 rounded-full border border-[#006d37]/20">
+                    {merchant.category}
+                  </span>
+                )}
+              </h5>
+              <p className="text-xs text-slate-500 flex items-center gap-1 font-mono">
+                <span className="material-symbols-outlined text-xs">call</span>
+                {merchant?.phone || 'Outreach Link Pitch'}
+              </p>
+            </div>
           </div>
-        ) : (
-          <div>
-            <h5 className="text-sm font-bold text-on-surface">General Prospect Cold Outreach</h5>
-            <p className="text-xs text-on-surface-variant mt-0.5">Custom message using your referral link</p>
-          </div>
-        )}
+
+          {merchant?.phone && (
+            <a
+              href={`tel:${merchant.phone}`}
+              className="w-8 h-8 rounded-full bg-[#006d37]/10 hover:bg-[#006d37]/20 text-[#006d37] flex items-center justify-center border border-[#006d37]/20 transition-all text-decoration-none shrink-0"
+              title="Call Merchant"
+            >
+              <span className="material-symbols-outlined text-sm">call</span>
+            </a>
+          )}
+        </div>
       </div>
 
-      {/* Language Switcher */}
-      <div className="flex items-center justify-between bg-white p-2.5 rounded-2xl border border-black/5 text-left">
-        <span className="text-xs font-bold text-on-surface flex items-center gap-1.5 pl-1">
-          <span className="material-symbols-outlined text-[16px] text-primary">translate</span>
-          Pitch Language:
+      {/* 2. Language Switcher */}
+      <div className="flex items-center justify-between bg-[#f8faf9] p-2 rounded-2xl border border-[#006d37]/15 text-left">
+        <span className="text-xs font-bold text-slate-600 flex items-center gap-1.5 pl-2">
+          <span className="material-symbols-outlined text-sm text-[#006d37]">translate</span>
+          Language:
         </span>
-        <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+        <div className="flex bg-[#eef5f1] p-1 rounded-xl gap-1 border border-black/5">
           <button
             onClick={() => handleLanguageChange('bm')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1 ${
               selectedLanguage === 'bm'
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-transparent text-slate-600 hover:text-black'
+                ? 'bg-[#006d37] text-white shadow-sm'
+                : 'bg-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
-            🇲🇾 Bahasa Melayu
+            🇲🇾 BM
           </button>
           <button
             onClick={() => handleLanguageChange('en')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1 ${
+            className={`px-3 py-1 rounded-lg text-xs font-bold transition-all border-none cursor-pointer flex items-center gap-1 ${
               selectedLanguage === 'en'
-                ? 'bg-primary text-white shadow-md'
-                : 'bg-transparent text-slate-600 hover:text-black'
+                ? 'bg-[#006d37] text-white shadow-sm'
+                : 'bg-transparent text-slate-600 hover:text-slate-900'
             }`}
           >
-            🇬🇧 English
+            🇬🇧 EN
           </button>
         </div>
       </div>
 
-      {/* Category Pills */}
-      <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-left scrollbar-none">
-        {[
-          { key: 'all', label: 'All Templates' },
-          { key: 'pitch_fb', label: '🍽️ F&B' },
-          { key: 'pitch_retail', label: '💈 Retail/Service' },
-          { key: 'standee_promo', label: '🎁 Free Standee' },
-          { key: 'onboarding', label: '🚀 Setup' },
-          { key: 'trial_nudge', label: '⏰ Trial' },
-          { key: 'dormant', label: '🔄 Win-Back' },
-          { key: 'quick_link', label: '⚡ Quick Pitch' },
-        ].map((cat) => (
-          <button
-            key={cat.key}
-            onClick={() => handleCategoryChange(cat.key)}
-            className={`px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-all border-none cursor-pointer ${
-              selectedCategory === cat.key
-                ? 'bg-black text-white dark:bg-white dark:text-black'
-                : 'bg-white text-slate-600 hover:bg-slate-200 border border-black/5'
-            }`}
-          >
-            {cat.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Template Card Selector List */}
-      <div className="flex flex-col gap-2 max-h-[160px] overflow-y-auto pr-1 text-left">
-        {filteredTemplates.length === 0 ? (
-          <p className="text-xs text-slate-400 py-3 text-center">No templates in this category.</p>
-        ) : (
-          filteredTemplates.map((tmpl) => {
+      {/* 3. Pitch Template Pills Bar (Scrollbar Hidden) */}
+      <div className="text-left">
+        <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider block mb-1.5">
+          Select Pitch Template:
+        </span>
+        <div 
+          className="flex items-center gap-1.5 overflow-x-auto pb-1 text-left" 
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {filteredTemplates.map((tmpl) => {
             const isSelected = tmpl.id === selectedTemplateId;
             return (
-              <div
+              <button
                 key={tmpl.id}
                 onClick={() => applyTemplate(tmpl)}
-                className={`p-3 rounded-2xl border transition-all cursor-pointer text-left ${
+                className={`px-3 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 shrink-0 ${
                   isSelected
-                    ? 'bg-primary/10 border-primary shadow-sm ring-1 ring-primary/20'
-                    : 'bg-white border-black/5 hover:border-slate-300'
+                    ? 'bg-[#006d37] text-white border-[#006d37] shadow-md scale-105'
+                    : 'bg-[#f8faf9] text-slate-700 hover:bg-[#eef5f1] border-slate-200'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-on-surface">{tmpl.title}</span>
-                  {isSelected && (
-                    <span className="material-symbols-outlined text-primary text-[16px]">check_circle</span>
-                  )}
-                </div>
-                <p className="text-[10px] text-on-surface-variant line-clamp-1">{tmpl.description}</p>
-              </div>
+                {isSelected && <span className="material-symbols-outlined text-xs font-black">check</span>}
+                <span>{tmpl.title}</span>
+              </button>
             );
-          })
-        )}
+          })}
+        </div>
       </div>
 
-      {/* Live Message Body Textarea */}
-      <div className="bg-white p-4 rounded-2xl border border-black/5 flex flex-col gap-2 text-left">
+      {/* 4. Live Message Textarea Box */}
+      <div className="bg-[#f8faf9] p-3.5 rounded-2xl border border-[#006d37]/15 flex flex-col gap-2 text-left">
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+          <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">
             Live Message Body (Editable)
           </span>
-          <span className="text-[10px] text-on-surface-variant font-mono">{customMsg.length} characters</span>
+          <span className="text-[10px] text-slate-500 font-mono font-bold">{customMsg.length} chars</span>
         </div>
 
         <Input.TextArea
@@ -235,43 +233,43 @@ export const WhatsAppDrawer: React.FC<WhatsAppDrawerProps> = ({
           onChange={(e) => setCustomMsg(e.target.value)}
           rows={7}
           style={{
-            borderRadius: 12,
+            borderRadius: 14,
             fontSize: '12px',
             lineHeight: '1.6',
             fontFamily: 'sans-serif',
-            backgroundColor: '#fafafa',
+            backgroundColor: '#ffffff',
+            color: '#0f172a',
+            borderColor: '#cbd5e1',
           }}
         />
 
-        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-1">
-          <span>Variables auto-substituted: <code className="bg-slate-100 px-1 py-0.5 rounded text-primary">referral_link</code></span>
-          <Tooltip title="Copy formatted text to paste manually in WhatsApp">
-            <button
-              onClick={handleCopyMessage}
-              className="text-primary hover:underline font-bold border-none bg-transparent cursor-pointer flex items-center gap-1"
-            >
-              <span className="material-symbols-outlined text-[14px]">content_copy</span>
-              Copy Message
-            </button>
-          </Tooltip>
+        <div className="flex items-center justify-between text-[10px] text-slate-500 pt-0.5">
+          <span>Auto-replaced: <code className="bg-[#006d37]/10 text-[#006d37] px-1.5 py-0.5 rounded font-mono font-bold">referral_link</code></span>
+          <button
+            onClick={handleCopyMessage}
+            className="text-[#006d37] hover:underline font-black border-none bg-transparent cursor-pointer flex items-center gap-1"
+          >
+            <span className="material-symbols-outlined text-xs">content_copy</span>
+            Copy Message
+          </button>
         </div>
       </div>
 
-      {/* Send Buttons */}
-      <div className="flex gap-2 mt-auto text-left">
+      {/* 5. Action Footer Buttons */}
+      <div className="flex gap-2.5 mt-auto pt-1 text-left">
         <button
           onClick={handleCopyMessage}
-          className="flex-1 bg-black/5 hover:bg-black/10 text-on-surface py-3.5 rounded-2xl font-headline font-semibold text-xs transition-all border-none cursor-pointer flex items-center justify-center gap-1.5"
+          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 py-3 rounded-2xl font-black text-xs transition-all border border-slate-200 cursor-pointer flex items-center justify-center gap-1.5"
         >
-          <span className="material-symbols-outlined text-[16px]">content_copy</span>
+          <span className="material-symbols-outlined text-sm">content_copy</span>
           Copy Text
         </button>
 
         <button
           onClick={handleShareWhatsApp}
-          className="flex-[2] bg-[#25D366] hover:bg-[#20BA5A] text-white py-3.5 rounded-2xl font-headline font-semibold text-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 font-sans"
+          className="flex-[2] bg-[#25D366] hover:bg-[#20BA5A] text-white py-3 rounded-2xl font-black text-sm transition-all border-none cursor-pointer flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/25 active:scale-95"
         >
-          <span className="material-symbols-outlined text-[18px]">chat</span>
+          <span className="material-symbols-outlined text-lg">chat</span>
           Open WhatsApp Chat
         </button>
       </div>

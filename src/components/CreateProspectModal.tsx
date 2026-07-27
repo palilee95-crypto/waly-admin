@@ -119,80 +119,80 @@ const CreateProspectModalContent: React.FC<CreateProspectModalProps> = ({
       footer={null}
       title={null}
       centered
-      width={520}
-      styles={{ body: { padding: '24px', borderRadius: '24px', backgroundColor: '#ffffff' } }}
+      width={420}
+      styles={{ body: { padding: '20px', borderRadius: '24px', backgroundColor: '#ffffff' } }}
     >
-      <div className="flex flex-col gap-4 text-left">
+      <div className="flex flex-col gap-3.5 text-left">
         {/* Modal Header */}
-        <div className="flex items-center gap-3 border-b border-surface-variant pb-3">
-          <div className="w-12 h-12 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center shadow-md">
-            <span className="material-symbols-outlined text-2xl font-bold">person_add</span>
+        <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+          <div className="w-10 h-10 rounded-2xl bg-[#006d37]/10 text-[#006d37] flex items-center justify-center shadow-sm shrink-0">
+            <span className="material-symbols-outlined text-xl font-bold">person_add</span>
           </div>
           <div>
-            <h3 className="font-headline text-lg font-bold text-on-surface">Add New Prospect</h3>
-            <p className="font-body text-xs text-on-surface-variant">Register store lead & dispatch referral pitch</p>
+            <h3 className="font-headline text-base font-black text-[#002d1e] mb-0.5">Add New Prospect Lead</h3>
+            <p className="font-body text-xs text-slate-500">Register store contact & dispatch WhatsApp pitch</p>
           </div>
         </div>
 
         {/* Input: Phone Number */}
         <div>
-          <label className="text-xs font-semibold text-on-surface mb-1 block">Merchant Phone Number *</label>
+          <label className="text-xs font-bold text-slate-700 mb-1 block">Merchant Phone Number *</label>
           <Input
             placeholder="e.g. 0123456789 or +60123456789"
             value={prospectPhone}
             onChange={(e) => setProspectPhone(e.target.value)}
-            className="rounded-xl h-11 text-sm font-medium"
-            prefix={<span className="material-symbols-outlined text-outline text-[18px]">phone</span>}
+            className="rounded-xl h-10 text-xs font-medium"
+            prefix={<span className="material-symbols-outlined text-slate-400 text-base">phone</span>}
           />
         </div>
 
         {/* Input: Merchant / Contact Name (Optional) */}
         <div>
-          <label className="text-xs font-semibold text-on-surface mb-1 block">Merchant / Store Name (Optional)</label>
+          <label className="text-xs font-bold text-slate-700 mb-1 block">Merchant / Store Name (Optional)</label>
           <Input
             placeholder="e.g. Kafe Kopi Sedap"
             value={prospectName}
             onChange={(e) => setProspectName(e.target.value)}
-            className="rounded-xl h-11 text-sm font-medium"
-            prefix={<span className="material-symbols-outlined text-outline text-[18px]">storefront</span>}
+            className="rounded-xl h-10 text-xs font-medium"
+            prefix={<span className="material-symbols-outlined text-slate-400 text-base">storefront</span>}
           />
         </div>
 
         {/* Template Selector & Language Toggle */}
-        <div className="bg-surface-container-low p-4 rounded-2xl border border-surface-variant">
-          <div className="flex justify-between items-center mb-2">
-            <label className="text-xs font-bold text-on-surface">WhatsApp Pitch Message</label>
-            <div className="flex gap-1 bg-surface-container-highest p-0.5 rounded-lg">
+        <div className="bg-[#f8faf9] p-3 rounded-2xl border border-[#006d37]/15 flex flex-col gap-2">
+          <div className="flex justify-between items-center">
+            <label className="text-xs font-bold text-[#002d1e]">WhatsApp Pitch Message</label>
+            <div className="flex gap-1 bg-[#eef5f1] p-0.5 rounded-lg border border-black/5">
               <button
                 type="button"
                 onClick={() => handleModalLanguageChange('bm')}
-                className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+                className={`px-2 py-0.5 text-[10px] font-bold rounded transition-all border-none cursor-pointer ${
                   modalLanguage === 'bm'
-                    ? 'bg-primary text-on-primary shadow-sm'
-                    : 'text-on-surface-variant hover:text-on-surface'
+                    ? 'bg-[#006d37] text-white shadow-sm'
+                    : 'bg-transparent text-slate-600 hover:text-slate-900'
                 }`}
               >
-                Bahasa Melayu
+                🇲🇾 BM
               </button>
               <button
                 type="button"
                 onClick={() => handleModalLanguageChange('en')}
-                className={`px-2.5 py-1 text-[10px] font-bold rounded-md transition-all ${
+                className={`px-2 py-0.5 text-[10px] font-bold rounded transition-all border-none cursor-pointer ${
                   modalLanguage === 'en'
-                    ? 'bg-primary text-on-primary shadow-sm'
-                    : 'text-on-surface-variant hover:text-on-surface'
+                    ? 'bg-[#006d37] text-white shadow-sm'
+                    : 'bg-transparent text-slate-600 hover:text-slate-900'
                 }`}
               >
-                English
+                🇬🇧 EN
               </button>
             </div>
           </div>
 
-          <div className="mb-2">
+          <div>
             <Select
               value={modalTemplateId}
               onChange={(val) => setModalTemplateId(val)}
-              className="w-full h-10 font-medium"
+              className="w-full h-9 font-medium text-xs"
               options={modalTemplates.map((t) => ({ label: t.title, value: t.id }))}
             />
           </div>
@@ -201,16 +201,17 @@ const CreateProspectModalContent: React.FC<CreateProspectModalProps> = ({
             rows={4}
             value={prospectMessage}
             onChange={(e) => setProspectMessage(e.target.value)}
-            className="rounded-xl text-xs font-mono bg-white"
+            className="rounded-xl text-xs font-sans bg-white border-slate-200"
+            style={{ fontSize: '11px', lineHeight: '1.5' }}
           />
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 mt-2">
+        <div className="flex gap-2.5 mt-1">
           <Button
             onClick={() => handleSubmit(false)}
             loading={isCreating}
-            className="h-12 rounded-xl font-bold border-surface-variant text-on-surface hover:bg-surface-container-low"
+            className="flex-1 h-11 rounded-xl font-bold border-slate-200 text-slate-700 bg-slate-100 hover:bg-slate-200 text-xs"
           >
             Save Lead Only
           </Button>
@@ -218,9 +219,9 @@ const CreateProspectModalContent: React.FC<CreateProspectModalProps> = ({
             type="primary"
             onClick={() => handleSubmit(true)}
             loading={isCreating}
-            className="h-12 rounded-xl font-bold bg-secondary hover:bg-primary text-white border-none flex items-center justify-center gap-1.5 shadow-md"
+            className="flex-1 h-11 rounded-xl font-bold bg-[#25D366] hover:bg-[#20BA5A] text-white border-none flex items-center justify-center gap-1 shadow-md text-xs shrink-0"
           >
-            <span className="material-symbols-outlined text-[18px]">send</span>
+            <span className="material-symbols-outlined text-base">send</span>
             Save & Send Pitch
           </Button>
         </div>

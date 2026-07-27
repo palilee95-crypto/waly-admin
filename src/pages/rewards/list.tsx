@@ -12,7 +12,7 @@ export const RewardList: React.FC = () => {
   const navigate = useNavigate();
   const { tableQueryResult } = useTable<any>({
     resource: 'rewards',
-    pagination: { pageSize: 10 },
+    pagination: { pageSize: 50 },
     meta: {
       expand: ['merchant'],
     },
@@ -21,98 +21,139 @@ export const RewardList: React.FC = () => {
   const rewards = tableQueryResult?.data?.data || [];
 
   return (
-    <div className="flex flex-col gap-6 font-body">
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="font-headline text-2xl font-bold text-on-surface">Rewards Catalog</h2>
-          <p className="font-body text-body-lg text-on-surface-variant">Configure catalog items and point cost values</p>
+    <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
+      
+      {/* 1. Forest Green Hero Header */}
+      <section className="relative z-10 bg-gradient-to-b from-[#002d1e] via-[#003825] to-[#1a4333] text-white pt-14 sm:pt-16 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))] pb-24 sm:pb-28 rounded-none w-full px-5 sm:px-8">
+        <div className="max-w-[1100px] mx-auto flex flex-col items-center text-center relative">
+          
+          <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
+            WALY REWARDS & CATALOG
+          </span>
+
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
+            Rewards Catalog
+          </h1>
+          
+          <p className="text-xs sm:text-sm text-[#85af9b] max-w-md mb-5 font-medium leading-relaxed">
+            Configure catalog items, point cost redemption thresholds, and store voucher assignments.
+          </p>
+
+          <button
+            onClick={() => navigate('/rewards/create')}
+            className="inline-flex items-center gap-2 bg-[#6bfe9c] text-[#002d1e] font-black text-xs px-5 py-2.5 rounded-full hover:scale-105 transition-all shadow-lg border-none cursor-pointer"
+          >
+            <span className="material-symbols-outlined text-[18px]">add</span>
+            <span>+ New Reward Item</span>
+          </button>
+
         </div>
-        <button
-          onClick={() => navigate('/rewards/create')}
-          className="bg-primary hover:bg-primary-container text-white px-6 py-3 rounded-xl font-headline font-semibold flex items-center gap-2 shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all border-none cursor-pointer"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          New Reward Item
-        </button>
+      </section>
+
+      {/* 2. Main Content Canvas */}
+      <div className="relative z-20 bg-[#fcf9f8] dark:bg-[#00150e] pt-0 pb-28">
+        <div className="max-w-[1100px] mx-auto w-full px-3 sm:px-6">
+          
+          {/* Main Bento Container (Overlapping Hero) */}
+          <div className="-mt-16 relative z-30 bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+            
+            {/* Title & Count Bar */}
+            <div className="flex items-center justify-between pb-3 border-b border-surface-variant dark:border-white/10 mb-4">
+              <h3 className="text-sm sm:text-base font-black text-on-surface dark:text-white flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#006d37] dark:text-[#6bfe9c]">emoji_events</span>
+                Catalog Items
+              </h3>
+              <span className="text-xs font-bold text-[#006d37] dark:text-[#6bfe9c]">
+                {rewards.length} Rewards Active
+              </span>
+            </div>
+
+            {/* Mobile-Native Clean Cards Grid */}
+            {tableQueryResult.isLoading ? (
+              <div className="py-20 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+              </div>
+            ) : rewards.length === 0 ? (
+              <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
+                <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">emoji_events</span>
+                <p className="text-xs font-bold text-on-surface dark:text-white">No rewards found in the catalog.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                {rewards.map((reward) => (
+                  <div
+                    key={reward.id}
+                    className="bg-[#f8faf9] dark:bg-[#001f15] rounded-2xl p-4 border border-surface-variant dark:border-[#004d30] flex flex-col justify-between shadow-sm hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
+                  >
+                    <div>
+                      {/* Top Row: Icon, Title, and Status Badge */}
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center font-black text-lg shrink-0 border border-amber-500/20">
+                            🎁
+                          </div>
+                          <div className="text-left">
+                            <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c] transition-colors leading-tight">
+                              {reward.name}
+                            </h4>
+                            <span className="text-[10px] font-bold text-[#006d37] dark:text-[#6bfe9c]">
+                              {reward.expand?.merchant?.name || reward.merchant || 'Platform-wide'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Status Badge */}
+                        <div>
+                          {reward.is_active ? (
+                            <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border border-[#6bfe9c]/30">
+                              ACTIVE
+                            </span>
+                          ) : (
+                            <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/30">
+                              RETIRED
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Info Row: Type, Points, and Stock */}
+                      <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-3">
+                        <span className="text-[10px] font-bold text-on-surface-variant dark:text-[#85af9b] uppercase">
+                          {reward.type ? reward.type.replace('_', ' ') : 'Free Item'}
+                        </span>
+                        <span className="font-black text-amber-600 dark:text-amber-400 bg-amber-500/15 px-2.5 py-0.5 rounded-full">
+                          ⚡ {reward.points_cost || 0} pts
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Pill Buttons */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-variant dark:border-white/10">
+                      <button
+                        onClick={() => navigate(`/rewards/show/${reward.id}`)}
+                        className="bg-transparent hover:bg-slate-100 dark:hover:bg-white/5 text-slate-600 dark:text-[#85af9b] px-3 py-1.5 rounded-xl text-[11px] font-bold border border-slate-200 dark:border-white/10 cursor-pointer"
+                      >
+                        Details
+                      </button>
+                      <button
+                        onClick={() => navigate(`/rewards/edit/${reward.id}`)}
+                        className="bg-[#006d37]/10 hover:bg-[#006d37]/20 text-[#006d37] dark:text-[#6bfe9c] px-3 py-1.5 rounded-xl text-[11px] font-black border border-[#006d37]/20 cursor-pointer flex items-center gap-1"
+                      >
+                        <span>Edit</span>
+                        <span className="material-symbols-outlined text-xs">edit</span>
+                      </button>
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            )}
+
+          </div>
+        </div>
       </div>
 
-      <div className="glass-panel rounded-[2rem] p-gutter overflow-hidden flex flex-col">
-        {tableQueryResult.isLoading ? (
-          <div className="py-20 flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-black/5">
-                  <th className="pb-4 font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Reward Name</th>
-                  <th className="pb-4 font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Merchant</th>
-                  <th className="pb-4 font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Type</th>
-                  <th className="pb-4 font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Points Cost</th>
-                  <th className="pb-4 font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Stock</th>
-                  <th className="pb-4 font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">Status</th>
-                  <th className="pb-4 font-headline text-[10px] text-on-surface-variant uppercase tracking-wider font-bold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5">
-                {rewards.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="py-10 text-center text-on-surface-variant text-sm">
-                      No rewards found in the catalog.
-                    </td>
-                  </tr>
-                ) : (
-                  rewards.map((reward) => (
-                    <tr key={reward.id} className="group hover:bg-white/40 transition-colors">
-                      <td className="py-5 font-semibold text-on-surface text-sm">{reward.name}</td>
-                      <td className="py-5 text-sm text-on-surface font-semibold">
-                        {reward.expand?.merchant ? (
-                          <Link
-                            to={`/merchants/${reward.merchant}`}
-                            className="text-primary hover:underline"
-                            style={{ color: '#0040e0' }}
-                          >
-                            {reward.expand.merchant.name}
-                          </Link>
-                        ) : (
-                          reward.merchant || 'Platform-wide'
-                        )}
-                      </td>
-                      <td className="py-5 text-sm text-on-surface uppercase">{reward.type}</td>
-                      <td className="py-5 text-sm text-primary font-bold">{reward.points_cost} pts</td>
-                      <td className="py-5 text-sm text-on-surface-variant">{reward.stock ?? 'Unlimited'}</td>
-                      <td className="py-5">
-                        {reward.is_active ? (
-                          <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">Active</span>
-                        ) : (
-                          <span className="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-[10px] font-bold">Retired</span>
-                        )}
-                      </td>
-                      <td className="py-5 text-right">
-                        <div className="flex justify-end gap-2">
-                          <button
-                            onClick={() => navigate(`/rewards/show/${reward.id}`)}
-                            className="text-primary font-bold text-xs hover:underline bg-transparent border-none cursor-pointer"
-                          >
-                            Show
-                          </button>
-                          <button
-                            onClick={() => navigate(`/rewards/edit/${reward.id}`)}
-                            className="text-on-surface-variant hover:text-on-surface font-bold text-xs hover:underline bg-transparent border-none cursor-pointer"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
     </div>
   );
 };

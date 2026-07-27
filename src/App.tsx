@@ -32,6 +32,7 @@ import { SalesAnalyticsPage } from './pages/sales-dashboard/analytics';
 import { SalesLeaderboardPage } from './pages/sales-dashboard/leaderboard';
 import { SalesCardPage } from './pages/sales-dashboard/card';
 import { SubscriptionList } from './pages/subscriptions/list';
+import { SalesAgentList } from './pages/sales-agents/list';
 
 
 // Theme Configuration matching code.html tokens (Geometric Precision)
@@ -71,6 +72,11 @@ export const App: React.FC = () => {
                 name: 'users',
                 list: '/users',
                 meta: { label: 'Users' },
+              },
+              {
+                name: 'sales_agents',
+                list: '/sales-agents',
+                meta: { label: 'Sales Agents' },
               },
               {
                 name: 'fraud_flags',
@@ -115,7 +121,7 @@ export const App: React.FC = () => {
               {/* Protected Routes wrapped in custom layout */}
               <Route
                 element={
-                  <Authenticated key="authenticated-routes" fallback={<Navigate to="/login" />}>
+                  <Authenticated key="protected" fallback={<Navigate to="/login" />}>
                     <AppLayout>
                       <Outlet />
                     </AppLayout>
@@ -123,7 +129,10 @@ export const App: React.FC = () => {
                 }
               >
                 <Route index element={<NavigateToResource resource="dashboard" />} />
+                {/* Dashboard & Overview */}
                 <Route path="/dashboard" element={<DashboardPage />} />
+                
+                {/* Sales Agent Internal Routes */}
                 <Route path="/sales-dashboard" element={<SalesDashboardPage />} />
                 <Route path="/sales-dashboard/prospects" element={<SalesProspectsPage />} />
                 <Route path="/sales-dashboard/merchants" element={<SalesMerchantsPage />} />
@@ -133,6 +142,9 @@ export const App: React.FC = () => {
                 <Route path="/sales-dashboard/leaderboard" element={<SalesLeaderboardPage />} />
                 <Route path="/sales-dashboard/card" element={<SalesCardPage />} />
                 
+                {/* Admin Sales Agents Hub */}
+                <Route path="/sales-agents" element={<SalesAgentList />} />
+
                 {/* Merchants */}
                 <Route path="/merchants" element={<MerchantList />} />
                 <Route path="/merchants/:id" element={<MerchantShow />} />

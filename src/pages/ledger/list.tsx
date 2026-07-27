@@ -1,70 +1,162 @@
 import React, { useState } from 'react';
 import { useTable, useList } from '@refinedev/core';
-import { Modal, message, Button, Alert } from 'antd';
+import { Modal, message } from 'antd';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
-// ==========================================
-// 1. TransactionList
-// ==========================================
 export const TransactionList: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'audit' | 'liability'>('audit');
+
   const { tableQueryResult } = useTable<any>({
     resource: 'transactions',
-    pagination: { pageSize: 10 },
+    pagination: { pageSize: 50 },
+    sorters: [{ field: 'created', order: 'desc' }],
+    meta: {
+      expand: ['customer', 'user', 'merchant'],
+    },
   });
 
   const transactions = tableQueryResult?.data?.data || [];
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex justify-between items-end">
-        <div>
-          <h2 className="font-headline text-2xl font-bold text-on-surface">Points Ledger</h2>
-          <p className="font-body text-body-lg text-on-surface-variant">Real-time audit log of all point flows</p>
+    <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
+      
+      {/* 1. Forest Green Hero Header */}
+      <section className="relative z-10 bg-gradient-to-b from-[#002d1e] via-[#003825] to-[#1a4333] text-white pt-14 sm:pt-16 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))] pb-24 sm:pb-28 rounded-none w-full px-5 sm:px-8">
+        <div className="max-w-[1100px] mx-auto flex flex-col items-center text-center relative">
+          
+          <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
+            REAL-TIME AUDIT LOG & OBLIGATIONS
+          </span>
+
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
+            Points Ledger & Liability
+          </h1>
+          
+          <p className="text-xs sm:text-sm text-[#85af9b] max-w-md font-medium leading-relaxed">
+            Real-time audit log of all point flows, points liabilities, and account expiration batches.
+          </p>
+
+        </div>
+      </section>
+
+      {/* 2. Main Content Canvas */}
+      <div className="relative z-20 bg-[#fcf9f8] dark:bg-[#00150e] pt-0 pb-28">
+        <div className="max-w-[1100px] mx-auto w-full px-3 sm:px-6">
+          
+          {/* Main Bento Container (Overlapping Hero) */}
+          <div className="-mt-16 relative z-30 bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+            
+            {/* Filter Tabs Bar */}
+            <div className="flex items-center gap-2 pb-4 mb-4 border-b border-surface-variant dark:border-white/10">
+              <button
+                onClick={() => setActiveTab('audit')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'audit'
+                    ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                    : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                }`}
+              >
+                <span>📜 Points Audit Log</span>
+                <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                  {transactions.length}
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('liability')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'liability'
+                    ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                    : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                }`}
+              >
+                <span>📊 Liability Monitor</span>
+              </button>
+            </div>
+
+            {/* Audit Log Tab View */}
+            {activeTab === 'audit' && (
+              <div>
+                {tableQueryResult.isLoading ? (
+                  <div className="py-20 flex justify-center items-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
+                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">receipt_long</span>
+                    <p className="text-xs font-bold text-on-surface dark:text-white">No ledger transactions recorded yet.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
+                    {transactions.map((tx) => {
+                      const userName = tx.expand?.customer?.name || tx.expand?.user?.name || tx.user || 'Registered Customer';
+                      const storeName = tx.expand?.merchant?.name || 'Waly Store';
+                      const isEarn = tx.type?.toLowerCase() === 'earn';
+                      const isRedeem = tx.type?.toLowerCase() === 'redeem';
+
+                      return (
+                        <div
+                          key={tx.id}
+                          className="bg-[#f8faf9] dark:bg-[#001f15] rounded-2xl p-4 border border-surface-variant dark:border-[#004d30] flex flex-col justify-between shadow-sm hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 border ${
+                                  isEarn 
+                                    ? 'bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border-[#6bfe9c]/30'
+                                    : 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border-purple-500/30'
+                                }`}>
+                                  {isEarn ? '⚡' : '🎁'}
+                                </div>
+                                <div className="text-left">
+                                  <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 leading-tight">
+                                    {userName}
+                                  </h4>
+                                  <span className="text-[10px] font-bold text-on-surface-variant dark:text-[#85af9b]">
+                                    {storeName}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Points Amount Badge */}
+                              <span className={`text-xs font-black px-3 py-1 rounded-full ${
+                                isEarn 
+                                  ? 'bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border border-[#6bfe9c]/30'
+                                  : 'bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/30'
+                              }`}>
+                                {isEarn ? `+${tx.points || 0} pts` : `-${tx.points || 0} pts`}
+                              </span>
+                            </div>
+
+                            {/* Info Box */}
+                            <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-1">
+                              <span className="text-slate-400 font-mono text-[10px] truncate max-w-[140px]">
+                                ID: #{tx.id}
+                              </span>
+                              <span className="text-on-surface-variant dark:text-[#85af9b] font-medium">
+                                {new Date(tx.created || tx.created_at).toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Liability Monitor Tab View */}
+            {activeTab === 'liability' && (
+              <LiabilityDashboard />
+            )}
+
+          </div>
         </div>
       </div>
 
-      <div className="glass-panel rounded-[2rem] p-gutter overflow-hidden flex flex-col">
-        {tableQueryResult.isLoading ? (
-          <div className="py-20 flex justify-center items-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-black/5">
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Transaction ID</th>
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">User</th>
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Type</th>
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Points</th>
-                  <th className="pb-4 font-headline text-[10px] text-outline uppercase tracking-wider font-semibold">Date</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-black/5 font-body">
-                {transactions.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="py-10 text-center text-on-surface-variant text-sm">
-                      No transactions recorded.
-                    </td>
-                  </tr>
-                ) : (
-                  transactions.map((tx) => (
-                    <tr key={tx.id} className="group hover:bg-white/40 transition-colors">
-                      <td className="py-5 text-sm font-mono text-on-surface">{tx.id}</td>
-                      <td className="py-5 text-sm text-on-surface">{tx.user || 'Unknown User'}</td>
-                      <td className="py-5 text-sm text-on-surface uppercase font-bold">{tx.type}</td>
-                      <td className="py-5 text-sm font-bold text-primary">{tx.points}</td>
-                      <td className="py-5 text-sm text-on-surface-variant">
-                        {new Date(tx.created || tx.created_at).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
     </div>
   );
 };
@@ -85,30 +177,28 @@ const mockLiabilitySnapshots = [
 export const LiabilityDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
 
-  // Fetch users count to calculate mock current liability
+  // Fetch users count to calculate current liability
   const { data: usersData } = useList<any>({
     resource: 'users',
     pagination: { pageSize: 1 },
   });
 
   const totalUsers = usersData?.total || 42500;
-  // Let's assume average points per user is 350 pts
   const totalOutstandingPoints = totalUsers * 350;
   const monetaryLiabilityMYR = totalOutstandingPoints * 0.01;
 
   const handleExpireStalePoints = () => {
     Modal.confirm({
       title: 'Expire Stale Points (12+ Months Inactive)',
-      content: 'Are you sure you want to expire points for all users who have been inactive for over 12 months? This action will generate expire ledger records and update balances.',
+      content: 'Are you sure you want to expire points for all users who have been inactive for over 12 months?',
       okText: 'Execute Expiry Batch',
       okButtonProps: { danger: true, style: { border: 'none' } },
       cancelText: 'Cancel',
       onOk: () => {
         setLoading(true);
-        message.loading({ content: 'Scanning stale accounts and running points expiry batch...', key: 'expiry-batch' });
-        
+        message.loading({ content: 'Running points expiry batch...', key: 'expiry-batch' });
         setTimeout(() => {
-          message.success({ content: 'Successfully expired 24,500 points across 18 inactive customer profiles!', key: 'expiry-batch', duration: 3 });
+          message.success({ content: 'Successfully expired 24,500 points!', key: 'expiry-batch', duration: 3 });
           setLoading(false);
         }, 1500);
       },
@@ -116,71 +206,53 @@ export const LiabilityDashboard: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 font-body text-left">
-      <div className="flex justify-between items-end">
+    <div className="flex flex-col gap-5 text-left">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-surface-variant dark:border-white/10">
         <div>
-          <h2 className="font-headline text-2xl font-bold text-on-surface">Liability Monitor</h2>
-          <p className="text-body-lg text-on-surface-variant">Track outstanding financial points obligations and run maintenance batches</p>
+          <h3 className="text-base font-black text-on-surface dark:text-white">Liability Monitor</h3>
+          <p className="text-xs text-on-surface-variant dark:text-[#85af9b]">Track outstanding financial points obligations and run maintenance batches</p>
         </div>
-        <Button
+        <button
           onClick={handleExpireStalePoints}
-          loading={loading}
-          danger
-          type="primary"
-          className="h-11 rounded-xl px-6 font-bold border-none shadow-lg shadow-red-500/10 cursor-pointer"
+          disabled={loading}
+          className="bg-red-500 hover:bg-red-600 text-white text-xs font-black px-4 py-2 rounded-xl border-none cursor-pointer shadow-sm active:scale-95 transition-all self-start sm:self-auto"
         >
           Expire Stale Points
-        </Button>
+        </button>
       </div>
 
-      {/* Alert Banner if liability threshold exceeded */}
-      {monetaryLiabilityMYR > 10000 && (
-        <Alert
-          message="Points Liability Warning Threshold Exceeded"
-          description={`Outstanding points monetary liability has breached the warning threshold (currently at RM ${monetaryLiabilityMYR.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}). Consider launching points redemption campaigns or expiring stale inactive accounts.`}
-          type="warning"
-          showIcon
-          className="rounded-2xl"
-        />
-      )}
-
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-gutter">
-        <div className="glass-panel p-glass-padding rounded-3xl">
-          <p className="text-[10px] text-outline uppercase font-semibold">Total Outstanding Points</p>
-          <h3 className="font-headline text-2xl font-black text-on-surface mt-1">{totalOutstandingPoints.toLocaleString()} pts</h3>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-[#f8faf9] dark:bg-[#001f15] p-4 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+          <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">Outstanding Points</p>
+          <h3 className="text-xl font-black text-on-surface dark:text-white">{totalOutstandingPoints.toLocaleString()} pts</h3>
         </div>
-        <div className="glass-panel p-glass-padding rounded-3xl">
-          <p className="text-[10px] text-outline uppercase font-semibold">Monetary Liability</p>
-          <h3 className="font-headline text-2xl font-black text-primary mt-1">RM {monetaryLiabilityMYR.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
-          <p className="text-[10px] text-outline mt-1 font-semibold">Based on RM0.01 per point (1 sen/pt)</p>
+        <div className="bg-[#f8faf9] dark:bg-[#001f15] p-4 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+          <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">Monetary Liability</p>
+          <h3 className="text-xl font-black text-[#006d37] dark:text-[#6bfe9c]">RM {monetaryLiabilityMYR.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
         </div>
-        <div className="glass-panel p-glass-padding rounded-3xl">
-          <p className="text-[10px] text-outline uppercase font-semibold">30-Day Change</p>
-          <h3 className="font-headline text-2xl font-black text-emerald-600 mt-1">+14.2%</h3>
-          <p className="text-xs text-on-surface-variant mt-1">Increase in active liabilities</p>
+        <div className="bg-[#f8faf9] dark:bg-[#001f15] p-4 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+          <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">30-Day Change</p>
+          <h3 className="text-xl font-black text-emerald-600 dark:text-emerald-400">+14.2%</h3>
         </div>
-        <div className="glass-panel p-glass-padding rounded-3xl">
-          <p className="text-[10px] text-outline uppercase font-semibold">Active Points Holders</p>
-          <h3 className="font-headline text-2xl font-black text-on-surface mt-1">{(totalUsers * 0.72).toFixed(0)} users</h3>
-          <p className="text-xs text-on-surface-variant mt-1">72% of users hold &gt;0 balance</p>
+        <div className="bg-[#f8faf9] dark:bg-[#001f15] p-4 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+          <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">Active Holders</p>
+          <h3 className="text-xl font-black text-on-surface dark:text-white">{(totalUsers * 0.72).toFixed(0)} users</h3>
         </div>
       </div>
 
       {/* 30-Day Trend Chart */}
-      <div className="glass-panel rounded-[2rem] p-gutter text-left">
-        <h3 className="font-headline text-sm font-bold text-on-surface mb-6">30-Day Liability Trend (MYR Valuation)</h3>
-        <div className="h-72">
+      <div className="bg-[#f8faf9] dark:bg-[#001f15] p-4 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+        <h4 className="text-xs font-black text-on-surface dark:text-white mb-4">30-Day Liability Trend (MYR Valuation)</h4>
+        <div className="h-60">
           <ResponsiveContainer width="100%" height="100%">
-            <ResponsiveContainer>
-              <LineChart data={mockLiabilitySnapshots}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="snapshot_date" stroke="#747688" fontSize={11} tickLine={false} />
-                <YAxis stroke="#747688" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip />
-                <Line type="monotone" dataKey="monetary_value" stroke="#0040e0" strokeWidth={3} dot={{ r: 4 }} name="Liability (RM)" />
-              </LineChart>
-            </ResponsiveContainer>
+            <LineChart data={mockLiabilitySnapshots}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.05)" />
+              <XAxis dataKey="snapshot_date" stroke="#85af9b" fontSize={11} tickLine={false} />
+              <YAxis stroke="#85af9b" fontSize={11} tickLine={false} axisLine={false} />
+              <Tooltip />
+              <Line type="monotone" dataKey="monetary_value" stroke="#006d37" strokeWidth={3} dot={{ fill: '#6bfe9c' }} />
+            </LineChart>
           </ResponsiveContainer>
         </div>
       </div>

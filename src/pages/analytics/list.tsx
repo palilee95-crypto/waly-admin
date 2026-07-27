@@ -74,56 +74,98 @@ export const PlatformAnalytics: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6 font-body">
-      {/* Header and Toolbar */}
-      <div className="flex flex-wrap justify-between items-end gap-4">
-        <div>
-          <h2 className="font-headline text-2xl font-bold text-on-surface">Platform Analytics</h2>
-          <p className="text-body-lg text-on-surface-variant">Real-time charts, usage logs, and system metrics</p>
-        </div>
-        
-        {/* Date Filters & Export Actions */}
-        <div className="flex items-center gap-4 flex-wrap bg-white/40 p-2 rounded-2xl glass-panel">
-          <Radio.Group value={range} onChange={(e) => setRange(e.target.value)} buttonStyle="solid" className="rounded-xl overflow-hidden border-none flex">
-            <Radio.Button value="7d" className="border-none h-9 flex items-center">7 Days</Radio.Button>
-            <Radio.Button value="30d" className="border-none h-9 flex items-center">30 Days</Radio.Button>
-            <Radio.Button value="90d" className="border-none h-9 flex items-center">90 Days</Radio.Button>
-          </Radio.Group>
-          {range === 'custom' && <RangePicker className="h-9 rounded-xl border-none" />}
-          <Button 
+    <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
+      
+      {/* 1. Forest Green Hero Header */}
+      <section className="relative z-10 bg-gradient-to-b from-[#002d1e] via-[#003825] to-[#1a4333] text-white pt-14 sm:pt-16 pt-[max(3.5rem,calc(env(safe-area-inset-top)+1.5rem))] pb-24 sm:pb-28 rounded-none w-full px-5 sm:px-8">
+        <div className="max-w-[1100px] mx-auto flex flex-col items-center text-center relative">
+          
+          <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
+            WALY SYSTEM METRICS & PERFORMANCE
+          </span>
+
+          <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
+            Platform Analytics
+          </h1>
+          
+          <p className="text-xs sm:text-sm text-[#85af9b] max-w-md mb-5 font-medium leading-relaxed">
+            Real-time user engagement charts, points velocity flow, tier distribution, and merchant benchmarks.
+          </p>
+
+          <button
             onClick={handleExportCSV}
-            type="primary" 
-            className="h-9 rounded-xl bg-primary text-white border-none flex items-center gap-2 font-bold shadow-md shadow-primary/10 cursor-pointer"
+            className="inline-flex items-center gap-2 bg-[#6bfe9c] text-[#002d1e] font-black text-xs px-5 py-2.5 rounded-full hover:scale-105 transition-all shadow-lg border-none cursor-pointer"
           >
             <span className="material-symbols-outlined text-[18px]">download</span>
-            Export CSV
-          </Button>
-        </div>
-      </div>
+            <span>Export CSV Report</span>
+          </button>
 
-      {/* KPI Cards Row (from 21-platform-analytics.md) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter">
-        <div className="glass-panel p-glass-padding rounded-3xl text-left">
-          <p className="text-[10px] text-outline uppercase font-semibold">Total Platform Users</p>
-          <h3 className="font-headline text-2xl font-black text-on-surface mt-1">{totalUsers.toLocaleString()}</h3>
-          <p className="text-xs text-emerald-600 mt-1 font-bold">+89 joined today</p>
         </div>
-        <div className="glass-panel p-glass-padding rounded-3xl text-left">
-          <p className="text-[10px] text-outline uppercase font-semibold">Active Merchants</p>
-          <h3 className="font-headline text-2xl font-black text-on-surface mt-1">{totalMerchants.toLocaleString()}</h3>
-          <p className="text-xs text-emerald-600 mt-1 font-bold">+11% active growth</p>
-        </div>
-        <div className="glass-panel p-glass-padding rounded-3xl text-left">
-          <p className="text-[10px] text-outline uppercase font-semibold">DAU / MAU Ratio</p>
-          <h3 className="font-headline text-2xl font-black text-on-surface mt-1">30.1%</h3>
-          <p className="text-xs text-on-surface-variant mt-1">12.8k active today / 42.5k monthly</p>
-        </div>
-        <div className="glass-panel p-glass-padding rounded-3xl text-left">
-          <p className="text-[10px] text-outline uppercase font-semibold">Active Campaigns</p>
-          <h3 className="font-headline text-2xl font-black text-on-surface mt-1">{activeCampaigns} Campaigns</h3>
-          <p className="text-xs text-primary font-bold">{activeCampaigns} ongoing promos</p>
-        </div>
-      </div>
+      </section>
+
+      {/* 2. Main Content Canvas */}
+      <div className="relative z-20 bg-[#fcf9f8] dark:bg-[#00150e] pt-0 pb-28">
+        <div className="max-w-[1100px] mx-auto w-full px-3 sm:px-6">
+          
+          {/* Main Bento Container (Overlapping Hero) */}
+          <div className="-mt-16 relative z-30 bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+            
+            {/* Range Selection Pills Bar */}
+            <div className="flex items-center justify-between gap-3 pb-4 border-b border-surface-variant dark:border-white/10 mb-5">
+              <div className="flex items-center gap-2">
+                {[
+                  { label: '7 Days', value: '7d' },
+                  { label: '30 Days', value: '30d' },
+                  { label: '90 Days', value: '90d' },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    onClick={() => setRange(item.value as any)}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                      range === item.value
+                        ? 'bg-[#006d37] text-white border-[#006d37] shadow-sm'
+                        : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30]'
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+
+              <span className="text-[10px] font-bold text-[#006d37] dark:text-[#6bfe9c]">
+                Live System Audit
+              </span>
+            </div>
+
+            {/* Compact 2-Column Mobile / 4-Column Desktop KPI Cards Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              
+              <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3.5 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+                <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">TOTAL USERS</p>
+                <h3 className="text-xl font-black text-on-surface dark:text-white mb-0">{totalUsers.toLocaleString()}</h3>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block mt-1">+89 joined today</span>
+              </div>
+
+              <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3.5 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+                <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">MERCHANTS</p>
+                <h3 className="text-xl font-black text-on-surface dark:text-white mb-0">{totalMerchants.toLocaleString()}</h3>
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold block mt-1">+11% active growth</span>
+              </div>
+
+              <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3.5 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+                <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">DAU / MAU RATIO</p>
+                <h3 className="text-xl font-black text-[#006d37] dark:text-[#6bfe9c] mb-0">30.1%</h3>
+                <span className="text-[10px] text-on-surface-variant dark:text-[#85af9b] font-medium block mt-1">12.8k active today</span>
+              </div>
+
+              <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3.5 rounded-2xl border border-surface-variant dark:border-[#004d30]">
+                <p className="text-[9px] text-on-surface-variant dark:text-[#85af9b] uppercase font-black tracking-wider mb-1">CAMPAIGNS</p>
+                <h3 className="text-xl font-black text-on-surface dark:text-white mb-0">{activeCampaigns} Active</h3>
+                <span className="text-[10px] text-[#006d37] dark:text-[#6bfe9c] font-bold block mt-1">8 ongoing promos</span>
+              </div>
+
+            </div>
 
       {/* Charts Bento Grid */}
       <div className="grid grid-cols-12 gap-gutter">
@@ -252,10 +294,14 @@ export const PlatformAnalytics: React.FC = () => {
                 </tr>
               ))}
             </tbody>
-          </table>
+            </table>
+          </div>
         </div>
+
       </div>
     </div>
+  </div>
+</div>
   );
 };
 export const MerchantRankings: React.FC = () => <div>Merchant Rankings Placeholder</div>;
