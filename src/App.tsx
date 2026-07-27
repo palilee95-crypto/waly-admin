@@ -9,6 +9,7 @@ import { walyDataProvider } from './dataProvider';
 import { walyAuthProvider } from './authProvider';
 import { accessControlProvider } from './accessControlProvider';
 import { AppLayout } from './components/layout';
+import { PwaInstallPrompt } from './components/PwaInstallPrompt';
 import { LoginPage } from './pages/auth/login';
 import { DashboardPage } from './pages/dashboard';
 import { MerchantList } from './pages/merchants/list';
@@ -192,6 +193,7 @@ export const App: React.FC = () => {
               <Route path="*" element={<Navigate to="/dashboard" />} />
             </Routes>
           </Refine>
+          <PwaInstallPrompt />
         </AntdApp>
       </ConfigProvider>
     </BrowserRouter>
