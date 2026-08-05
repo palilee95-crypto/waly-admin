@@ -86,6 +86,11 @@ export const accessControlProvider: AccessControlProvider = {
         edit:   ['super_admin', 'operations'],
         delete: ['super_admin'],
       },
+      system_settings: {
+        list:   ['super_admin', 'operations'],
+        show:   ['super_admin', 'operations'],
+        edit:   ['super_admin', 'operations'],
+      },
     };
 
     const allowed = permissions[resource ?? '']?.[action]?.includes(role) ?? false;

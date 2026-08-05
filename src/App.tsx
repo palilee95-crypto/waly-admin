@@ -34,6 +34,7 @@ import { SalesLeaderboardPage } from './pages/sales-dashboard/leaderboard';
 import { SalesCardPage } from './pages/sales-dashboard/card';
 import { SubscriptionList } from './pages/subscriptions/list';
 import { SalesAgentList } from './pages/sales-agents/list';
+import { SystemSettingsPage } from './pages/settings';
 
 
 // Theme Configuration matching code.html tokens (Geometric Precision)
@@ -109,6 +110,11 @@ export const App: React.FC = () => {
                 list: '/subscriptions',
                 meta: { label: 'Billing' },
               },
+              {
+                name: 'system_settings',
+                list: '/settings',
+                meta: { label: 'Settings' },
+              },
             ]}
             options={{
               syncWithLocation: true,
@@ -174,6 +180,7 @@ export const App: React.FC = () => {
                 <Route path="/ledger" element={<TransactionList />} />
                 <Route path="/ledger/liability" element={<LiabilityDashboard />} />
                 <Route path="/subscriptions" element={<SubscriptionList />} />
+                <Route path="/settings" element={<SystemSettingsPage />} />
                 
                 <Route path="/loyalty/tiers" element={<TierList />} />
                 <Route path="/loyalty/tiers/edit/:id" element={<TierEdit />} />
