@@ -5,6 +5,7 @@ import { Tag, message, Modal, Form, Select, Input, DatePicker, Button, Checkbox 
 import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { Link } from 'react-router-dom';
+import { pb } from '../../lib/pocketbase';
 
 export const SubscriptionList: React.FC = () => {
   const generatePbId = () => {
