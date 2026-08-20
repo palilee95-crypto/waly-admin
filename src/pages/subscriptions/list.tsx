@@ -307,6 +307,58 @@ export const SubscriptionList: React.FC = () => {
     });
   };
 
+  // 2.2 NFC Stand Hardware Pricing Settings (pricesettings02)
+  const { data: nfcPricingData, isLoading: isLoadingNfcPricing, refetch: refetchNfcPricing } = useOne({
+    resource: 'pricing_settings',
+    id: 'pricesettings02',
+  });
+  const [nfcPricingForm] = Form.useForm();
+
+  React.useEffect(() => {
+    if (nfcPricingData?.data) {
+      nfcPricingForm.setFieldsValue({
+        single_price: nfcPricingData.data.base_price_1m ?? 119,
+        duo_price: nfcPricingData.data.discount_3m ?? 198,
+        enterprise_price: nfcPricingData.data.discount_6m ?? 469,
+      });
+    }
+  }, [nfcPricingData, nfcPricingForm]);
+
+  const handleNfcPricingSubmit = (values: any) => {
+    updatePricing({
+      resource: 'pricing_settings',
+      id: 'pricesettings02',
+      values: {
+        base_price_1m: Number(values.single_price),
+        discount_3m: Number(values.duo_price),
+        discount_6m: Number(values.enterprise_price),
+        discount_9m: 0,
+        discount_12m: 0,
+        enable_3m: true,
+        enable_6m: true,
+        enable_9m: false,
+        enable_12m: false,
+      },
+      successNotification: () => {
+        message.success('NFC Stand pricing updated successfully');
+        refetchNfcPricing();
+        return {
+          message: 'Hardware Pricing Updated',
+          description: 'NFC hardware package prices saved.',
+          type: 'success',
+        };
+      },
+      errorNotification: (err: any) => {
+        message.error(err?.message || 'Failed to update NFC pricing.');
+        return {
+          message: 'Update Failed',
+          description: err?.message,
+          type: 'error',
+        };
+      }
+    });
+  };
+
   // 3. Promo Codes
   const { tableQueryResult: promoQuery } = useTable<any>({
     resource: 'subscription_promo_codes',
@@ -697,114 +749,200 @@ export const SubscriptionList: React.FC = () => {
 
       {/* Pricing Settings Tab */}
       {activeTab === 'pricing' && (
-        <div className="glass-panel rounded-[2rem] p-gutter max-w-xl">
-          <h3 className="font-headline text-lg font-bold text-on-surface mb-6">Pro Plan Pricing Model</h3>
-          {isLoadingPricing ? (
-            <div className="py-10 flex justify-center items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : (
-            <Form
-              form={pricingForm}
-              layout="vertical"
-              onFinish={handlePricingSubmit}
-              requiredMark={false}
-            >
-              <Form.Item
-                name="base_price_1m"
-                label={<span className="font-headline text-xs font-semibold text-outline">Base Monthly Price (RM)</span>}
-                rules={[{ required: true, message: 'Please enter base monthly price' }]}
-              >
-                <Input type="number" placeholder="119" className="rounded-xl h-10 border-black/10" />
-              </Form.Item>
-
-              <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
-                  <Form.Item
-                    name="enable_3m"
-                    valuePropName="checked"
-                    className="mb-2"
-                  >
-                    <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 3 Months</span></Checkbox>
-                  </Form.Item>
-                  <Form.Item
-                    name="discount_3m"
-                    label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
-                    rules={[{ required: true, message: 'Required' }]}
-                    className="mb-0"
-                  >
-                    <Input type="number" placeholder="5" className="rounded-xl h-10 border-black/10" />
-                  </Form.Item>
-                </div>
-
-                <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
-                  <Form.Item
-                    name="enable_6m"
-                    valuePropName="checked"
-                    className="mb-2"
-                  >
-                    <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 6 Months</span></Checkbox>
-                  </Form.Item>
-                  <Form.Item
-                    name="discount_6m"
-                    label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
-                    rules={[{ required: true, message: 'Required' }]}
-                    className="mb-0"
-                  >
-                    <Input type="number" placeholder="10" className="rounded-xl h-10 border-black/10" />
-                  </Form.Item>
-                </div>
-
-                <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
-                  <Form.Item
-                    name="enable_9m"
-                    valuePropName="checked"
-                    className="mb-2"
-                  >
-                    <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 9 Months</span></Checkbox>
-                  </Form.Item>
-                  <Form.Item
-                    name="discount_9m"
-                    label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
-                    rules={[{ required: true, message: 'Required' }]}
-                    className="mb-0"
-                  >
-                    <Input type="number" placeholder="12" className="rounded-xl h-10 border-black/10" />
-                  </Form.Item>
-                </div>
-
-                <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
-                  <Form.Item
-                    name="enable_12m"
-                    valuePropName="checked"
-                    className="mb-2"
-                  >
-                    <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 12 Months</span></Checkbox>
-                  </Form.Item>
-                  <Form.Item
-                    name="discount_12m"
-                    label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
-                    rules={[{ required: true, message: 'Required' }]}
-                    className="mb-0"
-                  >
-                    <Input type="number" placeholder="15" className="rounded-xl h-10 border-black/10" />
-                  </Form.Item>
-                </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Card 1: Pro Plan Subscription Pricing */}
+          <div className="glass-panel rounded-[2rem] p-gutter">
+            <h3 className="font-headline text-lg font-bold text-on-surface mb-6">Pro Plan Pricing Model</h3>
+            {isLoadingPricing ? (
+              <div className="py-10 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               </div>
-
-              <Form.Item className="mb-0 mt-6">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  loading={isUpdatingPricing}
-                  className="rounded-xl h-10 w-full font-bold border-none"
-                  style={{ backgroundColor: '#0040e0' }}
+            ) : (
+              <Form
+                form={pricingForm}
+                layout="vertical"
+                onFinish={handlePricingSubmit}
+                requiredMark={false}
+              >
+                <Form.Item
+                  name="base_price_1m"
+                  label={<span className="font-headline text-xs font-semibold text-outline">Base Monthly Price (RM)</span>}
+                  rules={[{ required: true, message: 'Please enter base monthly price' }]}
                 >
-                  Save Plan Configurations
-                </Button>
-              </Form.Item>
-            </Form>
-          )}
+                  <Input type="number" placeholder="79" className="rounded-xl h-10 border-black/10" />
+                </Form.Item>
+
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                  <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
+                    <Form.Item
+                      name="enable_3m"
+                      valuePropName="checked"
+                      className="mb-2"
+                    >
+                      <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 3 Months</span></Checkbox>
+                    </Form.Item>
+                    <Form.Item
+                      name="discount_3m"
+                      label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
+                      rules={[{ required: true, message: 'Required' }]}
+                      className="mb-0"
+                    >
+                      <Input type="number" placeholder="5" className="rounded-xl h-10 border-black/10" />
+                    </Form.Item>
+                  </div>
+
+                  <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
+                    <Form.Item
+                      name="enable_6m"
+                      valuePropName="checked"
+                      className="mb-2"
+                    >
+                      <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 6 Months</span></Checkbox>
+                    </Form.Item>
+                    <Form.Item
+                      name="discount_6m"
+                      label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
+                      rules={[{ required: true, message: 'Required' }]}
+                      className="mb-0"
+                    >
+                      <Input type="number" placeholder="10" className="rounded-xl h-10 border-black/10" />
+                    </Form.Item>
+                  </div>
+
+                  <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
+                    <Form.Item
+                      name="enable_9m"
+                      valuePropName="checked"
+                      className="mb-2"
+                    >
+                      <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 9 Months</span></Checkbox>
+                    </Form.Item>
+                    <Form.Item
+                      name="discount_9m"
+                      label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
+                      rules={[{ required: true, message: 'Required' }]}
+                      className="mb-0"
+                    >
+                      <Input type="number" placeholder="12" className="rounded-xl h-10 border-black/10" />
+                    </Form.Item>
+                  </div>
+
+                  <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
+                    <Form.Item
+                      name="enable_12m"
+                      valuePropName="checked"
+                      className="mb-2"
+                    >
+                      <Checkbox><span className="font-headline text-sm font-bold text-on-surface">Enable 12 Months</span></Checkbox>
+                    </Form.Item>
+                    <Form.Item
+                      name="discount_12m"
+                      label={<span className="font-headline text-xs font-semibold text-outline">Discount (%)</span>}
+                      rules={[{ required: true, message: 'Required' }]}
+                      className="mb-0"
+                    >
+                      <Input type="number" placeholder="15" className="rounded-xl h-10 border-black/10" />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <Form.Item className="mb-0 mt-6">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isUpdatingPricing}
+                    className="rounded-xl h-10 w-full font-bold border-none"
+                    style={{ backgroundColor: '#0040e0' }}
+                  >
+                    Save Plan Configurations
+                  </Button>
+                </Form.Item>
+              </Form>
+            )}
+          </div>
+
+          {/* Card 2: NFC Stand Hardware Packages Pricing (pricesettings02) */}
+          <div className="glass-panel rounded-[2rem] p-gutter">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="font-headline text-lg font-bold text-on-surface">NFC Stand Hardware Pricing</h3>
+                <p className="text-xs text-outline mt-1">Configures hardware prices on <code>/nfc-marketplace</code></p>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-[11px] font-bold">pricesettings02</span>
+            </div>
+
+            {isLoadingNfcPricing ? (
+              <div className="py-10 flex justify-center items-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-500"></div>
+              </div>
+            ) : (
+              <Form
+                form={nfcPricingForm}
+                layout="vertical"
+                onFinish={handleNfcPricingSubmit}
+                requiredMark={false}
+              >
+                <div className="space-y-4">
+                  <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-headline text-sm font-bold text-on-surface">1x Stand + 500 Customers</span>
+                      <span className="text-xs font-semibold text-outline">Single Branch</span>
+                    </div>
+                    <Form.Item
+                      name="single_price"
+                      label={<span className="font-headline text-xs font-semibold text-outline">Price (RM)</span>}
+                      rules={[{ required: true, message: 'Price is required' }]}
+                      className="mb-0"
+                    >
+                      <Input type="number" placeholder="119" className="rounded-xl h-10 border-black/10 font-bold" />
+                    </Form.Item>
+                  </div>
+
+                  <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-headline text-sm font-bold text-on-surface">2x Stand + 1,000 Customers</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-700 text-[10px] font-bold">POPULAR DUO</span>
+                    </div>
+                    <Form.Item
+                      name="duo_price"
+                      label={<span className="font-headline text-xs font-semibold text-outline">Price (RM)</span>}
+                      rules={[{ required: true, message: 'Price is required' }]}
+                      className="mb-0"
+                    >
+                      <Input type="number" placeholder="198" className="rounded-xl h-10 border-black/10 font-bold" />
+                    </Form.Item>
+                  </div>
+
+                  <div className="border border-black/5 p-4 rounded-2xl bg-black/[0.01]">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-headline text-sm font-bold text-on-surface">5x Stand + 5,000 Customers</span>
+                      <span className="text-xs font-semibold text-outline">Franchise Bundle</span>
+                    </div>
+                    <Form.Item
+                      name="enterprise_price"
+                      label={<span className="font-headline text-xs font-semibold text-outline">Price (RM)</span>}
+                      rules={[{ required: true, message: 'Price is required' }]}
+                      className="mb-0"
+                    >
+                      <Input type="number" placeholder="469" className="rounded-xl h-10 border-black/10 font-bold" />
+                    </Form.Item>
+                  </div>
+                </div>
+
+                <Form.Item className="mb-0 mt-6">
+                  <Button
+                    type="primary"
+                    htmlType="submit"
+                    loading={isUpdatingPricing}
+                    className="rounded-xl h-10 w-full font-bold border-none"
+                    style={{ backgroundColor: '#f59e0b', color: '#000' }}
+                  >
+                    Save NFC Stand Pricing
+                  </Button>
+                </Form.Item>
+              </Form>
+            )}
+          </div>
         </div>
       )}
 
