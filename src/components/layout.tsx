@@ -62,6 +62,7 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         { title: 'Dashboard', path: '/dashboard', category: 'Pages' },
         { title: 'Merchants Queue', path: '/merchants', category: 'Pages' },
         { title: 'Users Support', path: '/users', category: 'Pages' },
+        { title: 'Shipping & Hardware Orders', path: '/shipping', category: 'Pages' },
         { title: 'Billing & Subscriptions', path: '/subscriptions', category: 'Pages' },
         { title: 'Points Ledger', path: '/ledger', category: 'Pages' },
         { title: 'Liability Monitor', path: '/ledger/liability', category: 'Pages' },
@@ -78,6 +79,7 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         { title: 'Admin Accounts', path: '/admin-users', category: 'Pages' },
         { title: 'Audit Logs', path: '/admin-users/audit-logs', category: 'Pages' },
         { title: 'Sales Agents Hub', path: '/sales-agents', category: 'Pages' },
+        { title: 'System Settings', path: '/settings', category: 'Pages' },
       ];
 
   const filteredResults = searchQuery.trim() === ''
@@ -115,6 +117,7 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Users', icon: 'group', route: '/users' },
         { name: 'Sales Agents', icon: 'badge', route: '/sales-agents' },
         { name: 'Billing', icon: 'credit_card', route: '/subscriptions' },
+        { name: 'Shipping', icon: 'local_shipping', route: '/shipping' },
         { name: 'Loyalty', icon: 'groups_3', route: '/loyalty/tiers' },
         { name: 'Rewards', icon: 'payments', route: '/rewards' },
         { name: 'Campaigns', icon: 'campaign', route: '/campaigns' },
@@ -122,7 +125,8 @@ export const AppLayout: React.FC<LayoutProps> = ({ children }) => {
         { name: 'Analytics', icon: 'trending_up', route: '/analytics' },
         { name: 'Fraud', icon: 'security', route: '/fraud' },
         { name: 'Notifications', icon: 'notifications', route: '/notifications' },
-        { name: 'Admin Users', icon: 'settings', route: '/admin-users' },
+        { name: 'Admin Users', icon: 'manage_accounts', route: '/admin-users' },
+        { name: 'Settings', icon: 'settings', route: '/settings' },
       ];
 
   // Helper to determine if a route is active

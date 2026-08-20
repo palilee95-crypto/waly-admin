@@ -5,8 +5,8 @@ import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom
 import routerProvider, { NavigateToResource } from '@refinedev/react-router-v6';
 import { App as AntdApp, ConfigProvider } from 'antd';
 
-import { walyDataProvider } from './dataProvider';
-import { walyAuthProvider } from './authProvider';
+import { risevDataProvider } from './dataProvider';
+import { risevAuthProvider } from './authProvider';
 import { accessControlProvider } from './accessControlProvider';
 import { AppLayout } from './components/layout';
 import { PwaInstallPrompt } from './components/PwaInstallPrompt';
@@ -35,6 +35,7 @@ import { SalesCardPage } from './pages/sales-dashboard/card';
 import { SubscriptionList } from './pages/subscriptions/list';
 import { SalesAgentList } from './pages/sales-agents/list';
 import { SystemSettingsPage } from './pages/settings';
+import { ShippingOrderList } from './pages/shipping/list';
 
 
 // Theme Configuration matching code.html tokens (Geometric Precision)
@@ -54,8 +55,8 @@ export const App: React.FC = () => {
       <ConfigProvider theme={customTheme}>
         <AntdApp>
           <Refine
-            dataProvider={walyDataProvider}
-            authProvider={walyAuthProvider}
+            dataProvider={risevDataProvider}
+            authProvider={risevAuthProvider}
             accessControlProvider={accessControlProvider}
             routerProvider={routerProvider}
             notificationProvider={useNotificationProvider}
@@ -106,9 +107,19 @@ export const App: React.FC = () => {
                 meta: { label: 'Sales Dashboard' },
               },
               {
+                name: 'hardware_orders',
+                list: '/shipping',
+                meta: { label: 'Shipping' },
+              },
+              {
                 name: 'subscriptions',
                 list: '/subscriptions',
                 meta: { label: 'Billing' },
+              },
+              {
+                name: '_superusers',
+                list: '/admin-users',
+                meta: { label: 'Admin Users' },
               },
               {
                 name: 'system_settings',
@@ -179,6 +190,7 @@ export const App: React.FC = () => {
                 <Route path="/rewards/show/:id" element={<RewardShow />} />
                 <Route path="/ledger" element={<TransactionList />} />
                 <Route path="/ledger/liability" element={<LiabilityDashboard />} />
+                <Route path="/shipping" element={<ShippingOrderList />} />
                 <Route path="/subscriptions" element={<SubscriptionList />} />
                 <Route path="/settings" element={<SystemSettingsPage />} />
                 
