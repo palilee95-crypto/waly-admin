@@ -272,39 +272,35 @@ export const SubscriptionList: React.FC = () => {
     }
   }, [pricingData, pricingForm]);
 
-  const handlePricingSubmit = (values: any) => {
-    updatePricing({
-      resource: 'pricing_settings',
-      id: 'pricesettings01',
-      values: {
-        base_price_1m: Number(values.base_price_1m),
-        discount_3m: Number(values.discount_3m),
-        discount_6m: Number(values.discount_6m),
-        discount_9m: Number(values.discount_9m),
-        discount_12m: Number(values.discount_12m),
-        enable_3m: !!values.enable_3m,
-        enable_6m: !!values.enable_6m,
-        enable_9m: !!values.enable_9m,
-        enable_12m: !!values.enable_12m,
-      },
-      successNotification: () => {
-        message.success('Pricing configurations updated successfully');
-        refetchPricing();
-        return {
-          message: 'Pricing Updated',
-          description: 'Custom pricing options saved.',
-          type: 'success',
-        };
-      },
-      errorNotification: (err: any) => {
-        message.error(err?.message || 'Failed to update pricing settings.');
-        return {
-          message: 'Update Failed',
-          description: err?.message,
-          type: 'error',
-        };
-      }
-    });
+  const [isSavingPricing, setIsSavingPricing] = useState(false);
+  const [isSavingNfcPricing, setIsSavingNfcPricing] = useState(false);
+
+  const handlePricingSubmit = async (values: any) => {
+    setIsSavingPricing(true);
+    try {
+      await pb.send('/api/risev/admin/pricing-settings', {
+        method: 'POST',
+        body: {
+          id: 'pricesettings01',
+          base_price_1m: Number(values.base_price_1m),
+          discount_3m: Number(values.discount_3m),
+          discount_6m: Number(values.discount_6m),
+          discount_9m: Number(values.discount_9m),
+          discount_12m: Number(values.discount_12m),
+          enable_3m: !!values.enable_3m,
+          enable_6m: !!values.enable_6m,
+          enable_9m: !!values.enable_9m,
+          enable_12m: !!values.enable_12m,
+        },
+      });
+      message.success('Pro Plan pricing updated successfully');
+      refetchPricing();
+    } catch (err: any) {
+      console.error('Pro plan pricing update error:', err);
+      message.error(err?.message || 'Failed to update pricing settings.');
+    } finally {
+      setIsSavingPricing(false);
+    }
   };
 
   // 2.2 NFC Stand Hardware Pricing Settings (pricesettings02)
@@ -325,29 +321,30 @@ export const SubscriptionList: React.FC = () => {
   }, [nfcPricingData, nfcPricingForm]);
 
   const handleNfcPricingSubmit = async (values: any) => {
-    const payload = {
-      base_price_1m: Number(values.single_price),
-      discount_3m: Number(values.duo_price),
-      discount_6m: Number(values.enterprise_price),
-      discount_9m: 12,
-      discount_12m: 15,
-      enable_3m: true,
-      enable_6m: true,
-      enable_9m: false,
-      enable_12m: false,
-    };
-
+    setIsSavingNfcPricing(true);
     try {
-      if (nfcPricingData?.data) {
-        await pb.collection('pricing_settings').update('pricesettings02', payload);
-      } else {
-        await pb.collection('pricing_settings').create({ id: 'pricesettings02', ...payload });
-      }
+      await pb.send('/api/risev/admin/pricing-settings', {
+        method: 'POST',
+        body: {
+          id: 'pricesettings02',
+          base_price_1m: Number(values.single_price),
+          discount_3m: Number(values.duo_price),
+          discount_6m: Number(values.enterprise_price),
+          discount_9m: 12,
+          discount_12m: 15,
+          enable_3m: true,
+          enable_6m: true,
+          enable_9m: false,
+          enable_12m: false,
+        },
+      });
       message.success('NFC Stand pricing updated successfully');
       refetchNfcPricing();
     } catch (err: any) {
       console.error('NFC Pricing update error:', err);
       message.error(err?.message || 'Failed to update NFC pricing.');
+    } finally {
+      setIsSavingNfcPricing(false);
     }
   };
 
@@ -842,7 +839,7 @@ export const SubscriptionList: React.FC = () => {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    loading={isUpdatingPricing}
+                    loading={isSavingPricing}
                     className="rounded-xl h-10 w-full font-bold border-none"
                     style={{ backgroundColor: '#0040e0' }}
                   >
@@ -925,7 +922,7 @@ export const SubscriptionList: React.FC = () => {
                   <Button
                     type="primary"
                     htmlType="submit"
-                    loading={isUpdatingPricing}
+                    loading={isSavingNfcPricing}
                     className="rounded-xl h-10 w-full font-bold border-none"
                     style={{ backgroundColor: '#f59e0b', color: '#000' }}
                   >
