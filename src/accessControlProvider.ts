@@ -68,7 +68,7 @@ export const accessControlProvider: AccessControlProvider = {
         list:   ['super_admin', 'operations', 'analyst'],
         edit:   ['super_admin', 'operations'],
       },
-      admin_users: {
+      _superusers: {
         list:   ['super_admin'],
         create: ['super_admin'],
         edit:   ['super_admin'],
@@ -86,12 +86,30 @@ export const accessControlProvider: AccessControlProvider = {
         edit:   ['super_admin', 'operations'],
         delete: ['super_admin'],
       },
+      hardware_orders: {
+        list:   ['super_admin', 'operations', 'analyst', 'support'],
+        show:   ['super_admin', 'operations', 'analyst', 'support'],
+        create: ['super_admin', 'operations'],
+        edit:   ['super_admin', 'operations', 'support'],
+        delete: ['super_admin'],
+      },
+      subscriptions: {
+        list:   ['super_admin', 'operations', 'analyst', 'support'],
+        show:   ['super_admin', 'operations', 'analyst', 'support'],
+        create: ['super_admin', 'operations'],
+        edit:   ['super_admin', 'operations'],
+        delete: ['super_admin'],
+      },
       system_settings: {
         list:   ['super_admin', 'operations'],
         show:   ['super_admin', 'operations'],
         edit:   ['super_admin', 'operations'],
       },
     };
+
+    if (role === 'super_admin') {
+      return { can: true };
+    }
 
     const allowed = permissions[resource ?? '']?.[action]?.includes(role) ?? false;
     return { can: allowed };

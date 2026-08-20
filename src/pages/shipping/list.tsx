@@ -380,7 +380,7 @@ export const ShippingOrderList: React.FC = () => {
                 const preview = record.city && record.state ? `${record.city}, ${record.postcode} (${record.state})` : record.full_address || '-';
                 return (
                   <div style={{ maxWidth: 220 }}>
-                    <div style={{ fontSize: 12, color: '#334155', fontWeight: 600 }} numberOfLines={1}>
+                    <div style={{ fontSize: 12, color: '#334155', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {preview}
                     </div>
                     <div style={{ fontSize: 11, color: '#64748B', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
