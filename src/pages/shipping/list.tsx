@@ -264,6 +264,11 @@ export const ShippingOrderList: React.FC = () => {
           order_id: selectedOrder.id,
           courier_name: selectedCourierOption.courier_name,
           service_id: selectedCourierOption.service_id,
+          sender_name: senderAddress.name,
+          sender_phone: senderAddress.phone,
+          sender_address: senderAddress.address,
+          sender_postcode: senderAddress.postcode,
+          sender_state: senderAddress.state,
           notes: `EasyParcel 1-Click Booking (${selectedCourierOption.service_type || 'Standard'})`,
         },
       });
