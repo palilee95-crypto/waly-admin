@@ -91,7 +91,7 @@ export const ShippingOrderList: React.FC = () => {
   const { mutate: deleteOrder } = useDelete();
 
   // Refine Table for hardware_orders
-  const { tableProps, tableQueryResult } = useTable<HardwareOrder>({
+  const { tableQueryResult } = useTable<HardwareOrder>({
     resource: 'hardware_orders',
     sorters: {
       initial: [
@@ -102,11 +102,12 @@ export const ShippingOrderList: React.FC = () => {
       ],
     },
     pagination: {
-      pageSize: 20,
+      pageSize: 50,
     },
   });
 
-  const rawOrders: HardwareOrder[] = (tableProps.dataSource as any) || [];
+  const rawOrders: HardwareOrder[] = (tableQueryResult?.data?.data as any) || [];
+  const isLoading = tableQueryResult?.isLoading ?? false;
 
   // Filtered orders in-memory for instant responsive search
   const orders = rawOrders.filter((order) => {
@@ -331,7 +332,7 @@ export const ShippingOrderList: React.FC = () => {
         <Table<HardwareOrder>
           dataSource={orders}
           rowKey="id"
-          loading={tableProps.loading}
+          loading={isLoading}
           pagination={{ pageSize: 15, showSizeChanger: true, showTotal: (total) => `Total ${total} orders` }}
           columns={[
             {

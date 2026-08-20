@@ -77,12 +77,12 @@ export const SalesAgentList: React.FC = () => {
 
   const rawAgents = tableQueryResult?.data?.data || [];
 
-  // Rich fallback dataset matching Waly Sales Dashboard architecture
+  // Rich fallback dataset matching risev Sales Dashboard architecture
   const mockAgents = [
     {
       id: 'ag_01',
       name: 'Farhan Izwan',
-      email: 'farhan@waly.com',
+      email: 'farhan@risev.com',
       phone: '+60 12-345 6789',
       referral_code: 'AG-88192',
       status: 'active',
@@ -99,7 +99,7 @@ export const SalesAgentList: React.FC = () => {
     {
       id: 'ag_02',
       name: 'Ahmad Zaki',
-      email: 'zaki@waly.com',
+      email: 'zaki@risev.com',
       phone: '+60 17-889 1234',
       referral_code: 'AG-99120',
       status: 'active',
@@ -116,7 +116,7 @@ export const SalesAgentList: React.FC = () => {
     {
       id: 'ag_03',
       name: 'Mei Ling Tan',
-      email: 'meiling@waly.com',
+      email: 'meiling@risev.com',
       phone: '+60 19-332 4567',
       referral_code: 'AG-44182',
       status: 'active',
@@ -133,7 +133,7 @@ export const SalesAgentList: React.FC = () => {
     {
       id: 'ag_04',
       name: 'Suresh Kumar',
-      email: 'suresh@waly.com',
+      email: 'suresh@risev.com',
       phone: '+60 11-234 5678',
       referral_code: 'AG-77319',
       status: 'active',
@@ -150,7 +150,7 @@ export const SalesAgentList: React.FC = () => {
     {
       id: 'ag_05',
       name: 'Nurul Huda',
-      email: 'huda@waly.com',
+      email: 'huda@risev.com',
       phone: '+60 13-987 6543',
       referral_code: 'AG-22019',
       status: 'inactive',
@@ -194,7 +194,7 @@ export const SalesAgentList: React.FC = () => {
 
   // Copy referral code to clipboard
   const handleCopyCode = (code: string) => {
-    navigator.clipboard.writeText(`https://waly.app/join?ref=${code}`);
+    navigator.clipboard.writeText(`https://risev.app/join?ref=${code}`);
     message.success(`Referral code ${code} copied!`);
   };
 
@@ -326,7 +326,7 @@ export const SalesAgentList: React.FC = () => {
           
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY SALES FORCE MANAGEMENT
+            risev SALES FORCE MANAGEMENT
           </span>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
@@ -630,7 +630,7 @@ export const SalesAgentList: React.FC = () => {
           </Form.Item>
 
           <Form.Item name="email" label="Email Address" rules={[{ required: true, type: 'email' }]}>
-            <Input className="h-10 rounded-xl" placeholder="e.g. agent@waly.com" />
+            <Input className="h-10 rounded-xl" placeholder="e.g. agent@risev.com" />
           </Form.Item>
 
           <Form.Item name="phone" label="Phone Number" rules={[{ required: true }]}>

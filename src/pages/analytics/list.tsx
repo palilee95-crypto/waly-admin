@@ -178,7 +178,7 @@ export const PlatformAnalytics: React.FC = () => {
   const handleExportCSV = () => {
     message.loading({ content: 'Exporting analytics to CSV...', key: 'export' });
     setTimeout(() => {
-      message.success({ content: 'Downloaded waly-analytics-report.csv', key: 'export', duration: 2 });
+      message.success({ content: 'Downloaded risev-analytics-report.csv', key: 'export', duration: 2 });
     }, 1000);
   };
 
@@ -191,7 +191,7 @@ export const PlatformAnalytics: React.FC = () => {
           
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY SYSTEM METRICS & PERFORMANCE
+            risev SYSTEM METRICS & PERFORMANCE
           </span>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">

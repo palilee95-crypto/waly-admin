@@ -10,7 +10,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 export const AdminUserList: React.FC = () => {
   const navigate = useNavigate();
   const { tableQueryResult } = useTable<any>({
-    resource: 'admin_users',
+    resource: '_superusers',
     pagination: { pageSize: 50 },
   });
 
@@ -18,7 +18,7 @@ export const AdminUserList: React.FC = () => {
 
   // Enforce Super Admin only capability for deletion
   const { data: canDelete } = useCan({
-    resource: 'admin_users',
+    resource: '_superusers',
     action: 'delete',
   });
 
@@ -31,7 +31,7 @@ export const AdminUserList: React.FC = () => {
       cancelText: 'Cancel',
       onOk: () => {
         deleteUser({
-          resource: 'admin_users',
+          resource: '_superusers',
           id,
           successNotification: () => {
             message.success(`Admin user ${name} deleted`);
@@ -48,9 +48,9 @@ export const AdminUserList: React.FC = () => {
 
   const users = tableQueryResult?.data?.data || [];
   const displayUsers = users.length > 0 ? users : [
-    { id: 'a1', name: 'Super Admin User', email: 'super@waly.com', role: 'super_admin', is_active: true },
-    { id: 'a2', name: 'Ops Executive One', email: 'ops1@waly.com', role: 'operations', is_active: true },
-    { id: 'a3', name: 'Support Rep One', email: 'support1@waly.com', role: 'support', is_active: true }
+    { id: 'a1', name: 'Super Admin User', email: 'super@risev.com', role: 'super_admin', is_active: true },
+    { id: 'a2', name: 'Ops Executive One', email: 'ops1@risev.com', role: 'operations', is_active: true },
+    { id: 'a3', name: 'Support Rep One', email: 'support1@risev.com', role: 'support', is_active: true }
   ];
 
   return (
@@ -62,7 +62,7 @@ export const AdminUserList: React.FC = () => {
           
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY CONSOLE SECURITY
+            risev CONSOLE SECURITY
           </span>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
@@ -128,11 +128,11 @@ export const AdminUserList: React.FC = () => {
                         <div className="flex items-start justify-between gap-2 mb-2">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-2xl bg-[#006d37]/10 text-[#006d37] dark:bg-[#6bfe9c]/15 dark:text-[#6bfe9c] flex items-center justify-center font-black text-sm shrink-0 border border-[#006d37]/15">
-                              {(user.name || 'A').substring(0, 2).toUpperCase()}
+                              {(user.name || user.email || 'A').substring(0, 2).toUpperCase()}
                             </div>
                             <div className="text-left">
                               <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 leading-tight">
-                                {user.name}
+                                {user.name || user.email}
                               </h4>
                               <span className={`text-[9px] font-black px-2.5 py-0.5 rounded-full uppercase ${
                                 isSuper 
@@ -197,7 +197,7 @@ export const AdminUserList: React.FC = () => {
 export const AdminUserCreate: React.FC = () => {
   const navigate = useNavigate();
   const { onFinish, formProps } = useForm<any>({
-    resource: 'admin_users',
+    resource: '_superusers',
     action: 'create',
     redirect: 'list',
   });
@@ -279,7 +279,7 @@ export const AdminUserCreate: React.FC = () => {
                   EMAIL ADDRESS <span className="text-red-500">*</span>
                 </label>
                 <Form.Item name="email" rules={[{ required: true, type: 'email', message: 'Valid email required' }]} className="mb-0">
-                  <Input className="h-11 rounded-2xl text-sm font-bold border-slate-200 dark:border-[#004d30]" placeholder="e.g. john@waly.com" />
+                  <Input className="h-11 rounded-2xl text-sm font-bold border-slate-200 dark:border-[#004d30]" placeholder="e.g. john@risev.com" />
                 </Form.Item>
               </div>
 
@@ -354,7 +354,7 @@ export const AdminUserEdit: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
   const { onFinish, formProps } = useForm<any>({
-    resource: 'admin_users',
+    resource: '_superusers',
     action: 'edit',
     id,
     redirect: 'list',
@@ -436,7 +436,7 @@ export const AdminUserEdit: React.FC = () => {
                   EMAIL ADDRESS <span className="text-red-500">*</span>
                 </label>
                 <Form.Item name="email" rules={[{ required: true, type: 'email', message: 'Valid email required' }]} className="mb-0">
-                  <Input className="h-11 rounded-2xl text-sm font-bold border-slate-200 dark:border-[#004d30]" placeholder="e.g. john@waly.com" />
+                  <Input className="h-11 rounded-2xl text-sm font-bold border-slate-200 dark:border-[#004d30]" placeholder="e.g. john@risev.com" />
                 </Form.Item>
               </div>
 
@@ -544,9 +544,9 @@ export const AdminAuditLogList: React.FC = () => {
                 {logs.length === 0 ? (
                   // Sample default rows
                   [
-                    { id: '1', admin: 'super@waly.com', action: 'approve_merchant', resource: 'merchants', resource_id: 'm_9981', ip_address: '192.168.1.5', created: '2026-07-01 19:40' },
-                    { id: '2', admin: 'ops1@waly.com', action: 'suspend_user', resource: 'users', resource_id: 'u_1204', ip_address: '192.168.1.12', created: '2026-07-01 19:15' },
-                    { id: '3', admin: 'super@waly.com', action: 'update_velocity_rule', resource: 'velocity_rules', resource_id: 'r_high_velocity', ip_address: '192.168.1.5', created: '2026-07-01 18:00' }
+                    { id: '1', admin: 'super@risev.com', action: 'approve_merchant', resource: 'merchants', resource_id: 'm_9981', ip_address: '192.168.1.5', created: '2026-07-01 19:40' },
+                    { id: '2', admin: 'ops1@risev.com', action: 'suspend_user', resource: 'users', resource_id: 'u_1204', ip_address: '192.168.1.12', created: '2026-07-01 19:15' },
+                    { id: '3', admin: 'super@risev.com', action: 'update_velocity_rule', resource: 'velocity_rules', resource_id: 'r_high_velocity', ip_address: '192.168.1.5', created: '2026-07-01 18:00' }
                   ].map((log) => (
                     <tr key={log.id} className="group hover:bg-white/40 transition-colors">
                       <td className="py-4 font-semibold text-on-surface">{log.admin}</td>

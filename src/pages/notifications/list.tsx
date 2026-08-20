@@ -53,7 +53,7 @@ export const NotificationOverview: React.FC = () => {
           
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY SYSTEM BROADCASTS & ALERTS
+            risev SYSTEM BROADCASTS & ALERTS
           </span>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
@@ -247,7 +247,7 @@ export const NotificationBroadcast: React.FC = () => {
   const templates = [
     { key: 'campaign', title: '🔥 New Campaign Live!', body: 'Double points this weekend at all participating merchants.' },
     { key: 'upgrade', title: '🎉 You\'ve been upgraded!', body: 'Welcome to your new membership tier. Enjoy your new benefits.' },
-    { key: 'maintenance', title: '🔧 Scheduled Maintenance', body: 'WALY will be down for scheduled upgrades from 02:00 to 04:00 UTC.' }
+    { key: 'maintenance', title: '🔧 Scheduled Maintenance', body: 'risev will be down for scheduled upgrades from 02:00 to 04:00 UTC.' }
   ];
 
   const handleApplyTemplate = (tpl: any) => {
@@ -284,7 +284,7 @@ export const NotificationBroadcast: React.FC = () => {
 
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-2 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY BROADCAST ENGINE
+            risev BROADCAST ENGINE
           </span>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
@@ -428,7 +428,7 @@ export const NotificationBroadcast: React.FC = () => {
                     <span className="w-2 h-2 rounded-full bg-[#6bfe9c] animate-pulse"></span>
                     LIVE PUSH PREVIEW
                   </span>
-                  <span className="text-[10px] text-[#85af9b] font-mono">WALY Customer iOS / Android</span>
+                  <span className="text-[10px] text-[#85af9b] font-mono">risev Customer iOS / Android</span>
                 </div>
 
                 {/* Simulated Push Alert Card */}
@@ -438,7 +438,7 @@ export const NotificationBroadcast: React.FC = () => {
                       <div className="w-6 h-6 rounded-lg bg-[#6bfe9c] text-[#002d1e] font-black text-xs flex items-center justify-center">
                         W
                       </div>
-                      <span className="text-xs font-black text-white uppercase tracking-wider">WALY REWARDS</span>
+                      <span className="text-xs font-black text-white uppercase tracking-wider">risev REWARDS</span>
                     </div>
                     <span className="text-[10px] text-[#85af9b] font-medium">now</span>
                   </div>

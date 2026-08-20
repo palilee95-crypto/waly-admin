@@ -91,7 +91,7 @@ export const TransactionList: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
                     {transactions.map((tx) => {
                       const userName = tx.expand?.customer?.name || tx.expand?.user?.name || tx.user || 'Registered Customer';
-                      const storeName = tx.expand?.merchant?.name || 'Waly Store';
+                      const storeName = tx.expand?.merchant?.name || 'risev Store';
                       const isEarn = tx.type?.toLowerCase() === 'earn';
                       const isRedeem = tx.type?.toLowerCase() === 'redeem';
 

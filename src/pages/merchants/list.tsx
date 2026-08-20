@@ -232,7 +232,7 @@ export const MerchantList: React.FC = () => {
                         {/* Copy NFC Link */}
                         <button
                           onClick={() => {
-                            const nfcUrl = `https://waly-five.vercel.app/nfc?m=${merchant.id}`;
+                            const nfcUrl = `https://risev-five.vercel.app/nfc?m=${merchant.id}`;
                             navigator.clipboard.writeText(nfcUrl);
                             message.success(`NFC Link copied for ${merchant.name}`);
                           }}

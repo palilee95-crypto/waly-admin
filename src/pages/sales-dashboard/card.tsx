@@ -20,7 +20,7 @@ export const SalesCardPage: React.FC = () => {
   };
 
   const handleDirectWhatsAppShare = () => {
-    const text = encodeURIComponent(`Hi! Register your store on WALY Mobile Network using my partner referral link to start accepting orders: ${referralLink}`);
+    const text = encodeURIComponent(`Hi! Register your store on risev Mobile Network using my partner referral link to start accepting orders: ${referralLink}`);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
 
@@ -98,9 +98,9 @@ export const SalesCardPage: React.FC = () => {
                   <div className="h-0.5 w-full bg-amber-900/50 rounded-full"></div>
                 </div>
 
-                {/* Embossed Card Number Format: WALY - AXYW - S4I0 - 2026 */}
+                {/* Embossed Card Number Format: risev - AXYW - S4I0 - 2026 */}
                 <div className="flex items-center justify-between font-mono text-base sm:text-xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-100 via-slate-200 to-slate-400 tracking-[0.2em] sm:tracking-[0.25em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] select-all">
-                  <span>{referralCode ? referralCode.substring(0, 4) : 'WALY'}</span>
+                  <span>{referralCode ? referralCode.substring(0, 4) : 'risev'}</span>
                   <span>{referralCode ? referralCode.substring(4, 8) || 'PART' : 'PART'}</span>
                   <span>{referralCode ? referralCode.substring(8) || 'NER' : 'NER'}</span>
                   <span>2026</span>

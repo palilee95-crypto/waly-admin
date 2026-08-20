@@ -138,11 +138,11 @@ export const MerchantShow: React.FC = () => {
                   <div className="bg-[#002d1e] text-white p-3.5 rounded-2xl border border-[#004d30] flex flex-col gap-2 shadow-sm">
                     <span className="text-[9px] font-black uppercase text-[#6bfe9c] tracking-wider">NFC PROGRAM CARD URL</span>
                     <div className="bg-[#00150e] p-2 rounded-xl text-[11px] font-mono break-all text-white/90 border border-white/10">
-                      https://waly-five.vercel.app/nfc?m={merchant.id}
+                      https://risev-five.vercel.app/nfc?m={merchant.id}
                     </div>
                     <button
                       onClick={() => {
-                        const nfcUrl = `https://waly-five.vercel.app/nfc?m=${merchant.id}`;
+                        const nfcUrl = `https://risev-five.vercel.app/nfc?m=${merchant.id}`;
                         navigator.clipboard.writeText(nfcUrl);
                         message.success('NFC Link copied to clipboard!');
                       }}

@@ -231,7 +231,7 @@ export const SalesMerchantsPage: React.FC = () => {
                 </div>
                 <h4 className="text-base font-bold text-on-surface dark:text-white mb-1">No referred merchants found</h4>
                 <p className="text-xs text-on-surface-variant dark:text-[#85af9b] max-w-sm mx-auto mb-4">
-                  Share your referral link with local businesses to onboard them onto the Waly Merchant Loyalty network.
+                  Share your referral link with local businesses to onboard them onto the risev Merchant Loyalty network.
                 </p>
                 <button
                   onClick={() => setShareModalOpen(true)}
@@ -362,7 +362,7 @@ export const SalesMerchantsPage: React.FC = () => {
           <div className="flex gap-2">
             <button
               onClick={() => {
-                const text = encodeURIComponent(`Hi! Register your store on Waly app using my partner referral link: ${referralLink}`);
+                const text = encodeURIComponent(`Hi! Register your store on risev app using my partner referral link: ${referralLink}`);
                 window.open(`https://wa.me/?text=${text}`, '_blank');
               }}
               className="w-full bg-[#25D366] hover:bg-[#20BA5A] text-white py-3 rounded-xl font-bold text-xs border-none cursor-pointer shadow-md flex items-center justify-center gap-1.5"

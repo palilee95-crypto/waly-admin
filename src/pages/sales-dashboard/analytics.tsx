@@ -207,7 +207,7 @@ export const SalesAnalyticsPage: React.FC = () => {
             </div>
             <button
               onClick={() => {
-                const text = encodeURIComponent(`Hi! Register your store on Waly app using my partner referral link: ${import.meta.env.VITE_MERCHANT_APP_URL || 'https://waly-five.vercel.app'}`);
+                const text = encodeURIComponent(`Hi! Register your store on risev app using my partner referral link: ${import.meta.env.VITE_MERCHANT_APP_URL || 'https://risev-five.vercel.app'}`);
                 window.open(`https://wa.me/?text=${text}`, '_blank');
               }}
               className="bg-[#6bfe9c] hover:bg-[#52e883] text-[#002d1e] font-black text-xs px-4 py-2.5 rounded-xl border-none cursor-pointer transition-all flex items-center gap-1.5 shadow-md shrink-0 w-full sm:w-auto justify-center"

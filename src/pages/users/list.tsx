@@ -154,7 +154,7 @@ export const UserList: React.FC = () => {
           
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY NETWORK ACCOUNTS
+            risev NETWORK ACCOUNTS
           </span>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">

@@ -104,7 +104,7 @@ export const FraudFlagList: React.FC = () => {
           
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-3 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY SECURITY & ANTI-FRAUD
+            risev SECURITY & ANTI-FRAUD
           </span>
 
           <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight mb-2">
@@ -167,7 +167,7 @@ export const FraudFlagList: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
                 {flags.map((flag) => {
                   const userName = flag.expand?.user?.name || flag.user || 'Unknown User';
-                  const storeName = flag.expand?.merchant?.name || 'Waly Store';
+                  const storeName = flag.expand?.merchant?.name || 'risev Store';
 
                   return (
                     <div

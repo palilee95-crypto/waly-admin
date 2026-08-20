@@ -1,7 +1,7 @@
 import type { AuthProvider } from '@refinedev/core';
 import { pb } from './lib/pocketbase';
 
-export const walyAuthProvider: AuthProvider = {
+export const risevAuthProvider: AuthProvider = {
   login: async ({ email, password }) => {
     try {
       // 1. Try logging in as a Sales Agent (Option A Secure Collection)

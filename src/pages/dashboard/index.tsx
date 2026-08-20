@@ -114,7 +114,7 @@ export const DashboardPage: React.FC = () => {
           
           <span className="inline-flex items-center gap-1.5 bg-[#6bfe9c]/15 text-[#6bfe9c] text-[11px] font-black uppercase tracking-widest px-3.5 py-1 rounded-full border border-[#6bfe9c]/30 mb-2 shadow-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#6bfe9c] animate-pulse"></span>
-            WALY PLATFORM ADMINISTRATION
+            risev PLATFORM ADMINISTRATION
           </span>
 
           <h1 className="text-xl sm:text-3xl font-black text-white tracking-tight mb-1">

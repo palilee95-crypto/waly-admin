@@ -91,7 +91,7 @@ export const useSalesData = () => {
   };
 
   const referralCode = identity?.referral_code || 'RISEV_AGENT_100';
-  const merchantAppUrl = import.meta.env.VITE_MERCHANT_APP_URL || 'https://waly-five.vercel.app';
+  const merchantAppUrl = import.meta.env.VITE_MERCHANT_APP_URL || 'https://risev-five.vercel.app';
   const referralLink = `${merchantAppUrl}/?ref=${referralCode}`;
   const clicksCount = identity?.clicks || 0;
   
