@@ -196,6 +196,32 @@ export const ShippingOrderList: React.FC = () => {
   const [isLoadingRates, setIsLoadingRates] = useState<boolean>(false);
   const [selectedCourierOption, setSelectedCourierOption] = useState<any>(null);
   const [isBookingEasyParcel, setIsBookingEasyParcel] = useState<boolean>(false);
+  const [showSenderEdit, setShowSenderEdit] = useState<boolean>(false);
+  
+  const [senderAddress, setSenderAddress] = useState(() => {
+    try {
+      const saved = localStorage.getItem('risev_sender_address');
+      if (saved) return JSON.parse(saved);
+    } catch (e) {}
+    return {
+      name: 'Risev HQ',
+      phone: '011-5622 1568',
+      address: 'Plaza Sentral, Jalan Stesen Sentral 5',
+      postcode: '50470',
+      city: 'Kuala Lumpur',
+      state: 'WP Kuala Lumpur',
+    };
+  });
+
+  const updateSender = (field: string, val: string) => {
+    setSenderAddress((prev: any) => {
+      const updated = { ...prev, [field]: val };
+      try {
+        localStorage.setItem('risev_sender_address', JSON.stringify(updated));
+      } catch (e) {}
+      return updated;
+    });
+  };
 
   const handleOpenEasyParcel = async (record: HardwareOrder) => {
     setSelectedOrder(record);
@@ -840,10 +866,10 @@ export const ShippingOrderList: React.FC = () => {
             <Row gutter={16} style={{ marginBottom: 16 }}>
               <Col span={12}>
                 <div style={{ fontSize: 11, fontWeight: 800, color: '#94A3B8', textTransform: 'uppercase', marginBottom: 4 }}>SHIP FROM:</div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>RISEV HQ FULFILLMENT</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#0F172A' }}>{senderAddress.name?.toUpperCase()}</div>
                 <div style={{ fontSize: 11, color: '#475569', lineHeight: '16px' }}>
-                  Plaza Sentral, 50470 Kuala Lumpur, Malaysia<br />
-                  Tel: +60 11-5622 1568
+                  {senderAddress.address}, {senderAddress.postcode} {senderAddress.city}, {senderAddress.state}<br />
+                  Tel: {senderAddress.phone}
                 </div>
               </Col>
               <Col span={12}>
@@ -1013,10 +1039,96 @@ export const ShippingOrderList: React.FC = () => {
               </div>
             )}
 
-            {/* Sender / Pickup HQ Note */}
-            <div style={{ marginTop: 16, padding: '10px 14px', backgroundColor: '#F1F5F9', borderRadius: 10, fontSize: 11, color: '#475569', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <SafetyCertificateOutlined style={{ color: '#10B981', fontSize: 14 }} />
-              <span>Sender: <strong>Risev HQ</strong>, Plaza Sentral, 50470 Kuala Lumpur (+60 11-5622 1568)</span>
+            {/* Sender / Pickup HQ Accordion */}
+            <div style={{ marginTop: 16, border: '1px solid #E2E8F0', borderRadius: 12, overflow: 'hidden' }}>
+              <div 
+                onClick={() => setShowSenderEdit(!showSenderEdit)}
+                style={{ 
+                  padding: '10px 14px', 
+                  backgroundColor: '#F8FAFC', 
+                  fontSize: 12, 
+                  color: '#334155', 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  cursor: 'pointer' 
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <SafetyCertificateOutlined style={{ color: '#10B981', fontSize: 14 }} />
+                  <span>Sender (Pickup): <strong>{senderAddress.name}</strong> ({senderAddress.postcode} {senderAddress.city})</span>
+                </div>
+                <Button size="small" type="link" style={{ fontSize: 11, padding: 0 }}>
+                  {showSenderEdit ? 'Hide' : 'Edit Sender Address'}
+                </Button>
+              </div>
+
+              {showSenderEdit && (
+                <div style={{ padding: 14, backgroundColor: '#FFFFFF', borderTop: '1px solid #E2E8F0' }}>
+                  <Row gutter={[8, 8]}>
+                    <Col span={12}>
+                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginBottom: 2 }}>SENDER / STORE NAME</div>
+                      <Input 
+                        size="small" 
+                        value={senderAddress.name} 
+                        onChange={(e) => updateSender('name', e.target.value)} 
+                        placeholder="e.g. Risev HQ"
+                        style={{ borderRadius: 6 }}
+                      />
+                    </Col>
+                    <Col span={12}>
+                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginBottom: 2 }}>CONTACT PHONE</div>
+                      <Input 
+                        size="small" 
+                        value={senderAddress.phone} 
+                        onChange={(e) => updateSender('phone', e.target.value)} 
+                        placeholder="e.g. 011-5622 1568"
+                        style={{ borderRadius: 6 }}
+                      />
+                    </Col>
+                    <Col span={24}>
+                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginBottom: 2 }}>STREET ADDRESS</div>
+                      <Input 
+                        size="small" 
+                        value={senderAddress.address} 
+                        onChange={(e) => updateSender('address', e.target.value)} 
+                        placeholder="e.g. Unit 3A, Plaza Sentral, Jalan Stesen Sentral 5"
+                        style={{ borderRadius: 6 }}
+                      />
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginBottom: 2 }}>POSTCODE</div>
+                      <Input 
+                        size="small" 
+                        value={senderAddress.postcode} 
+                        onChange={(e) => updateSender('postcode', e.target.value)} 
+                        placeholder="e.g. 50470"
+                        style={{ borderRadius: 6 }}
+                      />
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginBottom: 2 }}>CITY</div>
+                      <Input 
+                        size="small" 
+                        value={senderAddress.city} 
+                        onChange={(e) => updateSender('city', e.target.value)} 
+                        placeholder="e.g. Kuala Lumpur"
+                        style={{ borderRadius: 6 }}
+                      />
+                    </Col>
+                    <Col span={8}>
+                      <div style={{ fontSize: 10, color: '#64748B', fontWeight: 600, marginBottom: 2 }}>STATE</div>
+                      <Input 
+                        size="small" 
+                        value={senderAddress.state} 
+                        onChange={(e) => updateSender('state', e.target.value)} 
+                        placeholder="e.g. WP Kuala Lumpur"
+                        style={{ borderRadius: 6 }}
+                      />
+                    </Col>
+                  </Row>
+                </div>
+              )}
             </div>
           </div>
         )}
