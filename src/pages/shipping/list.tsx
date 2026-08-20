@@ -35,7 +35,11 @@ import {
   DollarOutlined, 
   ShoppingOutlined,
   EditOutlined,
-  DeleteOutlined
+  DeleteOutlined,
+  ThunderboltOutlined,
+  RocketOutlined,
+  StarFilled,
+  SafetyCertificateOutlined
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { pb } from '../../lib/pocketbase';
@@ -183,6 +187,73 @@ export const ShippingOrderList: React.FC = () => {
       });
     } catch (err) {
       console.warn('Form validation error:', err);
+    }
+  };
+
+  // EasyParcel state
+  const [isEasyParcelModalOpen, setIsEasyParcelModalOpen] = useState<boolean>(false);
+  const [easyParcelRates, setEasyParcelRates] = useState<any[]>([]);
+  const [isLoadingRates, setIsLoadingRates] = useState<boolean>(false);
+  const [selectedCourierOption, setSelectedCourierOption] = useState<any>(null);
+  const [isBookingEasyParcel, setIsBookingEasyParcel] = useState<boolean>(false);
+
+  const handleOpenEasyParcel = async (record: HardwareOrder) => {
+    setSelectedOrder(record);
+    setIsEasyParcelModalOpen(true);
+    setIsLoadingRates(true);
+    setEasyParcelRates([]);
+    setSelectedCourierOption(null);
+
+    try {
+      const resp = await pb.send('/api/risev/easyparcel/rate-check', {
+        method: 'POST',
+        body: {
+          dest_postcode: record.postcode || '50470',
+          dest_state: record.state || 'Kuala Lumpur',
+          weight: 0.5,
+        },
+      });
+
+      if (resp && resp.rates) {
+        setEasyParcelRates(resp.rates);
+        const recommended = resp.rates.find((r: any) => r.is_recommended) || resp.rates[0];
+        setSelectedCourierOption(recommended);
+      }
+    } catch (err: any) {
+      console.error('Rate check error:', err);
+      message.error('Failed to load live courier rates.');
+    } finally {
+      setIsLoadingRates(false);
+    }
+  };
+
+  const handleConfirmEasyParcelBooking = async () => {
+    if (!selectedOrder || !selectedCourierOption) return;
+    setIsBookingEasyParcel(true);
+
+    try {
+      const resp = await pb.send('/api/risev/easyparcel/book', {
+        method: 'POST',
+        body: {
+          order_id: selectedOrder.id,
+          courier_name: selectedCourierOption.courier_name,
+          service_id: selectedCourierOption.service_id,
+          notes: `EasyParcel 1-Click Booking (${selectedCourierOption.service_type || 'Standard'})`,
+        },
+      });
+
+      if (resp && resp.success) {
+        message.success(`Shipment booked with ${resp.courier_name}! Tracking: ${resp.tracking_number}`, 6);
+        setIsEasyParcelModalOpen(false);
+        tableQueryResult.refetch();
+      } else {
+        message.error(resp?.message || 'Failed to complete EasyParcel booking.');
+      }
+    } catch (err: any) {
+      console.error('Booking error:', err);
+      message.error(err?.message || 'Error communicating with EasyParcel booking service.');
+    } finally {
+      setIsBookingEasyParcel(false);
     }
   };
 
@@ -472,7 +543,24 @@ export const ShippingOrderList: React.FC = () => {
               align: 'right',
               render: (_, record) => (
                 <Space>
-                  <Tooltip title="Fulfill / Assign Tracking">
+                  <Tooltip title="1-Click EasyParcel Courier Booking">
+                    <Button
+                      size="small"
+                      icon={<ThunderboltOutlined style={{ color: '#D97706' }} />}
+                      onClick={() => handleOpenEasyParcel(record)}
+                      style={{ 
+                        backgroundColor: '#FEF3C7', 
+                        borderColor: '#FCD34D', 
+                        color: '#92400E', 
+                        borderRadius: 8, 
+                        fontWeight: 700 
+                      }}
+                    >
+                      EasyParcel
+                    </Button>
+                  </Tooltip>
+
+                  <Tooltip title="Fulfill / Manual Tracking">
                     <Button
                       type="primary"
                       size="small"
@@ -802,6 +890,133 @@ export const ShippingOrderList: React.FC = () => {
               <div style={{ fontSize: 10, color: '#64748B', fontWeight: 700 }}>
                 STATUS: {selectedOrder.payment_status?.toUpperCase() || 'PAID'}
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* ========================================================= */}
+      {/* MODAL 4: EASYPARCEL 1-CLICK COURIER BOOKING               */}
+      {/* ========================================================= */}
+      <Modal
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ width: 28, height: 28, borderRadius: 8, backgroundColor: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ThunderboltOutlined style={{ color: '#D97706', fontSize: 16 }} />
+            </div>
+            <div>
+              <span style={{ fontWeight: 800, fontSize: 16 }}>EasyParcel 1-Click Courier Booking</span>
+              <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400 }}>Live Rate Quotations & Automated AWB Booking</div>
+            </div>
+          </div>
+        }
+        open={isEasyParcelModalOpen}
+        onCancel={() => setIsEasyParcelModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsEasyParcelModalOpen(false)} style={{ borderRadius: 8 }}>
+            Cancel
+          </Button>,
+          <Button
+            key="book"
+            type="primary"
+            loading={isBookingEasyParcel}
+            disabled={!selectedCourierOption || isLoadingRates}
+            icon={<RocketOutlined />}
+            onClick={handleConfirmEasyParcelBooking}
+            style={{ 
+              backgroundColor: '#0F172A', 
+              borderColor: '#0F172A', 
+              borderRadius: 8, 
+              fontWeight: 800,
+              height: 38
+            }}
+          >
+            {selectedCourierOption ? `Book with ${selectedCourierOption.courier_name} (RM ${selectedCourierOption.price?.toFixed(2)})` : 'Select a Courier'}
+          </Button>,
+        ]}
+        width={650}
+      >
+        {selectedOrder && (
+          <div>
+            {/* Parcel Details Banner */}
+            <div style={{ padding: 14, backgroundColor: '#F8FAFC', borderRadius: 14, border: '1px solid #E2E8F0', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#64748B', textTransform: 'uppercase' }}>Shipment For Order</div>
+                <div style={{ fontSize: 14, fontWeight: 800, color: '#0F172A' }}>{selectedOrder.order_no} — {selectedOrder.recipient_name}</div>
+                <div style={{ fontSize: 12, color: '#475569', marginTop: 2 }}>
+                  📍 {selectedOrder.city || 'Kuala Lumpur'}, {selectedOrder.postcode || '50470'} ({selectedOrder.state || 'WP'})
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <Tag color="purple" style={{ borderRadius: 8, fontWeight: 700, margin: 0 }}>Parcel ~0.5 KG</Tag>
+              </div>
+            </div>
+
+            {/* Courier Selection List */}
+            <div style={{ marginBottom: 12, fontWeight: 700, fontSize: 13, color: '#334155' }}>
+              Available Couriers ({easyParcelRates.length})
+            </div>
+
+            {isLoadingRates ? (
+              <div style={{ padding: 40, textAlign: 'center' }}>
+                <SyncOutlined spin style={{ fontSize: 24, color: '#3B82F6', marginBottom: 10 }} />
+                <div style={{ fontSize: 13, color: '#64748B' }}>Fetching live courier rates from EasyParcel...</div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 320, overflowY: 'auto' }}>
+                {easyParcelRates.map((rate, idx) => {
+                  const isSelected = selectedCourierOption?.service_id === rate.service_id;
+                  return (
+                    <div
+                      key={rate.service_id || idx}
+                      onClick={() => setSelectedCourierOption(rate)}
+                      style={{
+                        padding: '12px 16px',
+                        borderRadius: 12,
+                        border: isSelected ? '2px solid #3B82F6' : '1px solid #E2E8F0',
+                        backgroundColor: isSelected ? '#EFF6FF' : '#FFFFFF',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        transition: 'all 0.15s ease-in-out',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: isSelected ? '#DBEAFE' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, color: '#1E293B', fontSize: 12 }}>
+                          {rate.courier_name.substring(0, 3).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontWeight: 800, fontSize: 13, color: '#0F172A' }}>{rate.courier_name}</span>
+                            {rate.is_recommended && (
+                              <Tag color="gold" style={{ fontSize: 10, borderRadius: 6, fontWeight: 700, margin: 0 }}>BEST VALUE</Tag>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 11, color: '#64748B', marginTop: 2 }}>
+                            {rate.service_type} • ETA: <strong>{rate.delivery_eta}</strong>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: 15, fontWeight: 900, color: isSelected ? '#1D4ED8' : '#059669' }}>
+                          RM {rate.price?.toFixed(2)}
+                        </div>
+                        <div style={{ fontSize: 10, color: '#94A3B8' }}>
+                          ⭐ {rate.rating || 4.8} / 5.0
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Sender / Pickup HQ Note */}
+            <div style={{ marginTop: 16, padding: '10px 14px', backgroundColor: '#F1F5F9', borderRadius: 10, fontSize: 11, color: '#475569', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <SafetyCertificateOutlined style={{ color: '#10B981', fontSize: 14 }} />
+              <span>Sender: <strong>Risev HQ</strong>, Plaza Sentral, 50470 Kuala Lumpur (+60 11-5622 1568)</span>
             </div>
           </div>
         )}
