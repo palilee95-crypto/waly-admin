@@ -324,39 +324,31 @@ export const SubscriptionList: React.FC = () => {
     }
   }, [nfcPricingData, nfcPricingForm]);
 
-  const handleNfcPricingSubmit = (values: any) => {
-    updatePricing({
-      resource: 'pricing_settings',
-      id: 'pricesettings02',
-      values: {
-        base_price_1m: Number(values.single_price),
-        discount_3m: Number(values.duo_price),
-        discount_6m: Number(values.enterprise_price),
-        discount_9m: 0,
-        discount_12m: 0,
-        enable_3m: true,
-        enable_6m: true,
-        enable_9m: false,
-        enable_12m: false,
-      },
-      successNotification: () => {
-        message.success('NFC Stand pricing updated successfully');
-        refetchNfcPricing();
-        return {
-          message: 'Hardware Pricing Updated',
-          description: 'NFC hardware package prices saved.',
-          type: 'success',
-        };
-      },
-      errorNotification: (err: any) => {
-        message.error(err?.message || 'Failed to update NFC pricing.');
-        return {
-          message: 'Update Failed',
-          description: err?.message,
-          type: 'error',
-        };
+  const handleNfcPricingSubmit = async (values: any) => {
+    const payload = {
+      base_price_1m: Number(values.single_price),
+      discount_3m: Number(values.duo_price),
+      discount_6m: Number(values.enterprise_price),
+      discount_9m: 12,
+      discount_12m: 15,
+      enable_3m: true,
+      enable_6m: true,
+      enable_9m: false,
+      enable_12m: false,
+    };
+
+    try {
+      if (nfcPricingData?.data) {
+        await pb.collection('pricing_settings').update('pricesettings02', payload);
+      } else {
+        await pb.collection('pricing_settings').create({ id: 'pricesettings02', ...payload });
       }
-    });
+      message.success('NFC Stand pricing updated successfully');
+      refetchNfcPricing();
+    } catch (err: any) {
+      console.error('NFC Pricing update error:', err);
+      message.error(err?.message || 'Failed to update NFC pricing.');
+    }
   };
 
   // 3. Promo Codes

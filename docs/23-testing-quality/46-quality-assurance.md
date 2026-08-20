@@ -1,6 +1,6 @@
 # 46 — Admin Portal: Quality Assurance
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Quality Assurance defines the code review standards, pre-release checklist, and sign-off process for the Admin Portal. All features must pass QA before being merged to `main` and deployed to `admin.waly.app`.
+Quality Assurance defines the code review standards, pre-release checklist, and sign-off process for the Admin Portal. All features must pass QA before being merged to `main` and deployed to `admin.risev.app`.
 
 ---
 
@@ -42,7 +42,7 @@ Before every pull request merge:
 
 ## 3. Pre-Release QA Checklist
 
-Before each release to `admin.waly.app`:
+Before each release to `admin.risev.app`:
 
 ### Automated
 - [ ] `npm run lint` passes with zero errors
@@ -80,7 +80,7 @@ Before each release to `admin.waly.app`:
 3. CI pipeline runs: lint → test → build
 4. QA manual checklist signed off
 5. Merge to main
-6. GitHub Actions auto-deploys to admin.waly.app
+6. GitHub Actions auto-deploys to admin.risev.app
 7. Smoke test on production (login, dashboard, key flow)
 8. DONE ✅
 ```

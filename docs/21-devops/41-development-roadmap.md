@@ -1,6 +1,6 @@
 # 41 — Admin Portal: Development Roadmap
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -71,7 +71,7 @@ The Admin Portal is built in phased milestones. Each phase delivers a usable pro
 | Global search (`Ctrl+K`) | P2 | 📋 Planned |
 | PDF report export | P3 | 📋 Planned |
 | Performance audit + optimization | P2 | 📋 Planned |
-| Deployment to `admin.waly.app` | P0 | 📋 Planned |
+| Deployment to `admin.risev.app` | P0 | 📋 Planned |
 
 ---
 
@@ -82,7 +82,7 @@ The Admin Portal is built in phased milestones. Each phase delivers a usable pro
 | M1 — Foundation | End of Week 3 | Ops team can approve merchants and support users |
 | M2 — Campaigns & Analytics | End of Week 5 | Marketing team can run campaigns and view reports |
 | M3 — Loyalty & Gamification | End of Week 7 | Full loyalty config access |
-| M4 — Production Launch | End of Week 8 | `admin.waly.app` live with all 47 pages |
+| M4 — Production Launch | End of Week 8 | `admin.risev.app` live with all 47 pages |
 
 ---
 

@@ -1,6 +1,6 @@
 # 21 — Admin Portal: Platform Analytics
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Platform Analytics gives the WALY operations team a bird's-eye view of the loyalty ecosystem. This module surfaces Daily/Monthly Active Users, transaction volumes, campaign performance, tier distribution, and revenue proxy metrics — all driven by PocketBase queries and visualized with Recharts.
+Platform Analytics gives the risev operations team a bird's-eye view of the loyalty ecosystem. This module surfaces Daily/Monthly Active Users, transaction volumes, campaign performance, tier distribution, and revenue proxy metrics — all driven by PocketBase queries and visualized with Recharts.
 
 ---
 

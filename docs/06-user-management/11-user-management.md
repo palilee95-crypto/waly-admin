@@ -1,6 +1,6 @@
 # 11 — Admin Portal: User Management
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The User Management module provides admin staff with tools to search, view, edit, and manage WALY customer accounts. It is accessible by Operations Admins and Support Agents, with write permissions varying by role.
+The User Management module provides admin staff with tools to search, view, edit, and manage risev customer accounts. It is accessible by Operations Admins and Support Agents, with write permissions varying by role.
 
 ---
 

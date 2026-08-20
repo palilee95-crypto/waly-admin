@@ -1,6 +1,6 @@
 # 24 — Admin Portal: Velocity Rules
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 

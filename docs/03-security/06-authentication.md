@@ -1,6 +1,6 @@
 # 06 — Admin Portal: Authentication
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -15,7 +15,7 @@ The Admin Portal authenticates users against PocketBase using either the **super
 ## 2. Auth Flow
 
 ```
-1. User navigates to https://admin.waly.app
+1. User navigates to https://admin.risev.app
 2. Refine's <Authenticated> wrapper calls authProvider.check()
 3. authProvider.check() reads pb.authStore.isValid
 4. If invalid → redirect to /login
@@ -109,7 +109,7 @@ import { AuthPage } from '@refinedev/antd';
 export const LoginPage = () => (
   <AuthPage
     type="login"
-    title="WALY Admin Portal"
+    title="risev Admin Portal"
     forgotPasswordLink={false}
     registerLink={false}
   />
@@ -145,7 +145,7 @@ All admin routes are wrapped with Refine's `<Authenticated>` component:
 | Token leaked via XSS | Use `HttpOnly` cookie storage in future; currently localStorage with CSP headers |
 | Brute-force login | PocketBase rate-limiting on auth endpoints |
 | Unauthorized API access | All write endpoints require `@request.auth.collectionName = '_superusers'` rule |
-| CORS | PocketBase configured to allow only `https://admin.waly.app` |
+| CORS | PocketBase configured to allow only `https://admin.risev.app` |
 
 ---
 

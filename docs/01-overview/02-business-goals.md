@@ -1,6 +1,6 @@
 # 02 — Admin Portal: Business Goals
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document defines the business objectives, success metrics, and operational KPIs that the WALY Admin Portal must support. Every feature built into the admin portal should trace back to at least one goal listed here.
+This document defines the business objectives, success metrics, and operational KPIs that the risev Admin Portal must support. Every feature built into the admin portal should trace back to at least one goal listed here.
 
 ---
 
@@ -97,7 +97,7 @@ The admin portal home dashboard must surface these KPIs at a glance:
 - [ ] Fraud flag queue is live with review/resolve actions
 - [ ] Analytics dashboard shows real-time KPI cards and 30-day trend charts
 - [ ] Role-based access control enforced for all 4 admin personas
-- [ ] Admin portal is deployed to `https://admin.waly.app` with HTTPS
+- [ ] Admin portal is deployed to `https://admin.risev.app` with HTTPS
 
 ---
 

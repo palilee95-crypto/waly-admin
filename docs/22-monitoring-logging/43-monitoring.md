@@ -1,6 +1,6 @@
 # 43 — Admin Portal: Monitoring
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -30,17 +30,17 @@ Configure Uptime Robot to monitor:
 
 | Monitor | URL | Alert on |
 |---|---|---|
-| PocketBase API | `https://api.waly.app/api/health` | > 2 failed checks |
-| Admin Portal | `https://admin.waly.app` | > 2 failed checks |
+| PocketBase API | `https://api.risev.app/api/health` | > 2 failed checks |
+| Admin Portal | `https://admin.risev.app` | > 2 failed checks |
 
-Alert channels: Email to `ops@waly.app` + WhatsApp (via Evolution API).
+Alert channels: Email to `ops@risev.app` + WhatsApp (via Evolution API).
 
 ---
 
 ## 4. PocketBase Health Endpoint
 
 ```
-GET https://api.waly.app/api/health
+GET https://api.risev.app/api/health
 
 Response:
 {

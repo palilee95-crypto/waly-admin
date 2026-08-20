@@ -1,6 +1,6 @@
 # 31 — Admin Portal: API Design
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -15,7 +15,7 @@ The Admin Portal communicates exclusively with PocketBase's REST API using the `
 ## 2. Base URL
 
 ```
-Production:  https://api.waly.app
+Production:  https://api.risev.app
 Development: http://localhost:8090
 ```
 

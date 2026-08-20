@@ -1,6 +1,6 @@
 # 05 — Admin Portal: User Roles & Permissions
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The WALY Admin Portal implements **Role-Based Access Control (RBAC)** to ensure admin staff only access features and data relevant to their function. Refine's `accessControlProvider` enforces permissions at both the UI level (hiding/disabling elements) and the route level (blocking unauthorized navigation).
+The risev Admin Portal implements **Role-Based Access Control (RBAC)** to ensure admin staff only access features and data relevant to their function. Refine's `accessControlProvider` enforces permissions at both the UI level (hiding/disabling elements) and the route level (blocking unauthorized navigation).
 
 ---
 

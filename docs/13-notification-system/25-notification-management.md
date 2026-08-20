@@ -1,6 +1,6 @@
 # 25 — Admin Portal: Notification Management
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Notification Management module allows WALY operations admins to compose and broadcast push notifications, SMS, or in-app messages to targeted customer segments — without requiring engineering intervention. All notifications are stored in PocketBase and delivered via the existing Evolution API / WhatsApp hook.
+The Notification Management module allows risev operations admins to compose and broadcast push notifications, SMS, or in-app messages to targeted customer segments — without requiring engineering intervention. All notifications are stored in PocketBase and delivered via the existing Evolution API / WhatsApp hook.
 
 ---
 
@@ -90,7 +90,7 @@ Pre-built templates for common broadcasts:
 |---|---|---|
 | Campaign Launch | "🔥 New Campaign Live!" | "Double points this weekend at all participating merchants." |
 | Tier Upgrade | "🎉 You've been upgraded!" | "Welcome to [tier]. Enjoy your new benefits." |
-| System Maintenance | "🔧 Scheduled Maintenance" | "WALY will be down from [time] to [time]." |
+| System Maintenance | "🔧 Scheduled Maintenance" | "risev will be down from [time] to [time]." |
 | Reward Reminder | "⏰ Your reward expires soon" | "Redeem your points before [date]!" |
 
 ---

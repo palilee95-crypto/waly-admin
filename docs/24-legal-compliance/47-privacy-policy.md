@@ -1,6 +1,6 @@
 # 47 — Admin Portal: Privacy Policy
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document outlines the data privacy obligations that the WALY Admin Portal must adhere to, particularly regarding access to customer PII (Personally Identifiable Information), compliance with Malaysia's PDPA (Personal Data Protection Act 2010), and GDPR principles for any EU data subjects.
+This document outlines the data privacy obligations that the risev Admin Portal must adhere to, particularly regarding access to customer PII (Personally Identifiable Information), compliance with Malaysia's PDPA (Personal Data Protection Act 2010), and GDPR principles for any EU data subjects.
 
 ---
 
@@ -26,7 +26,7 @@ This document outlines the data privacy obligations that the WALY Admin Portal m
 
 ## 3. PDPA Compliance (Malaysia)
 
-Under the Personal Data Protection Act 2010 (PDPA), WALY must:
+Under the Personal Data Protection Act 2010 (PDPA), risev must:
 
 | Obligation | How Admin Portal Complies |
 |---|---|
@@ -44,7 +44,7 @@ Under the Personal Data Protection Act 2010 (PDPA), WALY must:
 All admin portal users must agree to:
 
 1. Access customer data only for legitimate operational purposes
-2. Not export or share customer data outside WALY systems
+2. Not export or share customer data outside risev systems
 3. Not cache or copy sensitive data to personal devices
 4. Report any suspected data breach immediately to the CTO
 

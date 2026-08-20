@@ -1,6 +1,6 @@
 # 45 — Admin Portal: Testing Strategy
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The WALY Admin Portal testing strategy covers unit tests for utilities and hooks, integration tests for key user flows, and E2E tests for critical admin actions. The goal is a fast, reliable test suite that catches regressions before deployment.
+The risev Admin Portal testing strategy covers unit tests for utilities and hooks, integration tests for key user flows, and E2E tests for critical admin actions. The goal is a fast, reliable test suite that catches regressions before deployment.
 
 ---
 
@@ -111,7 +111,7 @@ import { test, expect } from '@playwright/test';
 
 test('admin can approve a pending merchant', async ({ page }) => {
   await page.goto('/login');
-  await page.fill('[name=email]',    'admin@waly.app');
+  await page.fill('[name=email]',    'admin@risev.app');
   await page.fill('[name=password]', 'testpassword');
   await page.click('button[type=submit]');
 

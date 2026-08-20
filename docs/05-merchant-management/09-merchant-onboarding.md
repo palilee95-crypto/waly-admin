@@ -1,6 +1,6 @@
 # 09 — Admin Portal: Merchant Onboarding
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Merchant onboarding is the process by which a business owner submits their merchant profile in the WALY mobile app and awaits approval from the WALY operations team via the Admin Portal. This document covers the full onboarding lifecycle from submission to active status.
+Merchant onboarding is the process by which a business owner submits their merchant profile in the risev mobile app and awaits approval from the risev operations team via the Admin Portal. This document covers the full onboarding lifecycle from submission to active status.
 
 ---
 
@@ -86,7 +86,7 @@ const approveMerchant = (merchantId: string, ownerId: string) => {
   pb.collection('notifications').create({
     recipient: ownerId,
     title: '🎉 Merchant Approved!',
-    body: 'Your merchant has been verified. You can now start using WALY.',
+    body: 'Your merchant has been verified. You can now start using risev.',
     type: 'system',
   });
 };

@@ -1,6 +1,6 @@
 # 26 — Admin Portal: Notification Logs
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Notification Logs module provides a full delivery audit trail for every notification sent through WALY. Admins can track delivery status, identify failures, and retry failed sends.
+The Notification Logs module provides a full delivery audit trail for every notification sent through risev. Admins can track delivery status, identify failures, and retry failed sends.
 
 ---
 

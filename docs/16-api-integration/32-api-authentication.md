@@ -1,6 +1,6 @@
 # 32 — Admin Portal: API Authentication
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -27,14 +27,14 @@ For simplicity in Phase 1, all portal staff authenticate via the `admin_users` c
 
 ```
 POST /api/collections/admin_users/auth-with-password
-Body: { identity: "admin@waly.app", password: "..." }
+Body: { identity: "admin@risev.app", password: "..." }
 
 Response:
 {
   "token": "eyJhbGci...",
   "record": {
     "id": "abc123",
-    "email": "admin@waly.app",
+    "email": "admin@risev.app",
     "name": "Ahmad",
     "role": "operations"
   }

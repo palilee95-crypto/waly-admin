@@ -1,6 +1,6 @@
 # 10 — Admin Portal: Merchant Verification
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Merchant verification is the KYC (Know Your Customer) layer within the onboarding process. It ensures that businesses using the WALY platform are legitimate, properly categorized, and not impersonating other brands. Verification is managed by Operations Admins through the Admin Portal.
+Merchant verification is the KYC (Know Your Customer) layer within the onboarding process. It ensures that businesses using the risev platform are legitimate, properly categorized, and not impersonating other brands. Verification is managed by Operations Admins through the Admin Portal.
 
 ---
 

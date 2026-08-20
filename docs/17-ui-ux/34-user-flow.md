@@ -1,6 +1,6 @@
 # 34 — Admin Portal: User Flow
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-This document maps the key admin user journeys through the WALY Admin Portal — from login to task completion. Each flow is described step-by-step with the screens and actions involved.
+This document maps the key admin user journeys through the risev Admin Portal — from login to task completion. Each flow is described step-by-step with the screens and actions involved.
 
 ---
 
@@ -143,10 +143,10 @@ Customer calls support: "I should have gotten 200 points but didn't"
   ├── Review charts: DAU, Points Flow, Tier Distribution
   │
   ├── Click [Export CSV]
-  │   → Downloads "waly-analytics-2026-07-01.csv"
+  │   → Downloads "risev-analytics-2026-07-01.csv"
   │
   └── Click [Export PDF]
-      → Generates "waly-report-2026-07-01.pdf"
+      → Generates "risev-report-2026-07-01.pdf"
 ```
 
 ---

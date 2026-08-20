@@ -1,6 +1,6 @@
 # 35 — Admin Portal: UI Pages
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Complete inventory of all pages in the WALY Admin Portal. Each entry includes the route path, page component, required role, and primary Refine resource.
+Complete inventory of all pages in the risev Admin Portal. Each entry includes the route path, page component, required role, and primary Refine resource.
 
 ---
 

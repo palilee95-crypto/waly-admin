@@ -1,6 +1,6 @@
 # 14 — Admin Portal: Stamp Card Management
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Stamp cards are the core loyalty mechanic for merchants on WALY. Each merchant can have one or more stamp card templates. This document covers how admins can view, configure, and override stamp card templates from the Admin Portal.
+Stamp cards are the core loyalty mechanic for merchants on risev. Each merchant can have one or more stamp card templates. This document covers how admins can view, configure, and override stamp card templates from the Admin Portal.
 
 ---
 

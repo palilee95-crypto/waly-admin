@@ -1,6 +1,6 @@
 # 27 — Admin Portal: Admin Dashboard
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -16,7 +16,7 @@ The Admin Dashboard is the first page an admin sees after login. It is a command
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│  WALY Admin Portal                          👤 Admin Name ▼    │
+│  risev Admin Portal                          👤 Admin Name ▼    │
 ├───────────┬─────────────────────────────────────────────────────┤
 │           │  📊 DASHBOARD                                        │
 │  Sidebar  ├─────────────────────────────────────────────────────┤

@@ -1,6 +1,6 @@
 # 33 — Admin Portal: UI Guidelines
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -43,7 +43,7 @@ The Admin Portal uses **Ant Design v5** as its UI library, integrated with Refin
 
 ```typescript
 // src/App.tsx — ConfigProvider theme
-const walyTheme: ThemeConfig = {
+const risevTheme: ThemeConfig = {
   token: {
     colorPrimary:        '#6366f1',
     colorSuccess:        '#52c41a',

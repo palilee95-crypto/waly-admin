@@ -1,6 +1,6 @@
 # 38 — Admin Portal: Filtering & Sorting
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -92,7 +92,7 @@ const { triggerExport } = useExport({
   filters:     tableProps.filters, // passes active filters to export
   sorters:     tableProps.sorters,
   mapData:     exportMapper,
-  filename:    `waly-export-${dayjs().format('YYYY-MM-DD')}`,
+  filename:    `risev-export-${dayjs().format('YYYY-MM-DD')}`,
 });
 ```
 

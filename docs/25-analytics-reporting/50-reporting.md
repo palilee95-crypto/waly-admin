@@ -1,6 +1,6 @@
 # 50 — Admin Portal: Reporting
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Reporting module defines the scheduled reports, on-demand exports, and PDF/CSV generation capabilities of the WALY Admin Portal. Reports give the WALY operations and finance teams structured data for business reviews, compliance, and investor reporting.
+The Reporting module defines the scheduled reports, on-demand exports, and PDF/CSV generation capabilities of the risev Admin Portal. Reports give the risev operations and finance teams structured data for business reviews, compliance, and investor reporting.
 
 ---
 
@@ -45,7 +45,7 @@ const { triggerExport, isLoading } = useExport<Transaction>({
     'Note':            item.note,
     'Date':            dayjs(item.created).format('YYYY-MM-DD HH:mm'),
   }),
-  filename:  `waly-transactions-${dayjs().format('YYYY-MM-DD')}`,
+  filename:  `risev-transactions-${dayjs().format('YYYY-MM-DD')}`,
   pageSize:  500,  // fetch up to 500 records per export
 });
 
@@ -76,7 +76,7 @@ import { PDFDownloadLink, Document, Page, Text, View } from '@react-pdf/renderer
 const LiabilityReport = ({ data }: { data: ReportData }) => (
   <Document>
     <Page>
-      <Text>WALY Monthly Liability Report</Text>
+      <Text>risev Monthly Liability Report</Text>
       <Text>{dayjs().subtract(1, 'month').format('MMMM YYYY')}</Text>
       {/* report sections */}
     </Page>
@@ -96,8 +96,8 @@ Automated report emails via PocketBase cron hooks:
 cronAdd('weekly-merchant-report', '0 9 * * 1', async () => {
   const report = await buildWeeklyMerchantReport();
   await sendEmail({
-    to: 'ops@waly.app',
-    subject: `WALY Weekly Merchant Report — ${dayjs().format('DD MMM YYYY')}`,
+    to: 'ops@risev.app',
+    subject: `risev Weekly Merchant Report — ${dayjs().format('DD MMM YYYY')}`,
     attachments: [{ filename: 'report.csv', content: report.csv }],
   });
 });

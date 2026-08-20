@@ -1,6 +1,6 @@
 # 04 — Admin Portal: Technology Stack
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -54,7 +54,7 @@ The Admin Portal is built on **Refine** — an open-source React meta-framework 
 import PocketBase from 'pocketbase';
 
 export const pb = new PocketBase(import.meta.env.VITE_POCKETBASE_URL);
-// VITE_POCKETBASE_URL=https://api.waly.app
+// VITE_POCKETBASE_URL=https://api.risev.app
 ```
 
 ### 3.2 Data Provider
@@ -64,7 +64,7 @@ export const pb = new PocketBase(import.meta.env.VITE_POCKETBASE_URL);
 import { dataProvider } from '@refinedev/pocketbase';
 import { pb } from './lib/pocketbase';
 
-export const walyDataProvider = dataProvider(pb);
+export const risevDataProvider = dataProvider(pb);
 ```
 
 ### 3.3 Auth Provider
@@ -74,7 +74,7 @@ export const walyDataProvider = dataProvider(pb);
 import { authProvider } from '@refinedev/pocketbase';
 import { pb } from './lib/pocketbase';
 
-export const walyAuthProvider = authProvider(pb);
+export const risevAuthProvider = authProvider(pb);
 // Uses pb.admins.authWithPassword() for superuser login
 ```
 
@@ -88,15 +88,15 @@ import { BrowserRouter, Routes, Route, Outlet } from 'react-router-dom';
 import { NavigateToResource } from '@refinedev/react-router-v6';
 import { App as AntdApp } from 'antd';
 
-import { walyDataProvider } from './dataProvider';
-import { walyAuthProvider } from './authProvider';
+import { risevDataProvider } from './dataProvider';
+import { risevAuthProvider } from './authProvider';
 
 export const App = () => (
   <BrowserRouter>
     <AntdApp>
       <Refine
-        dataProvider={walyDataProvider}
-        authProvider={walyAuthProvider}
+        dataProvider={risevDataProvider}
+        authProvider={risevAuthProvider}
         notificationProvider={useNotificationProvider}
         resources={[
           { name: 'merchants',     list: '/merchants',    show: '/merchants/:id', meta: { label: 'Merchants' } },
@@ -144,8 +144,8 @@ export const App = () => (
 
 ```env
 # .env
-VITE_POCKETBASE_URL=https://api.waly.app
-VITE_APP_NAME=WALY Admin Portal
+VITE_POCKETBASE_URL=https://api.risev.app
+VITE_APP_NAME=risev Admin Portal
 VITE_APP_ENV=production
 ```
 

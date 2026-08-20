@@ -1,6 +1,6 @@
 # 13 — Admin Portal: Membership Tiers
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-WALY's loyalty programme uses a 4-tier membership system (Bronze → Silver → Gold → Platinum). Admin staff can view and edit tier definitions — thresholds, multipliers, and benefits — through the Admin Portal. Changes to tier definitions affect all customers globally.
+risev's loyalty programme uses a 4-tier membership system (Bronze → Silver → Gold → Platinum). Admin staff can view and edit tier definitions — thresholds, multipliers, and benefits — through the Admin Portal. Changes to tier definitions affect all customers globally.
 
 ---
 

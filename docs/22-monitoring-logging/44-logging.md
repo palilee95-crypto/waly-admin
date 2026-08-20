@@ -1,6 +1,6 @@
 # 44 — Admin Portal: Logging
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Logging in the WALY Admin Portal covers three layers: PocketBase request logs, Caddy access logs, and admin action audit logs. Together they provide a complete trail for debugging, compliance, and security review.
+Logging in the risev Admin Portal covers three layers: PocketBase request logs, Caddy access logs, and admin action audit logs. Together they provide a complete trail for debugging, compliance, and security review.
 
 ---
 
@@ -16,7 +16,7 @@ Logging in the WALY Admin Portal covers three layers: PocketBase request logs, C
 
 | Layer | What is Logged | Format | Storage |
 |---|---|---|---|
-| **Caddy Access Log** | HTTP requests to admin.waly.app | JSON | `/var/log/caddy/admin.waly.app.log` |
+| **Caddy Access Log** | HTTP requests to admin.risev.app | JSON | `/var/log/caddy/admin.risev.app.log` |
 | **PocketBase Logs** | API requests, auth events, hook errors | JSON | `pb_data/logs/` + PocketBase Admin UI |
 | **Admin Audit Log** | Admin user actions (approve, suspend, adjust) | JSON | `admin_audit_logs` PocketBase collection |
 | **Browser Console** | Dev-mode debug, Sentry errors (prod) | Text / JSON | Browser / Sentry |
@@ -33,7 +33,7 @@ Logging in the WALY Admin Portal covers three layers: PocketBase request logs, C
   "msg": "handled request",
   "request": {
     "method": "GET",
-    "host": "admin.waly.app",
+    "host": "admin.risev.app",
     "uri": "/dashboard",
     "remote_ip": "203.0.113.1",
     "user_agent": "Mozilla/5.0..."
@@ -53,7 +53,7 @@ PocketBase provides a built-in log viewer in the Admin UI (`/_/logs`):
 - **Auth logs**: login/logout events with IP and user
 - **Hook logs**: pb_hooks execution output and errors
 
-Access: `https://api.waly.app/_/` → Logs section.
+Access: `https://api.risev.app/_/` → Logs section.
 
 ---
 

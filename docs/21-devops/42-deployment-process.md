@@ -1,6 +1,6 @@
 # 42 — Admin Portal: Deployment Process
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -17,9 +17,9 @@ The Admin Portal is deployed as a static SPA (Vite production build) served by C
 ```
 Internet → Caddy (443 HTTPS)
   │
-  ├── admin.waly.app      → /var/www/admin-portal/dist/ (static SPA)
-  ├── api.waly.app        → localhost:8090 (PocketBase)
-  └── app.waly.app        → (future mobile web mirror)
+  ├── admin.risev.app      → /var/www/admin-portal/dist/ (static SPA)
+  ├── api.risev.app        → localhost:8090 (PocketBase)
+  └── app.risev.app        → (future mobile web mirror)
 ```
 
 ---
@@ -40,7 +40,7 @@ npm run build
 ## 4. Caddyfile Configuration
 
 ```caddy
-admin.waly.app {
+admin.risev.app {
   root * /var/www/admin-portal/dist
 
   # SPA fallback — all routes serve index.html
@@ -59,16 +59,16 @@ admin.waly.app {
 
   # Logging
   log {
-    output file /var/log/caddy/admin.waly.app.log
+    output file /var/log/caddy/admin.risev.app.log
     format json
   }
 }
 
-api.waly.app {
+api.risev.app {
   reverse_proxy localhost:8090
 
   # Allow admin portal CORS
-  header Access-Control-Allow-Origin "https://admin.waly.app"
+  header Access-Control-Allow-Origin "https://admin.risev.app"
   header Access-Control-Allow-Methods "GET, POST, PATCH, DELETE, OPTIONS"
   header Access-Control-Allow-Headers "Authorization, Content-Type"
 }
@@ -80,8 +80,8 @@ api.waly.app {
 
 ```bash
 # admin-portal/.env.production
-VITE_POCKETBASE_URL=https://api.waly.app
-VITE_APP_NAME=WALY Admin Portal
+VITE_POCKETBASE_URL=https://api.risev.app
+VITE_APP_NAME=risev Admin Portal
 VITE_APP_ENV=production
 ```
 
@@ -109,7 +109,7 @@ echo "🔄  Reloading Caddy..."
 sudo systemctl reload caddy
 
 echo "✅  Admin portal deployed successfully!"
-echo "🌐  https://admin.waly.app"
+echo "🌐  https://admin.risev.app"
 ```
 
 ---

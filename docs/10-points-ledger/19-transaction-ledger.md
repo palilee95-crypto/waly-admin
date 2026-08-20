@@ -1,6 +1,6 @@
 # 19 — Admin Portal: Transaction Ledger
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Transaction Ledger is the authoritative, immutable record of every points event on the WALY platform. Admins use it to audit point flows, investigate disputes, and verify system integrity. All transactions are append-only — no deletion is permitted.
+The Transaction Ledger is the authoritative, immutable record of every points event on the risev platform. Admins use it to audit point flows, investigate disputes, and verify system integrity. All transactions are append-only — no deletion is permitted.
 
 ---
 
@@ -97,7 +97,7 @@ const { triggerExport, isLoading } = useExport<Transaction>({
     Note:      item.note,
     Date:      item.created,
   }),
-  filename: `waly-ledger-${dayjs().format('YYYY-MM-DD')}`,
+  filename: `risev-ledger-${dayjs().format('YYYY-MM-DD')}`,
 });
 ```
 

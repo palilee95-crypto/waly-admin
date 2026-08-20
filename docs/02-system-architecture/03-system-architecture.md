@@ -1,6 +1,6 @@
 # 03 — Admin Portal: System Architecture
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The WALY Admin Portal is a **client-side Single Page Application (SPA)** built with Refine + Vite. It communicates exclusively with the existing PocketBase backend instance that also powers the mobile `web-app`. There is no separate backend for the admin portal — all data access goes through PocketBase's REST and SSE APIs.
+The risev Admin Portal is a **client-side Single Page Application (SPA)** built with Refine + Vite. It communicates exclusively with the existing PocketBase backend instance that also powers the mobile `web-app`. There is no separate backend for the admin portal — all data access goes through PocketBase's REST and SSE APIs.
 
 ---
 
@@ -16,8 +16,8 @@ The WALY Admin Portal is a **client-side Single Page Application (SPA)** built w
 
 ```
 ┌──────────────────────────────────────────────────────────┐
-│                   WALY Admin Portal                      │
-│           https://admin.waly.app (Browser SPA)           │
+│                   risev Admin Portal                      │
+│           https://admin.risev.app (Browser SPA)           │
 │                                                          │
 │  ┌────────────────────────────────────────────────────┐  │
 │  │  Refine Framework Layer                            │  │
@@ -38,7 +38,7 @@ The WALY Admin Portal is a **client-side Single Page Application (SPA)** built w
                        │
          ┌─────────────▼──────────────┐
          │   PocketBase v0.39.5       │
-         │   https://api.waly.app     │
+         │   https://api.risev.app     │
          │                            │
          │  ┌──────────────────────┐  │
          │  │  REST API (/api/)    │  │
@@ -84,7 +84,7 @@ Admin views fraud flags page
 
 ### 3.3 Authentication Flow
 ```
-Admin navigates to admin.waly.app
+Admin navigates to admin.risev.app
   → Refine authProvider.check() runs
   → No valid token → redirect to /login
   → Admin enters email + password
@@ -102,7 +102,7 @@ Admin navigates to admin.waly.app
 Internet
   │
   ▼
-Caddy (Reverse Proxy) — https://admin.waly.app
+Caddy (Reverse Proxy) — https://admin.risev.app
   │
   ├─► Serve admin-portal/dist/ (static SPA)
   │
@@ -121,7 +121,7 @@ Both the admin portal (static files) and PocketBase can run on the same server b
 | User data access | Superuser token bypasses all collection-level rules |
 | HTTPS enforcement | Caddy auto-provisions TLS via Let's Encrypt |
 | Token expiry | PocketBase superuser tokens expire; authProvider handles refresh |
-| CORS | PocketBase configured to only allow `admin.waly.app` origin |
+| CORS | PocketBase configured to only allow `admin.risev.app` origin |
 
 ---
 

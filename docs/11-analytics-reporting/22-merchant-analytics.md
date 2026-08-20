@@ -1,6 +1,6 @@
 # 22 — Admin Portal: Merchant Analytics
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Merchant Analytics provides per-merchant performance data, enabling the WALY operations team to identify top performers, flag underperforming merchants, and make data-driven decisions about campaign targeting and merchant support.
+Merchant Analytics provides per-merchant performance data, enabling the risev operations team to identify top performers, flag underperforming merchants, and make data-driven decisions about campaign targeting and merchant support.
 
 ---
 

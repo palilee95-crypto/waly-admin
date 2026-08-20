@@ -1,6 +1,6 @@
 # 36 — Admin Portal: Navigation Structure
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -15,7 +15,7 @@ The Admin Portal uses Refine's `ThemedLayoutV2` with a fixed left sidebar for pr
 ## 2. Sidebar Navigation Tree
 
 ```
-WALY Admin
+risev Admin
 ├── 📊 Dashboard                /dashboard
 │
 ├── 🏪 Merchants               /merchants
@@ -67,8 +67,8 @@ WALY Admin
 
 ```
 ┌────────────────────────┐
-│  🟣 WALY ADMIN         │
-│  admin.waly.app        │
+│  🟣 risev ADMIN         │
+│  admin.risev.app        │
 └────────────────────────┘
 ```
 

@@ -1,6 +1,6 @@
 # 49 — Admin Portal: Analytics (Portal Observability)
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -10,7 +10,7 @@
 
 This document covers **portal-level analytics** — tracking how admin staff use the Admin Portal itself (page views, feature usage, session lengths). This is distinct from [21-platform-analytics.md](../11-analytics-reporting/21-platform-analytics.md) which covers business/product analytics.
 
-Portal analytics help the WALY team understand which features are most used, where admins spend time, and which workflows can be improved.
+Portal analytics help the risev team understand which features are most used, where admins spend time, and which workflows can be improved.
 
 ---
 

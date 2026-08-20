@@ -1,6 +1,6 @@
 # 23 — Admin Portal: Fraud Flags
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-The Fraud Flags module is the admin's primary interface for reviewing, investigating, and resolving suspicious activity detected by WALY's automated fraud detection system. Every flag represents a triggered rule that requires human review.
+The Fraud Flags module is the admin's primary interface for reviewing, investigating, and resolving suspicious activity detected by risev's automated fraud detection system. Every flag represents a triggered rule that requires human review.
 
 ---
 

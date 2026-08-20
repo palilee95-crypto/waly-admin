@@ -1,6 +1,6 @@
 # 48 — Admin Portal: Terms & Conditions
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,19 +8,19 @@
 
 ## 1. Overview
 
-This document defines the acceptable-use policy and terms of access for the WALY Admin Portal. All admin portal users must agree to these terms as a condition of their access credentials.
+This document defines the acceptable-use policy and terms of access for the risev Admin Portal. All admin portal users must agree to these terms as a condition of their access credentials.
 
 ---
 
 ## 2. Scope of Access
 
-The WALY Admin Portal provides authorized WALY staff with access to:
+The risev Admin Portal provides authorized risev staff with access to:
 - Customer account data and transaction history
 - Merchant profiles and operational status
 - Platform-wide analytics and financial data
 - System configuration (fraud rules, tier thresholds)
 
-**Access is granted solely for legitimate WALY operational purposes.**
+**Access is granted solely for legitimate risev operational purposes.**
 
 ---
 
@@ -39,7 +39,7 @@ The WALY Admin Portal provides authorized WALY staff with access to:
 |---|---|
 | Accessing customer data for personal benefit | Immediate termination + legal action |
 | Sharing admin credentials with unauthorized persons | Immediate termination |
-| Exporting customer PII outside WALY systems | Immediate termination + PDPA liability |
+| Exporting customer PII outside risev systems | Immediate termination + PDPA liability |
 | Performing unauthorized points adjustments | Termination + recovery of fraudulent points |
 | Accessing admin portal from unsecured public networks | Warning → termination on repeat |
 | Circumventing role-based access controls | Immediate termination |
@@ -63,8 +63,8 @@ The WALY Admin Portal provides authorized WALY staff with access to:
 | Requirement | Standard |
 |---|---|
 | Browser | Chrome v120+, Firefox v120+, or Safari v17+ |
-| Network | WALY corporate network or approved VPN |
-| Device | WALY-issued or personally approved device |
+| Network | risev corporate network or approved VPN |
+| Device | risev-issued or personally approved device |
 | Screen lock | Must be enabled on all devices used to access the portal |
 
 ---

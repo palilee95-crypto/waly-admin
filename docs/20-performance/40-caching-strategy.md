@@ -1,6 +1,6 @@
 # 40 — Admin Portal: Caching Strategy
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -103,7 +103,7 @@ const { mutate } = useUpdate({
 
 ```caddy
 # Caddyfile
-admin.waly.app {
+admin.risev.app {
   root * /var/www/admin-portal/dist
 
   # Cache JS/CSS chunks for 1 year (content-hashed filenames)

@@ -1,17 +1,17 @@
-# 01 — WALY Admin Portal: Project Overview
+# 01 — risev Admin Portal: Project Overview
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Stack:** Refine + Vite + Ant Design + PocketBase v0.39.5
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
 ---
 
-## 1. What is the WALY Admin Portal?
+## 1. What is the risev Admin Portal?
 
-The **WALY Admin Portal** is a web-based internal operations dashboard built for WALY platform staff. It provides a centralized interface to manage every aspect of the WALY loyalty ecosystem — from merchant onboarding and user oversight to fraud monitoring, campaign control, and real-time analytics.
+The **risev Admin Portal** is a web-based internal operations dashboard built for risev platform staff. It provides a centralized interface to manage every aspect of the risev loyalty ecosystem — from merchant onboarding and user oversight to fraud monitoring, campaign control, and real-time analytics.
 
-The Admin Portal is a **separate project** from the mobile app (`web-app/`) but shares the same PocketBase backend instance. It is accessed via a web browser at `https://admin.waly.app` and is strictly restricted to authorized WALY operations team members.
+The Admin Portal is a **separate project** from the mobile app (`web-app/`) but shares the same PocketBase backend instance. It is accessed via a web browser at `https://admin.risev.app` and is strictly restricted to authorized risev operations team members.
 
 ---
 
@@ -19,7 +19,7 @@ The Admin Portal is a **separate project** from the mobile app (`web-app/`) but 
 
 | Problem | Admin Portal Solution |
 |---|---|
-| PocketBase's native `/_/` UI is developer-focused, not operations-friendly | Purpose-built UI tailored to WALY workflows |
+| PocketBase's native `/_/` UI is developer-focused, not operations-friendly | Purpose-built UI tailored to risev workflows |
 | No custom analytics or reporting in PocketBase UI | Embedded charts, KPI cards, and exportable reports |
 | Merchant approval requires direct database edits | One-click approval/rejection workflow with notifications |
 | Fraud review is manual SQL-style filtering | Dedicated fraud flag queue with review actions |
@@ -31,9 +31,9 @@ The Admin Portal is a **separate project** from the mobile app (`web-app/`) but 
 
 | Persona | Role | Capabilities |
 |---|---|---|
-| **Super Admin** | WALY CTO / Platform Owner | Full access — all CRUD, config, user management |
-| **Operations Admin** | WALY Ops Team | Merchant approval, user support, campaign management |
-| **Analyst** | WALY Data / Marketing | Read-only access to analytics, reports, export |
+| **Super Admin** | risev CTO / Platform Owner | Full access — all CRUD, config, user management |
+| **Operations Admin** | risev Ops Team | Merchant approval, user support, campaign management |
+| **Analyst** | risev Data / Marketing | Read-only access to analytics, reports, export |
 | **Support Agent** | Customer Support | User lookup, points adjustment, voucher actions |
 
 ---
@@ -107,7 +107,7 @@ admin-portal/
                     ▼
          ┌─────────────────────┐
          │  PocketBase v0.39.5 │
-         │  api.waly.app       │
+         │  api.risev.app       │
          │  REST + SSE + Auth  │
          └─────────────────────┘
 ```

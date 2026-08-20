@@ -1,6 +1,6 @@
 # 20 — Admin Portal: Liability Monitoring
 
-> **Platform:** WALY LOYALTY — Admin Portal
+> **Platform:** risev LOYALTY — Admin Portal
 > **Document Version:** 1.0.0
 > **Last Updated:** 2026-07-01
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-Points liability is the monetary value of all unredeemed points held by customers — the financial obligation WALY has to its users. The Liability Monitoring module gives admins real-time visibility into the total outstanding liability, daily trends, and alerts when liability exceeds configured thresholds.
+Points liability is the monetary value of all unredeemed points held by customers — the financial obligation risev has to its users. The Liability Monitoring module gives admins real-time visibility into the total outstanding liability, daily trends, and alerts when liability exceeds configured thresholds.
 
 ---
 
