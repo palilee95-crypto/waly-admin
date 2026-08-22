@@ -190,12 +190,12 @@ export const ShippingOrderList: React.FC = () => {
     }
   };
 
-  // EasyParcel state
-  const [isEasyParcelModalOpen, setIsEasyParcelModalOpen] = useState<boolean>(false);
-  const [easyParcelRates, setEasyParcelRates] = useState<any[]>([]);
+  // J&T Express courier booking state
+  const [isJntModalOpen, setIsJntModalOpen] = useState<boolean>(false);
+  const [jntRates, setJntRates] = useState<any[]>([]);
   const [isLoadingRates, setIsLoadingRates] = useState<boolean>(false);
   const [selectedCourierOption, setSelectedCourierOption] = useState<any>(null);
-  const [isBookingEasyParcel, setIsBookingEasyParcel] = useState<boolean>(false);
+  const [isBookingJnt, setIsBookingJnt] = useState<boolean>(false);
   const [showSenderEdit, setShowSenderEdit] = useState<boolean>(false);
   
   const [senderAddress, setSenderAddress] = useState(() => {
@@ -213,6 +213,19 @@ export const ShippingOrderList: React.FC = () => {
     };
   });
 
+  const [jntStatus, setJntStatus] = useState<any>(null);
+
+  const fetchJntStatus = async () => {
+    try {
+      const res = await pb.send('/api/risev/jnt/status', { method: 'GET' });
+      setJntStatus(res);
+    } catch (e) {}
+  };
+
+  useEffect(() => {
+    fetchJntStatus();
+  }, []);
+
   const updateSender = (field: string, val: string) => {
     setSenderAddress((prev: any) => {
       const updated = { ...prev, [field]: val };
@@ -223,15 +236,15 @@ export const ShippingOrderList: React.FC = () => {
     });
   };
 
-  const handleOpenEasyParcel = async (record: HardwareOrder) => {
+  const handleOpenJnt = async (record: HardwareOrder) => {
     setSelectedOrder(record);
-    setIsEasyParcelModalOpen(true);
+    setIsJntModalOpen(true);
     setIsLoadingRates(true);
-    setEasyParcelRates([]);
+    setJntRates([]);
     setSelectedCourierOption(null);
 
     try {
-      const resp = await pb.send('/api/risev/easyparcel/rate-check', {
+      const resp = await pb.send('/api/risev/jnt/rate-check', {
         method: 'POST',
         body: {
           dest_postcode: record.postcode || '50470',
@@ -241,50 +254,51 @@ export const ShippingOrderList: React.FC = () => {
       });
 
       if (resp && resp.rates) {
-        setEasyParcelRates(resp.rates);
+        setJntRates(resp.rates);
         const recommended = resp.rates.find((r: any) => r.is_recommended) || resp.rates[0];
         setSelectedCourierOption(recommended);
       }
     } catch (err: any) {
       console.error('Rate check error:', err);
-      message.error('Failed to load live courier rates.');
+      message.error('Failed to load J&T courier rates.');
     } finally {
       setIsLoadingRates(false);
     }
   };
 
-  const handleConfirmEasyParcelBooking = async () => {
+  const handleConfirmJntBooking = async () => {
     if (!selectedOrder || !selectedCourierOption) return;
-    setIsBookingEasyParcel(true);
+    setIsBookingJnt(true);
 
     try {
-      const resp = await pb.send('/api/risev/easyparcel/book', {
+      const resp = await pb.send('/api/risev/jnt/book', {
         method: 'POST',
         body: {
           order_id: selectedOrder.id,
           courier_name: selectedCourierOption.courier_name,
           service_id: selectedCourierOption.service_id,
+          service_code: selectedCourierOption.service_code,
           sender_name: senderAddress.name,
           sender_phone: senderAddress.phone,
           sender_address: senderAddress.address,
           sender_postcode: senderAddress.postcode,
           sender_state: senderAddress.state,
-          notes: `EasyParcel 1-Click Booking (${selectedCourierOption.service_type || 'Standard'})`,
+          notes: `J&T Express 1-Click Booking (${selectedCourierOption.service_type || 'Standard'})`,
         },
       });
 
       if (resp && resp.success) {
         message.success(`Shipment booked with ${resp.courier_name}! Tracking: ${resp.tracking_number}`, 6);
-        setIsEasyParcelModalOpen(false);
+        setIsJntModalOpen(false);
         tableQueryResult.refetch();
       } else {
-        message.error(resp?.message || 'Failed to complete EasyParcel booking.');
+        message.error(resp?.message || 'Failed to complete J&T booking.');
       }
     } catch (err: any) {
       console.error('Booking error:', err);
-      message.error(err?.message || 'Error communicating with EasyParcel booking service.');
+      message.error(err?.message || 'Error communicating with J&T booking service.');
     } finally {
-      setIsBookingEasyParcel(false);
+      setIsBookingJnt(false);
     }
   };
 
@@ -308,7 +322,7 @@ export const ShippingOrderList: React.FC = () => {
   const getTrackingUrl = (courierName?: string, trackingNo?: string) => {
     if (!trackingNo) return '#';
     const found = COURIER_OPTIONS.find(c => c.value === courierName);
-    return found ? found.trackUrl(trackingNo) : `https://www.google.com/search?q=${encodeURIComponent(`${courierName || ''} tracking ${trackingNo}`)}`;
+    return found ? found.trackUrl(trackingNo) : `https://www.jtexpress.my/tracking?bills=${trackingNo}`;
   };
 
   const formatPhone = (phone: string) => {
@@ -331,9 +345,28 @@ export const ShippingOrderList: React.FC = () => {
           </p>
         </div>
         <Space>
+          <Button
+            type={jntStatus?.has_active_token ? "default" : "primary"}
+            icon={<ThunderboltOutlined style={{ color: jntStatus?.has_active_token ? '#10B981' : '#FFFFFF' }} />}
+            style={{
+              borderRadius: 10,
+              fontWeight: 600,
+              borderColor: jntStatus?.has_active_token ? '#10B981' : '#0F172A',
+              color: jntStatus?.has_active_token ? '#065F46' : '#FFFFFF',
+              backgroundColor: jntStatus?.has_active_token ? '#ECFDF5' : '#0F172A'
+            }}
+            onClick={() => {
+              window.open("https://vip.jtexpress.my", "_blank");
+            }}
+          >
+            {jntStatus?.has_active_token ? '⚡ J&T VIP Live (Connected)' : '⚡ Open J&T VIP Portal'}
+          </Button>
           <Button 
             icon={<ReloadOutlined />} 
-            onClick={() => tableQueryResult.refetch()}
+            onClick={() => {
+              tableQueryResult.refetch();
+              fetchJntStatus();
+            }}
             loading={tableQueryResult.isFetching}
           >
             Refresh
@@ -574,11 +607,11 @@ export const ShippingOrderList: React.FC = () => {
               align: 'right',
               render: (_, record) => (
                 <Space>
-                  <Tooltip title="1-Click EasyParcel Courier Booking">
+                  <Tooltip title="1-Click J&T Express Courier Booking">
                     <Button
                       size="small"
                       icon={<ThunderboltOutlined style={{ color: '#D97706' }} />}
-                      onClick={() => handleOpenEasyParcel(record)}
+                      onClick={() => handleOpenJnt(record)}
                       style={{ 
                         backgroundColor: '#FEF3C7', 
                         borderColor: '#FCD34D', 
@@ -587,7 +620,7 @@ export const ShippingOrderList: React.FC = () => {
                         fontWeight: 700 
                       }}
                     >
-                      EasyParcel
+                      J&T Express
                     </Button>
                   </Tooltip>
 
@@ -927,7 +960,7 @@ export const ShippingOrderList: React.FC = () => {
       </Modal>
 
       {/* ========================================================= */}
-      {/* MODAL 4: EASYPARCEL 1-CLICK COURIER BOOKING               */}
+      {/* MODAL 4: J&T EXPRESS 1-CLICK COURIER BOOKING              */}
       {/* ========================================================= */}
       <Modal
         title={
@@ -936,24 +969,24 @@ export const ShippingOrderList: React.FC = () => {
               <ThunderboltOutlined style={{ color: '#D97706', fontSize: 16 }} />
             </div>
             <div>
-              <span style={{ fontWeight: 800, fontSize: 16 }}>EasyParcel 1-Click Courier Booking</span>
-              <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400 }}>Live Rate Quotations & Automated AWB Booking</div>
+              <span style={{ fontWeight: 800, fontSize: 16 }}>J&T Express 1-Click Courier Booking</span>
+              <div style={{ fontSize: 11, color: '#64748B', fontWeight: 400 }}>VIP Direct AWB Generation & Automated Tracking</div>
             </div>
           </div>
         }
-        open={isEasyParcelModalOpen}
-        onCancel={() => setIsEasyParcelModalOpen(false)}
+        open={isJntModalOpen}
+        onCancel={() => setIsJntModalOpen(false)}
         footer={[
-          <Button key="cancel" onClick={() => setIsEasyParcelModalOpen(false)} style={{ borderRadius: 8 }}>
+          <Button key="cancel" onClick={() => setIsJntModalOpen(false)} style={{ borderRadius: 8 }}>
             Cancel
           </Button>,
           <Button
             key="book"
             type="primary"
-            loading={isBookingEasyParcel}
+            loading={isBookingJnt}
             disabled={!selectedCourierOption || isLoadingRates}
             icon={<RocketOutlined />}
-            onClick={handleConfirmEasyParcelBooking}
+            onClick={handleConfirmJntBooking}
             style={{ 
               backgroundColor: '#0F172A', 
               borderColor: '#0F172A', 
@@ -962,7 +995,7 @@ export const ShippingOrderList: React.FC = () => {
               height: 38
             }}
           >
-            {selectedCourierOption ? `Book with ${selectedCourierOption.courier_name} (RM ${selectedCourierOption.price?.toFixed(2)})` : 'Select a Courier'}
+            {selectedCourierOption ? `Book with ${selectedCourierOption.courier_name} (RM ${selectedCourierOption.price?.toFixed(2)})` : 'Select a Service'}
           </Button>,
         ]}
         width={650}
@@ -985,17 +1018,17 @@ export const ShippingOrderList: React.FC = () => {
 
             {/* Courier Selection List */}
             <div style={{ marginBottom: 12, fontWeight: 700, fontSize: 13, color: '#334155' }}>
-              Available Couriers ({easyParcelRates.length})
+              J&T Shipping Services ({jntRates.length})
             </div>
 
             {isLoadingRates ? (
               <div style={{ padding: 40, textAlign: 'center' }}>
                 <SyncOutlined spin style={{ fontSize: 24, color: '#3B82F6', marginBottom: 10 }} />
-                <div style={{ fontSize: 13, color: '#64748B' }}>Fetching live courier rates from EasyParcel...</div>
+                <div style={{ fontSize: 13, color: '#64748B' }}>Fetching J&T courier rates...</div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxHeight: 320, overflowY: 'auto' }}>
-                {easyParcelRates.map((rate, idx) => {
+                {jntRates.map((rate, idx) => {
                   const isSelected = selectedCourierOption?.service_id === rate.service_id;
                   return (
                     <div
