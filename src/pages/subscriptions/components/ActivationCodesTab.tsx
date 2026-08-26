@@ -316,7 +316,7 @@ export const ActivationCodesTab: React.FC = () => {
     ctx.stroke();
 
     // Load QR Code onto Canvas
-    const activateUrl = `https://risev.app/activate?code=${record.code}`;
+    const activateUrl = `https://risev.app/nfc?c=${record.code}`;
     const qrImg = new Image();
     qrImg.crossOrigin = 'anonymous';
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(activateUrl)}&color=002d1e&margin=2`;
@@ -371,9 +371,9 @@ export const ActivationCodesTab: React.FC = () => {
       ctx.stroke();
 
       const steps = [
-        '1. Scan QR code above or visit risev.app/activate',
+        '1. Scan QR code above or tap Stand with smartphone',
         '2. Log in or create your Risev merchant store account',
-        '3. Enter the activation code above to unlock your customer capacity',
+        '3. Tap "Bind Stand to My Store" to unlock your customer capacity',
         '4. Place your Risev NFC Stand at the counter & start collecting members!',
       ];
 
@@ -446,7 +446,7 @@ export const ActivationCodesTab: React.FC = () => {
 
     const cardsHtml = printCodes
       .map((item) => {
-        const activateUrl = `https://risev.app/activate?code=${item.code}`;
+        const activateUrl = `https://risev.app/nfc?c=${item.code}`;
         // Generate QR code image URL using high-quality Google Chart API or QR SVG
         const qrImgSrc = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(activateUrl)}&color=002d1e&margin=2`;
 
@@ -479,7 +479,7 @@ export const ActivationCodesTab: React.FC = () => {
             <div class="steps-box">
               <div class="step-item">
                 <span class="step-num">1</span>
-                <span>Scan QR code above or visit <strong>risev.app/activate</strong></span>
+                <span>Scan QR code above or tap Stand with smartphone</span>
               </div>
               <div class="step-item">
                 <span class="step-num">2</span>
@@ -487,7 +487,7 @@ export const ActivationCodesTab: React.FC = () => {
               </div>
               <div class="step-item">
                 <span class="step-num">3</span>
-                <span>Enter code above to unlock your customer quota</span>
+                <span>Tap "Bind Stand to My Store" to unlock your customer capacity</span>
               </div>
               <div class="step-item">
                 <span class="step-num">4</span>
@@ -1246,7 +1246,7 @@ export const ActivationCodesTab: React.FC = () => {
           {/* Grid of Preview Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {printCodes.map((item) => {
-              const activateUrl = `https://risev.app/activate?code=${item.code}`;
+              const activateUrl = `https://risev.app/nfc?c=${item.code}`;
               return (
                 <div
                   key={item.id}
@@ -1305,7 +1305,7 @@ export const ActivationCodesTab: React.FC = () => {
                   <div className="text-left w-full text-[9.5px] text-slate-600 flex flex-col gap-1 border-t border-slate-100 pt-2 font-medium">
                     <div className="flex items-center gap-1.5">
                       <span className="w-3.5 h-3.5 rounded-full bg-[#006d37] text-white flex items-center justify-center text-[8px] font-black shrink-0">1</span>
-                      <span>Scan QR code above or visit <strong>risev.app/activate</strong></span>
+                      <span>Scan QR code above or tap Stand with smartphone</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-3.5 h-3.5 rounded-full bg-[#006d37] text-white flex items-center justify-center text-[8px] font-black shrink-0">2</span>
@@ -1313,7 +1313,7 @@ export const ActivationCodesTab: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-3.5 h-3.5 rounded-full bg-[#006d37] text-white flex items-center justify-center text-[8px] font-black shrink-0">3</span>
-                      <span>Enter code above to unlock your customer quota</span>
+                      <span>Tap "Bind Stand to My Store" to unlock customer capacity</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="w-3.5 h-3.5 rounded-full bg-[#006d37] text-white flex items-center justify-center text-[8px] font-black shrink-0">4</span>
