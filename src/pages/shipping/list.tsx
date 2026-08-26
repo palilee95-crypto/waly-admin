@@ -39,9 +39,11 @@ import {
   ThunderboltOutlined,
   RocketOutlined,
   StarFilled,
-  SafetyCertificateOutlined
+  SafetyCertificateOutlined,
+  QrcodeOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
+import { useNavigate } from 'react-router-dom';
 import { pb } from '../../lib/pocketbase';
 
 interface HardwareOrder {
@@ -83,6 +85,7 @@ const COURIER_OPTIONS = [
 ];
 
 export const ShippingOrderList: React.FC = () => {
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
   const [selectedOrder, setSelectedOrder] = useState<HardwareOrder | null>(null);
@@ -360,6 +363,16 @@ export const ShippingOrderList: React.FC = () => {
             }}
           >
             {jntStatus?.has_active_token ? '⚡ J&T VIP Live (Connected)' : '⚡ Open J&T VIP Portal'}
+          </Button>
+          <Button
+            icon={<QrcodeOutlined style={{ color: '#006d37' }} />}
+            onClick={() => navigate('/subscriptions?tab=stand_codes')}
+            style={{
+              borderRadius: 10,
+              fontWeight: 600,
+            }}
+          >
+            Stand Codes (RSV)
           </Button>
           <Button 
             icon={<ReloadOutlined />} 

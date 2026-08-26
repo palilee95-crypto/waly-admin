@@ -117,6 +117,11 @@ export const App: React.FC = () => {
                 meta: { label: 'Billing' },
               },
               {
+                name: 'activation_codes',
+                list: '/subscriptions?tab=stand_codes',
+                meta: { label: 'Stand Codes', hide: true },
+              },
+              {
                 name: '_superusers',
                 list: '/admin-users',
                 meta: { label: 'Admin Users' },

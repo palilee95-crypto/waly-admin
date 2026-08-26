@@ -2,10 +2,11 @@ import React, { useState } from 'react';
 import { useTable, useCreate, useDelete, useOne, useUpdate } from '@refinedev/core';
 import { useSelect } from '@refinedev/antd';
 import { Tag, message, Modal, Form, Select, Input, DatePicker, Button, Checkbox } from 'antd';
-import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, DeleteOutlined, QrcodeOutlined } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { Link } from 'react-router-dom';
 import { pb } from '../../lib/pocketbase';
+import { ActivationCodesTab } from './components/ActivationCodesTab';
 
 export const SubscriptionList: React.FC = () => {
   const generatePbId = () => {
@@ -17,7 +18,7 @@ export const SubscriptionList: React.FC = () => {
     return result;
   };
 
-  const [activeTab, setActiveTab] = useState<'subscriptions' | 'free_trials' | 'pricing' | 'promo_codes'>('subscriptions');
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'free_trials' | 'stand_codes' | 'pricing' | 'promo_codes'>('subscriptions');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form] = Form.useForm();
 
@@ -127,6 +128,16 @@ export const SubscriptionList: React.FC = () => {
   React.useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const merchantId = params.get('grantTrialFor');
+    const tabParam = params.get('tab');
+    if (tabParam === 'stand_codes' || tabParam === 'activation_codes') {
+      setActiveTab('stand_codes');
+    } else if (tabParam === 'free_trials') {
+      setActiveTab('free_trials');
+    } else if (tabParam === 'pricing') {
+      setActiveTab('pricing');
+    } else if (tabParam === 'promo_codes') {
+      setActiveTab('promo_codes');
+    }
     if (merchantId) {
       handleOpenTrialModal(merchantId);
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -503,6 +514,18 @@ export const SubscriptionList: React.FC = () => {
                     {subscriptions.filter(s => s.status === 'trialing' || s.chipin_payment_id?.startsWith('free_trial_admin_')).length}
                   </span>
                 )}
+              </button>
+
+              <button
+                onClick={() => setActiveTab('stand_codes')}
+                className={`px-4 py-2 rounded-2xl text-xs font-black whitespace-nowrap transition-all border cursor-pointer flex items-center gap-1.5 ${
+                  activeTab === 'stand_codes'
+                    ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                    : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                }`}
+              >
+                <QrcodeOutlined className="text-xs" />
+                <span>Stand Codes (RSV)</span>
               </button>
 
               <button
@@ -1000,6 +1023,13 @@ export const SubscriptionList: React.FC = () => {
             )}
           </div>
         )}
+
+      {/* Stand Codes (RSV) Tab */}
+      {activeTab === 'stand_codes' && (
+        <div className="pt-2">
+          <ActivationCodesTab />
+        </div>
+      )}
 
       {/* Create Manual Billing Modal */}
       <Modal
