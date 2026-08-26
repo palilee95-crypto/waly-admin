@@ -12,6 +12,7 @@ import {
   ClockCircleOutlined,
   QrcodeOutlined,
   ShopOutlined,
+  LinkOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { Link } from 'react-router-dom';
@@ -116,10 +117,20 @@ export const ActivationCodesTab: React.FC = () => {
   const redemptionRate = totalCount > 0 ? Math.round((redeemedCount / totalCount) * 100) : 0;
   const totalQuotaProvisioned = redeemedCount * 500;
 
-  // Copy Single Code Helper
+  // Copy Helpers
   const handleCopy = (text: string, label = 'Code') => {
-    navigator.clipboard.writeText(text);
-    message.success(`${label} copied to clipboard!`);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      message.success(`Copied ${label}: ${text}`);
+    }
+  };
+
+  const handleCopyStandLink = (code: string) => {
+    const url = `https://risev.app/nfc?c=${code}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+      message.success(`Copied Stand Link: ${url}`);
+    }
   };
 
   // Open Generate Modal
@@ -222,7 +233,7 @@ export const ActivationCodesTab: React.FC = () => {
       c.expand?.redeemed_by?.name ? `"${c.expand.redeemed_by.name.replace(/"/g, '""')}"` : c.redeemed_by || '',
       c.redeemed_at ? dayjs(c.redeemed_at).format('YYYY-MM-DD HH:mm') : '',
       dayjs(c.created).format('YYYY-MM-DD HH:mm'),
-      `https://risev.app/activate?code=${c.code}`,
+      `https://risev.app/nfc?c=${c.code}`,
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
@@ -941,15 +952,24 @@ export const ActivationCodesTab: React.FC = () => {
                       className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors group"
                     >
                       {/* Code string with copy button */}
+                      {/* Code string with copy buttons */}
                       <td className="py-3 px-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <span className="font-mono text-sm font-black text-[#006d37] dark:text-[#6bfe9c] bg-[#006d37]/10 dark:bg-[#6bfe9c]/15 px-2.5 py-1 rounded-lg border border-[#006d37]/20 select-all">
                             {item.code}
                           </span>
-                          <Tooltip title="Copy Code">
+                          <Tooltip title="Copy Stand Link (https://risev.app/nfc?c=...)">
+                            <button
+                              onClick={() => handleCopyStandLink(item.code)}
+                              className="text-slate-400 hover:text-[#006d37] dark:hover:text-[#6bfe9c] p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors bg-transparent border-none cursor-pointer flex items-center justify-center"
+                            >
+                              <LinkOutlined className="text-xs" />
+                            </button>
+                          </Tooltip>
+                          <Tooltip title="Copy Code text">
                             <button
                               onClick={() => handleCopy(item.code, 'Activation Code')}
-                              className="text-slate-400 hover:text-[#006d37] p-1 rounded transition-colors bg-transparent border-none cursor-pointer"
+                              className="text-slate-400 hover:text-[#006d37] dark:hover:text-[#6bfe9c] p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors bg-transparent border-none cursor-pointer flex items-center justify-center"
                             >
                               <CopyOutlined className="text-xs" />
                             </button>
@@ -1022,6 +1042,15 @@ export const ActivationCodesTab: React.FC = () => {
                       {/* Actions */}
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          <Tooltip title="Copy Stand Link (https://risev.app/nfc?c=...)">
+                            <button
+                              onClick={() => handleCopyStandLink(item.code)}
+                              className="text-slate-600 dark:text-slate-300 hover:text-[#006d37] dark:hover:text-[#6bfe9c] p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all bg-transparent border-none cursor-pointer"
+                            >
+                              <LinkOutlined className="text-sm" />
+                            </button>
+                          </Tooltip>
+
                           <Tooltip title="Download Card Image (PNG)">
                             <button
                               onClick={() => downloadCardAsImage(item)}
