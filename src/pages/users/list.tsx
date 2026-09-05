@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useTable, useUpdate, useDelete } from '@refinedev/core';
+import { useTable, useUpdate } from '@refinedev/core';
 import { Modal, Form, Input, Select, Button, message, Pagination, Popconfirm } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { pb } from '../../lib/pocketbase';
 
 export const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
   const [adjustmentForm] = Form.useForm();
 
   // Search values state
@@ -29,7 +31,6 @@ export const UserList: React.FC = () => {
   });
 
   const { mutate: updateUser } = useUpdate();
-  const { mutate: deleteUser } = useDelete();
   const isFirstRender = useRef(true);
 
   // Perform search automatically when typing (with a short 250ms debounce)
@@ -97,19 +98,21 @@ export const UserList: React.FC = () => {
     });
   };
 
-  const handleHardDelete = (user: any) => {
-    deleteUser({
-      resource: 'users',
-      id: user.id,
-      successNotification: () => {
-        message.success(`User ${user.name} and all related data have been deleted.`);
-        return {
-          message: 'User Deleted',
-          description: `The account for ${user.name} has been permanently removed.`,
-          type: 'success',
-        };
-      },
-    });
+  const handleHardDelete = async (user: any) => {
+    try {
+      setDeletingUserId(user.id);
+      const res = await pb.send<{ success: boolean; message: string }>('/api/risev/admin/users/delete', {
+        method: 'POST',
+        body: { userId: user.id },
+      });
+      message.success(res?.message || `User ${user.name} and all related data have been deleted.`);
+      tableQueryResult.refetch();
+    } catch (err: any) {
+      console.error('[ADMIN DELETE USER ERROR]', err);
+      message.error(err?.data?.message || err?.message || 'Failed to delete user account.');
+    } finally {
+      setDeletingUserId(null);
+    }
   };
 
   const handleAdjustPointsClick = (user: any) => {
@@ -316,16 +319,17 @@ export const UserList: React.FC = () => {
 
                         <Popconfirm
                           title="Delete User"
-                          description={`Delete account for ${user.name}?`}
+                          description={`Permanently delete ${user.name} and all associated data?`}
                           okText="Delete"
                           cancelText="Cancel"
                           okButtonProps={{ danger: true, style: { border: 'none' } }}
                           onConfirm={() => handleHardDelete(user)}
                         >
                           <button
-                            className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-red-500/20 cursor-pointer"
+                            disabled={deletingUserId === user.id}
+                            className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-red-500/20 cursor-pointer disabled:opacity-50"
                           >
-                            🗑️
+                            {deletingUserId === user.id ? '⏳' : '🗑️'}
                           </button>
                         </Popconfirm>
                       </div>
