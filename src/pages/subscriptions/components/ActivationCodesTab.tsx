@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTable, useDelete } from '@refinedev/core';
-import { Tag, message, Modal, Form, Select, Input, Button, Popconfirm, QRCode, Tooltip } from 'antd';
+import { Tag, message, Modal, Form, Select, Input, Button, Popconfirm, QRCode, Tooltip, InputNumber } from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -194,7 +194,7 @@ export const ActivationCodesTab: React.FC = () => {
   // Execute Batch Generation
   const handleGenerateSubmit = async (values: any) => {
     setIsGenerating(true);
-    const qty = Math.min(Math.max(Number(values.quantity) || 1, 1), 100);
+    const qty = Math.min(Math.max(Number(values.quantity) || 1, 1), 200);
     const prefix = (values.prefix || 'RSV').trim().toUpperCase();
     const plan = values.plan || 'stand_bundle';
     const quota = Number(values.quota) || 500;
@@ -1305,19 +1305,43 @@ export const ActivationCodesTab: React.FC = () => {
           {/* Batch Quantity */}
           <Form.Item
             name="quantity"
-            label={<span className="text-[10px] font-black uppercase text-[#006d37] tracking-wider">Batch Quantity (1 - 100)</span>}
-            rules={[{ required: true, message: 'Please select quantity' }]}
+            label={<span className="text-[10px] font-black uppercase text-[#006d37] tracking-wider">Batch Quantity (Enter Custom Amount)</span>}
+            rules={[
+              { required: true, message: 'Please enter quantity' },
+              {
+                validator: async (_, value) => {
+                  const num = Number(value);
+                  if (!value || isNaN(num) || num < 1 || num > 200) {
+                    throw new Error('Quantity must be between 1 and 200 codes');
+                  }
+                },
+              },
+            ]}
             initialValue={10}
+            className="mb-1"
           >
-            <Select className="rounded-xl h-10">
-              <Select.Option value={1}>1 Code</Select.Option>
-              <Select.Option value={5}>5 Codes</Select.Option>
-              <Select.Option value={10}>10 Codes (Standard Batch)</Select.Option>
-              <Select.Option value={25}>25 Codes</Select.Option>
-              <Select.Option value={50}>50 Codes</Select.Option>
-              <Select.Option value={100}>100 Codes (Full Box)</Select.Option>
-            </Select>
+            <InputNumber
+              min={1}
+              max={200}
+              placeholder="e.g. 7, 15, 30, 100"
+              className="w-full rounded-xl h-10 font-bold text-sm border-slate-200 flex items-center"
+            />
           </Form.Item>
+
+          {/* Quick preset chips */}
+          <div className="flex items-center gap-1.5 mb-2.5 flex-wrap">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Quick:</span>
+            {[1, 5, 10, 20, 25, 50, 100].map((preset) => (
+              <button
+                key={preset}
+                type="button"
+                onClick={() => generateForm.setFieldValue('quantity', preset)}
+                className="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-100 dark:bg-white/10 hover:bg-[#006d37] hover:text-white text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-white/10 transition-colors cursor-pointer"
+              >
+                {preset}
+              </button>
+            ))}
+          </div>
 
           {/* Remark / Notes */}
           <Form.Item
