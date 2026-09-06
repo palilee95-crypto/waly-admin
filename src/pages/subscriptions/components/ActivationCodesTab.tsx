@@ -13,6 +13,9 @@ import {
   QrcodeOutlined,
   ShopOutlined,
   LinkOutlined,
+  EditOutlined,
+  CheckOutlined,
+  CloseOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { Link } from 'react-router-dom';
@@ -27,6 +30,7 @@ export interface ActivationCodeRecord {
   redeemed_by?: string;
   redeemed_at?: string;
   channel?: 'tiktok_shop' | 'shopee' | 'marketplace' | 'manual';
+  remark?: string;
   created: string;
   updated: string;
   expand?: {
@@ -60,6 +64,11 @@ export const ActivationCodesTab: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | 'available' | 'redeemed'>('all');
   const [channelFilter, setChannelFilter] = useState<string>('all');
   const [searchKeyword, setSearchKeyword] = useState<string>('');
+
+  // Inline Remark Editing State
+  const [editingRemarkId, setEditingRemarkId] = useState<string | null>(null);
+  const [remarkInput, setRemarkInput] = useState<string>('');
+  const [isSavingRemark, setIsSavingRemark] = useState(false);
 
   // Generation Modal State
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
@@ -107,7 +116,8 @@ export const ActivationCodesTab: React.FC = () => {
     const codeMatch = item.code?.toLowerCase().includes(kw);
     const merchantMatch = item.expand?.redeemed_by?.name?.toLowerCase().includes(kw);
     const merchantIdMatch = item.redeemed_by?.toLowerCase().includes(kw);
-    return codeMatch || merchantMatch || merchantIdMatch;
+    const remarkMatch = item.remark?.toLowerCase().includes(kw);
+    return codeMatch || merchantMatch || merchantIdMatch || remarkMatch;
   });
 
   // KPI Calculations
@@ -116,6 +126,29 @@ export const ActivationCodesTab: React.FC = () => {
   const redeemedCount = allCodes.filter((c) => c.is_redeemed).length;
   const redemptionRate = totalCount > 0 ? Math.round((redeemedCount / totalCount) * 100) : 0;
   const totalQuotaProvisioned = redeemedCount * 500;
+
+  // Remark Edit Handlers
+  const handleStartEditRemark = (record: ActivationCodeRecord) => {
+    setEditingRemarkId(record.id);
+    setRemarkInput(record.remark || '');
+  };
+
+  const handleSaveRemark = async (id: string) => {
+    try {
+      setIsSavingRemark(true);
+      await pb.collection('activation_codes').update(id, {
+        remark: remarkInput.trim(),
+      });
+      message.success('Remark saved successfully');
+      setEditingRemarkId(null);
+      tableQueryResult.refetch();
+    } catch (err: any) {
+      console.error('Failed to update remark:', err);
+      message.error(err?.message || 'Failed to update remark');
+    } finally {
+      setIsSavingRemark(false);
+    }
+  };
 
   // Copy Helpers
   const handleCopy = (text: string, label = 'Code') => {
@@ -133,6 +166,17 @@ export const ActivationCodesTab: React.FC = () => {
     }
   };
 
+  // Open Print Slip Modal
+  const handleOpenPrintModal = (singleCode?: ActivationCodeRecord) => {
+    if (singleCode) {
+      setPrintCodes([singleCode]);
+    } else {
+      const targetCodes = filteredCodes.filter((c) => !c.is_redeemed).slice(0, 40);
+      setPrintCodes(targetCodes.length > 0 ? targetCodes : allCodes.slice(0, 40));
+    }
+    setIsPrintModalOpen(true);
+  };
+
   // Open Generate Modal
   const handleOpenGenerateModal = () => {
     generateForm.resetFields();
@@ -142,6 +186,7 @@ export const ActivationCodesTab: React.FC = () => {
       plan: 'stand_bundle',
       quota: 500,
       channel: 'tiktok_shop',
+      remark: '',
     });
     setIsGenerateModalOpen(true);
   };
@@ -154,6 +199,8 @@ export const ActivationCodesTab: React.FC = () => {
     const plan = values.plan || 'stand_bundle';
     const quota = Number(values.quota) || 500;
     const channel = values.channel || 'manual';
+
+    const remark = (values.remark || '').trim();
 
     const generatedCodesSet = new Set<string>();
     // Collect existing codes to prevent collision in-batch
@@ -179,6 +226,7 @@ export const ActivationCodesTab: React.FC = () => {
           quota,
           is_redeemed: false,
           channel,
+          ...(remark ? { remark } : {}),
         });
         successCount++;
       } catch (err: any) {
@@ -223,13 +271,14 @@ export const ActivationCodesTab: React.FC = () => {
       return;
     }
 
-    const headers = ['Code', 'Plan', 'Customer Quota', 'Channel', 'Status', 'Redeemed By Store', 'Redeemed At', 'Created Date', 'Activation URL'];
+    const headers = ['Code', 'Plan', 'Customer Quota', 'Channel', 'Status', 'Remark', 'Redeemed By Store', 'Redeemed At', 'Created Date', 'Activation URL'];
     const rows = filteredCodes.map((c) => [
       c.code,
       c.plan,
       c.quota || 500,
       c.channel || 'manual',
       c.is_redeemed ? 'REDEEMED' : 'AVAILABLE',
+      c.remark ? `"${c.remark.replace(/"/g, '""')}"` : '',
       c.expand?.redeemed_by?.name ? `"${c.expand.redeemed_by.name.replace(/"/g, '""')}"` : c.redeemed_by || '',
       c.redeemed_at ? dayjs(c.redeemed_at).format('YYYY-MM-DD HH:mm') : '',
       dayjs(c.created).format('YYYY-MM-DD HH:mm'),
@@ -934,7 +983,7 @@ export const ActivationCodesTab: React.FC = () => {
                     Status
                   </th>
                   <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-[#85af9b]">
-                    Redeemed By
+                    Assigned / Redeemed By
                   </th>
                   <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-[#85af9b]">
                     Created
@@ -1009,7 +1058,7 @@ export const ActivationCodesTab: React.FC = () => {
                         )}
                       </td>
 
-                      {/* Redeemed By */}
+                      {/* Assigned / Redeemed By */}
                       <td className="py-3 px-4">
                         {item.is_redeemed ? (
                           <div className="flex flex-col">
@@ -1028,9 +1077,123 @@ export const ActivationCodesTab: React.FC = () => {
                             <span className="text-[10px] text-slate-400">
                               {item.redeemed_at ? dayjs(item.redeemed_at).format('MMM D, YYYY h:mm A') : 'Redeemed'}
                             </span>
+                            {/* Remark note if available or editable */}
+                            {editingRemarkId === item.id ? (
+                              <div className="flex items-center gap-1 mt-1.5">
+                                <Input
+                                  size="small"
+                                  value={remarkInput}
+                                  onChange={(e) => setRemarkInput(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveRemark(item.id);
+                                    if (e.key === 'Escape') setEditingRemarkId(null);
+                                  }}
+                                  placeholder="Note / remark..."
+                                  className="rounded-lg text-xs h-7 min-w-[140px]"
+                                  autoFocus
+                                />
+                                <Button
+                                  size="small"
+                                  type="primary"
+                                  loading={isSavingRemark}
+                                  onClick={() => handleSaveRemark(item.id)}
+                                  icon={<CheckOutlined />}
+                                  className="bg-[#006d37] border-none h-7 px-2"
+                                />
+                                <Button
+                                  size="small"
+                                  onClick={() => setEditingRemarkId(null)}
+                                  icon={<CloseOutlined />}
+                                  className="h-7 px-2"
+                                />
+                              </div>
+                            ) : item.remark ? (
+                              <div className="flex items-center gap-1 mt-1">
+                                <span
+                                  className="inline-flex items-center text-[11px] text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-md border border-slate-200/50 dark:border-white/10 max-w-[200px] truncate"
+                                  title={item.remark}
+                                >
+                                  📝 {item.remark}
+                                </span>
+                                <Tooltip title="Edit Remark">
+                                  <button
+                                    onClick={() => handleStartEditRemark(item)}
+                                    className="text-slate-400 hover:text-[#006d37] dark:hover:text-[#6bfe9c] p-0.5 rounded border-none bg-transparent cursor-pointer"
+                                  >
+                                    <EditOutlined className="text-[11px]" />
+                                  </button>
+                                </Tooltip>
+                              </div>
+                            ) : (
+                              <button
+                                onClick={() => handleStartEditRemark(item)}
+                                className="text-[10px] text-slate-400 hover:text-[#006d37] dark:hover:text-[#6bfe9c] w-fit mt-1 bg-transparent border-none cursor-pointer p-0"
+                              >
+                                + Add Note
+                              </button>
+                            )}
                           </div>
                         ) : (
-                          <span className="text-xs text-slate-400 font-medium italic">Unclaimed</span>
+                          <div>
+                            {editingRemarkId === item.id ? (
+                              <div className="flex items-center gap-1.5">
+                                <Input
+                                  size="small"
+                                  value={remarkInput}
+                                  onChange={(e) => setRemarkInput(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleSaveRemark(item.id);
+                                    if (e.key === 'Escape') setEditingRemarkId(null);
+                                  }}
+                                  placeholder="e.g. Kedai Ali / Order #123"
+                                  className="rounded-lg text-xs h-7 min-w-[150px]"
+                                  autoFocus
+                                />
+                                <Button
+                                  size="small"
+                                  type="primary"
+                                  loading={isSavingRemark}
+                                  onClick={() => handleSaveRemark(item.id)}
+                                  icon={<CheckOutlined />}
+                                  className="bg-[#006d37] border-none h-7 px-2"
+                                />
+                                <Button
+                                  size="small"
+                                  onClick={() => setEditingRemarkId(null)}
+                                  icon={<CloseOutlined />}
+                                  className="h-7 px-2"
+                                />
+                              </div>
+                            ) : item.remark ? (
+                              <div className="flex flex-col">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100">
+                                    {item.remark}
+                                  </span>
+                                  <Tooltip title="Edit Remark">
+                                    <button
+                                      onClick={() => handleStartEditRemark(item)}
+                                      className="text-slate-400 hover:text-[#006d37] dark:hover:text-[#6bfe9c] p-0.5 rounded border-none bg-transparent cursor-pointer"
+                                    >
+                                      <EditOutlined className="text-xs" />
+                                    </button>
+                                  </Tooltip>
+                                </div>
+                                <span className="text-[10px] text-slate-400 font-medium italic">Unclaimed (Available)</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs text-slate-400 font-medium italic">Unclaimed</span>
+                                <button
+                                  onClick={() => handleStartEditRemark(item)}
+                                  className="text-[10px] font-bold text-[#006d37] dark:text-[#6bfe9c] bg-[#006d37]/10 hover:bg-[#006d37]/20 px-2 py-0.5 rounded-md border border-[#006d37]/20 cursor-pointer flex items-center gap-1 transition-colors"
+                                >
+                                  <EditOutlined className="text-[10px]" />
+                                  <span>+ Remark</span>
+                                </button>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </td>
 
@@ -1154,6 +1317,17 @@ export const ActivationCodesTab: React.FC = () => {
               <Select.Option value={50}>50 Codes</Select.Option>
               <Select.Option value={100}>100 Codes (Full Box)</Select.Option>
             </Select>
+          </Form.Item>
+
+          {/* Remark / Notes */}
+          <Form.Item
+            name="remark"
+            label={<span className="text-[10px] font-black uppercase text-[#006d37] tracking-wider">Remark / Batch Note (Optional)</span>}
+          >
+            <Input
+              placeholder="e.g. TikTok Shop Batch #1 or Assigned to Kedai Ali"
+              className="rounded-xl h-10 border-slate-200"
+            />
           </Form.Item>
 
           {/* Channel */}
