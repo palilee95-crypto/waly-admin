@@ -61,6 +61,11 @@ export const SubscriptionList: React.FC = () => {
   const [topUpCustomQuota, setTopUpCustomQuota] = useState<number>(500);
   const [isSubmittingTopUp, setIsSubmittingTopUp] = useState(false);
 
+  // Subscriptions Sorter and Filter State
+  const [subSearchQuery, setSubSearchQuery] = useState('');
+  const [subFilterStatus, setSubFilterStatus] = useState<'all' | 'active' | 'stand_bundle' | 'pro' | 'near_limit'>('all');
+  const [subSortBy, setSubSortBy] = useState<'active_first' | 'lowest_quota' | 'most_customers' | 'newest' | 'expiring_soon'>('active_first');
+
   const [quotaMap, setQuotaMap] = useState<Record<string, {
     customerCount: number;
     quotaLimit: number;
@@ -667,20 +672,141 @@ export const SubscriptionList: React.FC = () => {
             </div>
 
             {/* Subscriptions Tab View */}
-            {activeTab === 'subscriptions' && (
-              <div>
-                {tableQueryResult.isLoading ? (
-                  <div className="py-20 flex justify-center items-center">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+            {activeTab === 'subscriptions' && (() => {
+              const processedSubscriptions = [...subscriptions]
+                .filter((sub) => {
+                  const merchantName = (sub.expand?.merchant?.name || '').toLowerCase();
+                  const chipinId = (sub.chipin_payment_id || '').toLowerCase();
+                  const mid = (sub.merchant || '').toLowerCase();
+                  const query = subSearchQuery.toLowerCase().trim();
+                  const matchesSearch = !query || merchantName.includes(query) || chipinId.includes(query) || mid.includes(query);
+                  if (!matchesSearch) return false;
+
+                  const q = quotaMap[sub.merchant];
+                  if (subFilterStatus === 'active') {
+                    return sub.status === 'active' || sub.status === 'trialing';
+                  }
+                  if (subFilterStatus === 'stand_bundle') {
+                    return sub.plan === 'stand_bundle';
+                  }
+                  if (subFilterStatus === 'pro') {
+                    return sub.plan === 'pro' || sub.plan === 'starter' || sub.plan === 'business' || sub.plan === 'enterprise';
+                  }
+                  if (subFilterStatus === 'near_limit') {
+                    return q && !q.isUnlimited && q.percentage >= 80;
+                  }
+                  return true;
+                })
+                .sort((a, b) => {
+                  const qA = quotaMap[a.merchant] || { customerCount: 0, quotaLimit: 500, remaining: 500, percentage: 0, isUnlimited: false };
+                  const qB = quotaMap[b.merchant] || { customerCount: 0, quotaLimit: 500, remaining: 500, percentage: 0, isUnlimited: false };
+
+                  if (subSortBy === 'active_first') {
+                    const statusRank = (sub: any) => {
+                      if (sub.status === 'active') return 0;
+                      if (sub.status === 'trialing') return 1;
+                      return 2;
+                    };
+                    const rankDiff = statusRank(a) - statusRank(b);
+                    if (rankDiff !== 0) return rankDiff;
+                    return new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime();
+                  }
+
+                  if (subSortBy === 'lowest_quota') {
+                    if (qA.isUnlimited && !qB.isUnlimited) return 1;
+                    if (!qA.isUnlimited && qB.isUnlimited) return -1;
+                    if (qA.isUnlimited && qB.isUnlimited) return 0;
+                    return qA.remaining - qB.remaining;
+                  }
+
+                  if (subSortBy === 'most_customers') {
+                    return qB.customerCount - qA.customerCount;
+                  }
+
+                  if (subSortBy === 'expiring_soon') {
+                    const getExpiryTime = (sub: any) => {
+                      if (!sub.current_period_end) return Infinity;
+                      const t = new Date(sub.current_period_end).getTime();
+                      return isNaN(t) ? Infinity : t;
+                    };
+                    return getExpiryTime(a) - getExpiryTime(b);
+                  }
+
+                  if (subSortBy === 'newest') {
+                    return new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime();
+                  }
+
+                  return 0;
+                });
+
+              return (
+                <div>
+                  {/* Search and Sorter Toolbar */}
+                  <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 mb-4 mt-2">
+                    {/* Filter Pills */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+                      {[
+                        { id: 'all', label: `All (${subscriptions.length})` },
+                        { id: 'active', label: `Active (${subscriptions.filter(s => s.status === 'active' || s.status === 'trialing').length})` },
+                        { id: 'stand_bundle', label: 'Stand Bundle' },
+                        { id: 'pro', label: 'PRO Plans' },
+                        { id: 'near_limit', label: '⚠️ Near Quota' },
+                      ].map((f) => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setSubFilterStatus(f.id as any)}
+                          className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border cursor-pointer ${
+                            subFilterStatus === f.id
+                              ? 'bg-[#006d37] text-white border-[#006d37] shadow-sm'
+                              : 'bg-white dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                          }`}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Search & Sorter Controls */}
+                    <div className="flex items-center gap-2">
+                      <div className="relative flex-1 md:w-56">
+                        <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">search</span>
+                        <input
+                          type="text"
+                          placeholder="Search merchant or ref..."
+                          value={subSearchQuery}
+                          onChange={(e) => setSubSearchQuery(e.target.value)}
+                          className="w-full pl-8 pr-3 py-1.5 bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-xs text-on-surface dark:text-white outline-none focus:border-[#006d37] transition-all"
+                        />
+                      </div>
+
+                      <Select
+                        value={subSortBy}
+                        onChange={(val) => setSubSortBy(val)}
+                        className="h-8 text-xs font-bold min-w-[160px]"
+                        options={[
+                          { value: 'active_first', label: '⚡ Active First' },
+                          { value: 'lowest_quota', label: '📉 Lowest Quota Left' },
+                          { value: 'most_customers', label: '👥 Most Customers' },
+                          { value: 'newest', label: '🕒 Newest First' },
+                          { value: 'expiring_soon', label: '⏳ Expiring Soonest' },
+                        ]}
+                      />
+                    </div>
                   </div>
-                ) : subscriptions.length === 0 ? (
-                  <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
-                    <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">credit_card</span>
-                    <p className="text-xs font-bold text-on-surface dark:text-white">No active or past merchant subscriptions found.</p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
-                    {subscriptions.map((sub) => {
+
+                  {tableQueryResult.isLoading ? (
+                    <div className="py-20 flex justify-center items-center">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+                    </div>
+                  ) : processedSubscriptions.length === 0 ? (
+                    <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
+                      <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">credit_card</span>
+                      <p className="text-xs font-bold text-on-surface dark:text-white">No merchant subscriptions matching your filter.</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-3">
+                      {processedSubscriptions.map((sub) => {
                       const expiryInfo = getDaysRemaining(sub.current_period_end);
                       return (
                         <div
@@ -802,7 +928,8 @@ export const SubscriptionList: React.FC = () => {
                   </div>
                 )}
               </div>
-            )}
+            );
+          })()}
             
             {/* Free Trials Tab View */}
       {activeTab === 'free_trials' && (
