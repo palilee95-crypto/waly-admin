@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTable, useUpdate } from '@refinedev/core';
 import { message, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
+import { pb } from '../../lib/pocketbase';
 
 export const MerchantList: React.FC = () => {
   const navigate = useNavigate();
@@ -9,6 +10,14 @@ export const MerchantList: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [rejectingMerchantId, setRejectingMerchantId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState<string>('');
+  const [quotaMap, setQuotaMap] = useState<Record<string, {
+    plan: string;
+    customerCount: number;
+    quotaLimit: number;
+    remaining: number;
+    percentage: number;
+    isUnlimited: boolean;
+  }>>({});
 
   // Fetch merchants from pocketbase
   const { tableQueryResult } = useTable<any>({
@@ -75,6 +84,69 @@ export const MerchantList: React.FC = () => {
 
   const allMerchants = tableQueryResult?.data?.data || [];
   const pendingCount = allMerchants.filter(m => m.status === 'pending').length;
+
+  useEffect(() => {
+    const loadQuotas = async () => {
+      try {
+        const [subs, cards, codes] = await Promise.all([
+          pb.collection('subscriptions').getFullList({ filter: 'status = "active" || status = "trialing"', requestKey: null }),
+          pb.collection('loyalty_cards').getFullList({ fields: 'id,merchant', requestKey: null }),
+          pb.collection('activation_codes').getFullList({ filter: 'is_redeemed = true', requestKey: null }),
+        ]);
+
+        const cardCounts: Record<string, number> = {};
+        cards.forEach((c: any) => {
+          if (c.merchant) {
+            cardCounts[c.merchant] = (cardCounts[c.merchant] || 0) + 1;
+          }
+        });
+
+        const standQuotas: Record<string, number> = {};
+        codes.forEach((c: any) => {
+          if (c.redeemed_by) {
+            const q = Number(c.quota) > 0 ? Number(c.quota) : 500;
+            standQuotas[c.redeemed_by] = (standQuotas[c.redeemed_by] || 0) + q;
+          }
+        });
+
+        const subByMerchant: Record<string, any> = {};
+        subs.forEach((s: any) => {
+          if (s.merchant) {
+            subByMerchant[s.merchant] = s;
+          }
+        });
+
+        const map: Record<string, any> = {};
+        allMerchants.forEach((m: any) => {
+          const sub = subByMerchant[m.id];
+          const plan = sub?.plan || 'none';
+          const customerCount = cardCounts[m.id] || 0;
+          const standQuota = standQuotas[m.id] || 500;
+          const isUnlimited = plan === 'pro' || plan === 'business' || plan === 'enterprise';
+          const quotaLimit = isUnlimited ? Infinity : (plan === 'stand_bundle' ? standQuota : 500);
+          const remaining = isUnlimited ? Infinity : Math.max(0, quotaLimit - customerCount);
+          const percentage = isUnlimited ? 100 : Math.min(100, Math.round((customerCount / quotaLimit) * 100));
+
+          map[m.id] = {
+            plan,
+            customerCount,
+            quotaLimit,
+            remaining,
+            percentage,
+            isUnlimited,
+          };
+        });
+
+        setQuotaMap(map);
+      } catch (err) {
+        console.warn('Failed to load merchant quotas:', err);
+      }
+    };
+
+    if (allMerchants.length > 0) {
+      loadQuotas();
+    }
+  }, [allMerchants.length]);
 
   const filteredMerchants = allMerchants.filter(m =>
     (m.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -220,9 +292,51 @@ export const MerchantList: React.FC = () => {
                       </div>
 
                       {/* Address / Description */}
-                      <p className="text-xs text-on-surface-variant dark:text-[#85af9b] mb-3 line-clamp-1">
+                      <p className="text-xs text-on-surface-variant dark:text-[#85af9b] mb-2 line-clamp-1">
                         {merchant.description || merchant.address || 'Registered merchant'}
                       </p>
+
+                      {/* Customer Quota Tracker Box */}
+                      {(() => {
+                        const q = quotaMap[merchant.id] || {
+                          plan: 'stand_bundle',
+                          customerCount: 0,
+                          quotaLimit: 500,
+                          remaining: 500,
+                          percentage: 0,
+                          isUnlimited: false,
+                        };
+
+                        return (
+                          <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex flex-col gap-1.5 mb-3">
+                            <div className="flex items-center justify-between text-[11px]">
+                              <span className="text-slate-500 dark:text-[#85af9b] font-medium flex items-center gap-1">
+                                <span className="material-symbols-outlined text-xs">group</span>
+                                <span>Customer Quota</span>
+                              </span>
+                              <span className="font-bold">
+                                {q.isUnlimited ? (
+                                  <span className="text-indigo-600 dark:text-indigo-400 font-black">{q.customerCount} (Unlimited ♾️)</span>
+                                ) : (
+                                  <span className={q.remaining <= 25 ? 'text-red-600 dark:text-red-400' : q.remaining <= 100 ? 'text-amber-600 dark:text-amber-400' : 'text-[#006d37] dark:text-[#6bfe9c]'}>
+                                    {q.customerCount} / {q.quotaLimit.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">({q.remaining.toLocaleString()} left)</span>
+                                  </span>
+                                )}
+                              </span>
+                            </div>
+                            {!q.isUnlimited && (
+                              <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                                <div 
+                                  className={`h-full rounded-full transition-all duration-500 ${
+                                    q.percentage >= 95 ? 'bg-red-500' : q.percentage >= 80 ? 'bg-amber-500' : 'bg-[#006d37] dark:bg-[#6bfe9c]'
+                                  }`} 
+                                  style={{ width: `${Math.max(3, q.percentage)}%` }} 
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
 
                     {/* Bottom Action Pills Bar */}

@@ -42,8 +42,58 @@ export const MerchantShow: React.FC = () => {
     ],
   });
 
+  // 4. Fetch subscription for this merchant
+  const { data: subData, isLoading: isLoadingSub } = useList<any>({
+    resource: 'subscriptions',
+    filters: [
+      {
+        field: 'merchant',
+        operator: 'eq',
+        value: id,
+      },
+    ],
+  });
+
+  // 5. Fetch stand activation codes for this merchant
+  const { data: codesData, isLoading: isLoadingCodes } = useList<any>({
+    resource: 'activation_codes',
+    filters: [
+      {
+        field: 'redeemed_by',
+        operator: 'eq',
+        value: id,
+      },
+      {
+        field: 'is_redeemed',
+        operator: 'eq',
+        value: true,
+      },
+    ],
+  });
+
+  // 6. Fetch loyalty cards (customer count) for this merchant
+  const { data: cardsData, isLoading: isLoadingCards } = useList<any>({
+    resource: 'loyalty_cards',
+    filters: [
+      {
+        field: 'merchant',
+        operator: 'eq',
+        value: id,
+      },
+    ],
+    pagination: { pageSize: 1 },
+  });
+
   const stampCards = stampCardsData?.data || [];
   const rewards = rewardsData?.data || [];
+  const sub = subData?.data?.[0];
+  const standCodes = codesData?.data || [];
+  const customerCount = cardsData?.total || 0;
+  const totalStandQuota = standCodes.reduce((acc: number, c: any) => acc + (Number(c.quota) > 0 ? Number(c.quota) : 500), 0);
+  const isUnlimited = sub?.plan === 'pro' || sub?.plan === 'business' || sub?.plan === 'enterprise';
+  const quotaLimit = isUnlimited ? Infinity : (sub?.plan === 'stand_bundle' ? (totalStandQuota || 500) : 500);
+  const remaining = isUnlimited ? Infinity : Math.max(0, quotaLimit - customerCount);
+  const percentage = isUnlimited ? 100 : Math.min(100, Math.round((customerCount / quotaLimit) * 100));
 
   return (
     <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
@@ -129,9 +179,50 @@ export const MerchantShow: React.FC = () => {
                     <p className="font-mono text-on-surface-variant dark:text-[#85af9b]">{merchant.expand?.owner?.phone || 'No phone added'}</p>
                   </div>
 
+                  {/* Store Description */}
                   <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3 rounded-2xl border border-surface-variant dark:border-[#004d30]">
                     <span className="text-[9px] font-black uppercase text-on-surface-variant dark:text-[#85af9b] tracking-wider block mb-0.5">STORE DESCRIPTION</span>
                     <p className="text-on-surface dark:text-white font-medium leading-relaxed">{merchant.description || merchant.address || 'No store description added.'}</p>
+                  </div>
+
+                  {/* Quota & Subscription Capacity Card */}
+                  <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3.5 rounded-2xl border border-surface-variant dark:border-[#004d30] flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase text-on-surface-variant dark:text-[#85af9b] tracking-wider">
+                        CUSTOMER DATABASE QUOTA
+                      </span>
+                      <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                        isUnlimited ? 'bg-indigo-500/15 text-indigo-600 dark:text-indigo-400' : 'bg-[#006d37]/10 text-[#006d37] dark:text-[#6bfe9c]'
+                      }`}>
+                        {sub?.plan ? sub.plan.replace('_', ' ') : 'STAND BUNDLE'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-baseline justify-between mt-1">
+                      <span className="text-xl font-black text-on-surface dark:text-white">
+                        {customerCount.toLocaleString()}
+                      </span>
+                      <span className="text-xs font-bold text-slate-500 dark:text-[#85af9b]">
+                        {isUnlimited ? 'Unlimited ♾️' : `/ ${quotaLimit.toLocaleString()} capacity`}
+                      </span>
+                    </div>
+
+                    {!isUnlimited && (
+                      <div>
+                        <div className="w-full h-2 bg-slate-200 dark:bg-white/10 rounded-full overflow-hidden mb-1">
+                          <div
+                            className={`h-full rounded-full transition-all duration-500 ${
+                              percentage >= 95 ? 'bg-red-500' : percentage >= 80 ? 'bg-amber-500' : 'bg-[#006d37] dark:bg-[#6bfe9c]'
+                            }`}
+                            style={{ width: `${Math.max(3, percentage)}%` }}
+                          />
+                        </div>
+                        <div className="flex justify-between text-[10px] text-slate-500 dark:text-[#85af9b]">
+                          <span>{percentage}% used</span>
+                          <span className={remaining <= 50 ? 'text-red-500 font-bold' : ''}>{remaining.toLocaleString()} slots remaining</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* NFC URL Section */}
@@ -245,6 +336,69 @@ export const MerchantShow: React.FC = () => {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    )}
+                  </Tabs.TabPane>
+
+                  {/* Tab 3: NFC Stands & Bundles */}
+                  <Tabs.TabPane
+                    tab={
+                      <span className="flex items-center gap-2 text-xs font-bold">
+                        <span className="material-symbols-outlined text-base text-amber-500">nfc</span>
+                        NFC Stands & Bundles ({standCodes.length})
+                      </span>
+                    }
+                    key="3"
+                  >
+                    {standCodes.length === 0 ? (
+                      <div className="py-12 text-center text-on-surface-variant dark:text-[#85af9b]">
+                        <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">devices_other</span>
+                        <p className="text-xs font-bold text-on-surface dark:text-white">No physical stand activation codes registered yet.</p>
+                        <p className="text-[11px] text-slate-400">Stands redeemed via TikTok Shop or marketplace will appear here.</p>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-3 pt-2">
+                        <div className="bg-[#002d1e]/10 dark:bg-[#6bfe9c]/10 p-3.5 rounded-2xl border border-[#006d37]/20 flex items-center justify-between text-xs mb-1">
+                          <div>
+                            <span className="font-black text-on-surface dark:text-white block">Combined Stand Bundle Quota</span>
+                            <span className="text-[11px] text-slate-500 dark:text-[#85af9b]">Total capacity unlocked from physical stands</span>
+                          </div>
+                          <span className="text-base font-black text-[#006d37] dark:text-[#6bfe9c]">
+                            {totalStandQuota.toLocaleString()} Customers
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {standCodes.map((code: any) => (
+                            <div 
+                              key={code.id}
+                              className="bg-[#f8faf9] dark:bg-[#001f15] p-3.5 rounded-2xl border border-surface-variant dark:border-[#004d30] flex flex-col justify-between"
+                            >
+                              <div>
+                                <div className="flex items-center justify-between mb-1.5">
+                                  <span className="font-mono font-black text-xs text-on-surface dark:text-white tracking-wider">
+                                    {code.code}
+                                  </span>
+                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400">
+                                    REDEEMED
+                                  </span>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[#85af9b] mb-1">
+                                  <span>Customer Quota:</span>
+                                  <span className="font-bold text-on-surface dark:text-white">+{code.quota || 500} customers</span>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-[#85af9b]">
+                                  <span>Channel:</span>
+                                  <span className="capitalize font-medium">{code.channel || 'Marketplace'}</span>
+                                </div>
+                              </div>
+                              {code.redeemed_at && (
+                                <div className="text-[10px] text-slate-400 pt-2 mt-2 border-t border-slate-200 dark:border-white/10">
+                                  Redeemed: {new Date(code.redeemed_at).toLocaleDateString()}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     )}
                   </Tabs.TabPane>

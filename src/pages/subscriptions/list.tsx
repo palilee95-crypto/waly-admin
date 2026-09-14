@@ -52,6 +52,66 @@ export const SubscriptionList: React.FC = () => {
     return parseInt(trialPreset, 10) || 7;
   };
 
+  // Top Up Quota State
+  const [isTopUpModalOpen, setIsTopUpModalOpen] = useState(false);
+  const [topUpMerchantId, setTopUpMerchantId] = useState<string>('');
+  const [topUpMerchantName, setTopUpMerchantName] = useState<string>('');
+  const [topUpCurrentQuota, setTopUpCurrentQuota] = useState<number>(500);
+  const [topUpPreset, setTopUpPreset] = useState<'500' | '1000' | '3000' | 'custom'>('500');
+  const [topUpCustomQuota, setTopUpCustomQuota] = useState<number>(500);
+  const [isSubmittingTopUp, setIsSubmittingTopUp] = useState(false);
+
+  const [quotaMap, setQuotaMap] = useState<Record<string, {
+    customerCount: number;
+    quotaLimit: number;
+    remaining: number;
+    percentage: number;
+    isUnlimited: boolean;
+  }>>({});
+
+  const getCalculatedTopUpQuota = () => {
+    if (topUpPreset === 'custom') {
+      return topUpCustomQuota > 0 ? topUpCustomQuota : 500;
+    }
+    return parseInt(topUpPreset, 10) || 500;
+  };
+
+  const handleOpenTopUpModal = (merchantId: string, merchantName?: string, currentQuota = 500) => {
+    setTopUpMerchantId(merchantId);
+    setTopUpMerchantName(merchantName || `Merchant ${merchantId}`);
+    setTopUpCurrentQuota(currentQuota);
+    setTopUpPreset('500');
+    setTopUpCustomQuota(500);
+    setIsTopUpModalOpen(true);
+  };
+
+  const handleTopUpSubmit = async () => {
+    if (!topUpMerchantId) {
+      message.error('Please select a merchant');
+      return;
+    }
+    const addedQuota = getCalculatedTopUpQuota();
+    setIsSubmittingTopUp(true);
+    try {
+      await pb.collection('activation_codes').create({
+        code: `TOPUP-${generatePbId().toUpperCase()}`,
+        plan: 'stand_bundle',
+        quota: addedQuota,
+        is_redeemed: true,
+        redeemed_by: topUpMerchantId,
+        redeemed_at: dayjs().toISOString().replace('T', ' ').substring(0, 19),
+        channel: 'manual',
+      });
+      message.success(`Successfully added +${addedQuota.toLocaleString()} customer quota to ${topUpMerchantName}!`);
+      setIsTopUpModalOpen(false);
+      tableQueryResult.refetch();
+    } catch (err: any) {
+      message.error(err?.message || 'Failed to top up quota');
+    } finally {
+      setIsSubmittingTopUp(false);
+    }
+  };
+
   const handleOpenTrialModal = (merchantId?: string) => {
     setTrialMerchantId(merchantId || '');
     setTrialPreset('7');
@@ -169,6 +229,61 @@ export const SubscriptionList: React.FC = () => {
   }));
 
   const subscriptions = tableQueryResult?.data?.data || [];
+
+  React.useEffect(() => {
+    const loadQuotas = async () => {
+      try {
+        const [cards, codes] = await Promise.all([
+          pb.collection('loyalty_cards').getFullList({ fields: 'id,merchant', requestKey: null }),
+          pb.collection('activation_codes').getFullList({ filter: 'is_redeemed = true', requestKey: null }),
+        ]);
+
+        const cardCounts: Record<string, number> = {};
+        cards.forEach((c: any) => {
+          if (c.merchant) {
+            cardCounts[c.merchant] = (cardCounts[c.merchant] || 0) + 1;
+          }
+        });
+
+        const standQuotas: Record<string, number> = {};
+        codes.forEach((c: any) => {
+          if (c.redeemed_by) {
+            const q = Number(c.quota) > 0 ? Number(c.quota) : 500;
+            standQuotas[c.redeemed_by] = (standQuotas[c.redeemed_by] || 0) + q;
+          }
+        });
+
+        const map: Record<string, any> = {};
+        subscriptions.forEach((sub: any) => {
+          const mid = sub.merchant;
+          if (!mid) return;
+          const plan = sub.plan || 'none';
+          const customerCount = cardCounts[mid] || 0;
+          const standQuota = standQuotas[mid] || 500;
+          const isUnlimited = plan === 'pro' || plan === 'business' || plan === 'enterprise';
+          const quotaLimit = isUnlimited ? Infinity : (plan === 'stand_bundle' ? standQuota : 500);
+          const remaining = isUnlimited ? Infinity : Math.max(0, quotaLimit - customerCount);
+          const percentage = isUnlimited ? 100 : Math.min(100, Math.round((customerCount / quotaLimit) * 100));
+
+          map[mid] = {
+            customerCount,
+            quotaLimit,
+            remaining,
+            percentage,
+            isUnlimited,
+          };
+        });
+
+        setQuotaMap(map);
+      } catch (err) {
+        console.warn('Failed to load subscription quotas:', err);
+      }
+    };
+
+    if (subscriptions.length > 0) {
+      loadQuotas();
+    }
+  }, [subscriptions.length]);
 
   const handleOpenCreateModal = () => {
     form.resetFields();
@@ -608,6 +723,47 @@ export const SubscriptionList: React.FC = () => {
                               </div>
                             </div>
 
+                            {/* Customer Database Quota Box */}
+                            {(() => {
+                              const q = quotaMap[sub.merchant] || {
+                                customerCount: 0,
+                                quotaLimit: 500,
+                                remaining: 500,
+                                percentage: 0,
+                                isUnlimited: sub.plan === 'pro' || sub.plan === 'business' || sub.plan === 'enterprise',
+                              };
+
+                              return (
+                                <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex flex-col gap-1.5 mb-2.5">
+                                  <div className="flex items-center justify-between text-[11px]">
+                                    <span className="text-slate-500 dark:text-[#85af9b] font-medium flex items-center gap-1">
+                                      <span className="material-symbols-outlined text-xs">group</span>
+                                      <span>Database Quota</span>
+                                    </span>
+                                    <span className="font-bold">
+                                      {q.isUnlimited ? (
+                                        <span className="text-indigo-600 dark:text-indigo-400 font-black">{q.customerCount} (Unlimited ♾️)</span>
+                                      ) : (
+                                        <span className={q.remaining <= 25 ? 'text-red-600 dark:text-red-400' : q.remaining <= 100 ? 'text-amber-600 dark:text-amber-400' : 'text-[#006d37] dark:text-[#6bfe9c]'}>
+                                          {q.customerCount} / {q.quotaLimit.toLocaleString()} <span className="text-[10px] font-normal text-slate-400">({q.remaining.toLocaleString()} left)</span>
+                                        </span>
+                                      )}
+                                    </span>
+                                  </div>
+                                  {!q.isUnlimited && (
+                                    <div className="w-full h-1.5 bg-slate-100 dark:bg-white/10 rounded-full overflow-hidden">
+                                      <div 
+                                        className={`h-full rounded-full transition-all duration-500 ${
+                                          q.percentage >= 95 ? 'bg-red-500' : q.percentage >= 80 ? 'bg-amber-500' : 'bg-[#006d37] dark:bg-[#6bfe9c]'
+                                        }`} 
+                                        style={{ width: `${Math.max(3, q.percentage)}%` }} 
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })()}
+
                             {/* Details Row */}
                             <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-3">
                               <span className="text-slate-500 font-mono text-[10px] truncate max-w-[150px]">
@@ -621,6 +777,16 @@ export const SubscriptionList: React.FC = () => {
 
                           {/* Actions */}
                           <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-variant dark:border-white/10">
+                            <button
+                              onClick={() => {
+                                const q = quotaMap[sub.merchant];
+                                handleOpenTopUpModal(sub.merchant, sub.expand?.merchant?.name, q?.quotaLimit || 500);
+                              }}
+                              className="bg-[#006d37]/10 hover:bg-[#006d37]/20 text-[#006d37] dark:text-[#6bfe9c] px-3 py-1.5 rounded-xl text-[11px] font-bold border border-[#006d37]/20 cursor-pointer flex items-center gap-1"
+                            >
+                              <span className="material-symbols-outlined text-xs">add_circle</span>
+                              <span>+ Top Up Quota</span>
+                            </button>
                             <button
                               onClick={() => {
                                 handleOpenTrialModal(sub.merchant);
@@ -1321,6 +1487,127 @@ export const SubscriptionList: React.FC = () => {
             >
               <span>Grant Free Trial</span>
               <span className="material-symbols-outlined text-sm">arrow_forward</span>
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Top Up Customer Quota Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 pt-1">
+            <div className="w-8 h-8 rounded-xl bg-[#006d37]/10 dark:bg-[#6bfe9c]/15 text-[#006d37] dark:text-[#6bfe9c] flex items-center justify-center font-black text-sm shrink-0">
+              👥
+            </div>
+            <div>
+              <h3 className="font-black text-base text-on-surface dark:text-white mb-0 leading-tight">
+                Top Up Customer Database Quota
+              </h3>
+              <p className="text-[11px] text-on-surface-variant dark:text-[#85af9b] font-normal">
+                Grant extra customer capacity to {topUpMerchantName}
+              </p>
+            </div>
+          </div>
+        }
+        open={isTopUpModalOpen}
+        onCancel={() => setIsTopUpModalOpen(false)}
+        footer={null}
+        destroyOnHidden
+        centered
+        width={480}
+      >
+        <div className="pt-2 flex flex-col gap-4">
+          <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3 rounded-2xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-xs">
+            <span className="text-slate-500 dark:text-[#85af9b]">Current Capacity:</span>
+            <span className="font-black text-on-surface dark:text-white">
+              {topUpCurrentQuota.toLocaleString()} Customers
+            </span>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-black uppercase text-[#006d37] dark:text-[#6bfe9c] tracking-wider mb-1.5 block">
+              CHOOSE TOP-UP CAPACITY PRESET <span className="text-red-500">*</span>
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { label: '+500', value: '500' },
+                { label: '+1,000', value: '1000' },
+                { label: '+3,000', value: '3000' },
+                { label: 'Custom', value: 'custom' },
+              ].map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setTopUpPreset(opt.value as any)}
+                  className={`px-3 py-2 rounded-xl text-xs font-black transition-all cursor-pointer border ${
+                    topUpPreset === opt.value
+                      ? 'bg-[#006d37] text-white border-[#006d37] shadow-sm'
+                      : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-700 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+
+            {topUpPreset === 'custom' && (
+              <div className="mt-2.5">
+                <label className="text-xs text-on-surface-variant dark:text-[#85af9b] mb-1 block font-bold">
+                  Enter Custom Additional Quota:
+                </label>
+                <Input
+                  type="number"
+                  min={100}
+                  max={50000}
+                  step={100}
+                  value={topUpCustomQuota}
+                  onChange={(e) => setTopUpCustomQuota(parseInt(e.target.value, 10) || 500)}
+                  placeholder="e.g. 1500"
+                  className="rounded-xl h-10 border-slate-200 font-bold"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* New Quota Summary Preview */}
+          <div className="p-4 rounded-2xl bg-[#002d1e] text-white border border-[#004d30] flex flex-col gap-2 shadow-sm">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#6bfe9c]">QUOTA STACKING PREVIEW</span>
+              <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-[#6bfe9c]/20 text-[#6bfe9c] border border-[#6bfe9c]/30">
+                +{getCalculatedTopUpQuota().toLocaleString()} CAPACITY
+              </span>
+            </div>
+            
+            <div className="flex justify-between items-center text-xs">
+              <span className="text-[#85af9b]">Previous Quota:</span>
+              <span className="font-bold text-white">{topUpCurrentQuota.toLocaleString()} Customers</span>
+            </div>
+
+            <div className="flex justify-between items-center text-xs pt-1 border-t border-white/10">
+              <span className="text-[#85af9b]">New Total Capacity:</span>
+              <span className="font-black text-[#6bfe9c] text-sm">
+                {(topUpCurrentQuota + getCalculatedTopUpQuota()).toLocaleString()} Customers
+              </span>
+            </div>
+          </div>
+
+          {/* Modal Actions */}
+          <div className="flex justify-end gap-2 pt-2 border-t border-surface-variant dark:border-white/10">
+            <button
+              type="button"
+              onClick={() => setIsTopUpModalOpen(false)}
+              className="px-4 py-2 rounded-xl text-xs font-bold bg-transparent text-slate-600 dark:text-[#85af9b] hover:bg-slate-100 dark:hover:bg-white/5 border border-slate-200 dark:border-white/10 cursor-pointer transition-all"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleTopUpSubmit}
+              disabled={isSubmittingTopUp}
+              className="px-5 py-2 rounded-xl text-xs font-black bg-[#006d37] hover:bg-[#004d27] text-white border-none cursor-pointer transition-all shadow-md active:scale-95 flex items-center gap-1.5"
+            >
+              <span>Confirm & Add Quota</span>
+              <span className="material-symbols-outlined text-sm">check_circle</span>
             </button>
           </div>
         </div>
