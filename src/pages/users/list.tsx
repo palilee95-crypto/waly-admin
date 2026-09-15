@@ -16,6 +16,13 @@ export const UserList: React.FC = () => {
   const [searchPhone, setSearchPhone] = useState('');
   const [searchRole, setSearchRole] = useState('all');
 
+  // Merchant filter state
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null);
+  const [merchants, setMerchants] = useState<any[]>([]);
+  const [loadingMerchants, setLoadingMerchants] = useState(false);
+  const [merchantCards, setMerchantCards] = useState<any[]>([]);
+  const [loadingMerchantCards, setLoadingMerchantCards] = useState(false);
+
   // Fetch users from pocketbase
   const { 
     tableQueryResult, 
@@ -33,10 +40,63 @@ export const UserList: React.FC = () => {
   const { mutate: updateUser } = useUpdate();
   const isFirstRender = useRef(true);
 
+  // Load merchants list for the dropdown filter
+  useEffect(() => {
+    const fetchMerchants = async () => {
+      try {
+        setLoadingMerchants(true);
+        const records = await pb.collection('merchants').getFullList({
+          sort: 'name',
+          fields: 'id,name,status,category',
+          requestKey: null,
+        });
+        setMerchants(records);
+      } catch (err) {
+        console.warn('Failed to fetch merchants for filter:', err);
+      } finally {
+        setLoadingMerchants(false);
+      }
+    };
+    fetchMerchants();
+  }, []);
+
+  // Fetch loyalty cards and customer details when a merchant is selected
+  const fetchMerchantCards = async (merchantId: string) => {
+    try {
+      setLoadingMerchantCards(true);
+      const records = await pb.collection('loyalty_cards').getFullList({
+        filter: `merchant = "${merchantId}"`,
+        expand: 'customer,program,merchant',
+        sort: '-created',
+        requestKey: null,
+      });
+      // Filter out any orphaned cards where customer record was deleted
+      const validCards = records.filter((r: any) => r.expand?.customer);
+      setMerchantCards(validCards);
+    } catch (err) {
+      console.warn('Failed to fetch loyalty cards for merchant:', err);
+      message.error('Failed to load customers for selected merchant.');
+    } finally {
+      setLoadingMerchantCards(false);
+    }
+  };
+
+  useEffect(() => {
+    if (selectedMerchantId) {
+      fetchMerchantCards(selectedMerchantId);
+    } else {
+      setMerchantCards([]);
+    }
+  }, [selectedMerchantId]);
+
   // Perform search automatically when typing (with a short 250ms debounce)
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
+      return;
+    }
+    if (selectedMerchantId) {
+      // In merchant filter mode, client-side filtering handles searchName
       return;
     }
     const handler = setTimeout(() => {
@@ -54,11 +114,12 @@ export const UserList: React.FC = () => {
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [searchName, searchPhone, searchRole]);
+  }, [searchName, searchPhone, searchRole, selectedMerchantId]);
 
   // Handle immediate search / clear on Enter keydown
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
+      if (selectedMerchantId) return;
       const activeFilters = [];
       if (searchName.trim()) {
         activeFilters.push({ field: 'name', operator: 'contains', value: searchName.trim() + '%' });
@@ -87,6 +148,15 @@ export const UserList: React.FC = () => {
           values: { status: newStatus },
           successNotification: () => {
             message.success(`User ${user.name} status updated to ${newStatus}`);
+            if (selectedMerchantId) {
+              setMerchantCards((prev) =>
+                prev.map((c) =>
+                  c.expand?.customer?.id === user.id
+                    ? { ...c, expand: { ...c.expand, customer: { ...c.expand.customer, status: newStatus } } }
+                    : c
+                )
+              );
+            }
             return {
               message: 'Status Updated',
               description: `User account is now ${newStatus}.`,
@@ -106,6 +176,9 @@ export const UserList: React.FC = () => {
         body: { userId: user.id },
       });
       message.success(res?.message || `User ${user.name} and all related data have been deleted.`);
+      if (selectedMerchantId) {
+        setMerchantCards((prev) => prev.filter((c) => c.expand?.customer?.id !== user.id));
+      }
       tableQueryResult.refetch();
     } catch (err: any) {
       console.error('[ADMIN DELETE USER ERROR]', err);
@@ -135,6 +208,15 @@ export const UserList: React.FC = () => {
       values: { total_points: newPoints },
       successNotification: () => {
         message.success(`Points adjusted for ${selectedUser.name}. New balance: ${newPoints}`);
+        if (selectedMerchantId) {
+          setMerchantCards((prev) =>
+            prev.map((c) =>
+              c.expand?.customer?.id === selectedUser.id
+                ? { ...c, expand: { ...c.expand, customer: { ...c.expand.customer, total_points: newPoints } } }
+                : c
+            )
+          );
+        }
         return {
           message: 'Points Adjusted',
           description: `Credited/debited points successfully.`,
@@ -147,6 +229,18 @@ export const UserList: React.FC = () => {
   };
 
   const users = tableQueryResult?.data?.data || [];
+  const selectedMerchant = merchants.find((m) => m.id === selectedMerchantId);
+
+  // Filter merchant cards by search query
+  const filteredMerchantCards = merchantCards.filter((card) => {
+    const cust = card.expand?.customer;
+    if (!cust) return false;
+    const query = searchName.trim().toLowerCase();
+    if (!query) return true;
+    const nameMatch = (cust.name || '').toLowerCase().includes(query);
+    const phoneMatch = (cust.phone || '').toLowerCase().includes(query);
+    return nameMatch || phoneMatch;
+  });
 
   return (
     <div className="flex flex-col gap-0 text-left w-full pb-10 overflow-x-hidden">
@@ -165,7 +259,7 @@ export const UserList: React.FC = () => {
           </h1>
           
           <p className="text-xs sm:text-sm text-[#85af9b] max-w-md font-medium leading-relaxed">
-            Search customer profiles, inspect points balances, adjust points, and manage account statuses.
+            Search customer profiles, inspect points balances, filter customers per merchant, adjust points, and manage account statuses.
           </p>
 
         </div>
@@ -178,171 +272,373 @@ export const UserList: React.FC = () => {
           {/* Main Bento Container (Overlapping Hero) */}
           <div className="-mt-16 relative z-30 bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
             
-            {/* Toolbar: Unified Search & Role Filter Tabs */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-surface-variant dark:border-white/10">
+            {/* Toolbar: Unified Search, Merchant Filter & Role Tabs */}
+            <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-surface-variant dark:border-white/10">
               
-              {/* Role Filter Tabs */}
-              <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
-                <button
-                  onClick={() => setSearchRole('all')}
-                  className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
-                    searchRole === 'all'
-                      ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
-                      : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
-                  }`}
-                >
-                  All Users ({users.length})
-                </button>
-                <button
-                  onClick={() => setSearchRole('customer')}
-                  className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
-                    searchRole === 'customer'
-                      ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
-                      : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
-                  }`}
-                >
-                  Customers
-                </button>
-                <button
-                  onClick={() => setSearchRole('merchant')}
-                  className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
-                    searchRole === 'merchant'
-                      ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
-                      : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
-                  }`}
-                >
-                  Merchants
-                </button>
-              </div>
+              {/* Left Side: Role Filter Tabs OR Active Merchant Indicator */}
+              {selectedMerchantId ? (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="px-3.5 py-1.5 rounded-2xl text-xs font-black bg-[#006d37] text-white flex items-center gap-2 shadow-sm">
+                    <span className="material-symbols-outlined text-sm">storefront</span>
+                    <span className="truncate max-w-[220px]">{selectedMerchant?.name || 'Merchant'}</span>
+                    <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold">
+                      {filteredMerchantCards.length} {filteredMerchantCards.length === 1 ? 'Customer' : 'Customers'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() => setSelectedMerchantId(null)}
+                    className="px-3 py-1.5 rounded-2xl text-xs font-bold bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border border-slate-200 dark:border-[#004d30] hover:text-red-600 hover:border-red-400 transition-all cursor-pointer flex items-center gap-1"
+                  >
+                    <span className="material-symbols-outlined text-sm">close</span>
+                    <span>Clear Filter</span>
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
+                  <button
+                    onClick={() => setSearchRole('all')}
+                    className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
+                      searchRole === 'all'
+                        ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                        : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                    }`}
+                  >
+                    All Users ({users.length})
+                  </button>
+                  <button
+                    onClick={() => setSearchRole('customer')}
+                    className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
+                      searchRole === 'customer'
+                        ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                        : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                    }`}
+                  >
+                    Customers
+                  </button>
+                  <button
+                    onClick={() => setSearchRole('merchant')}
+                    className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
+                      searchRole === 'merchant'
+                        ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
+                        : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
+                    }`}
+                  >
+                    Merchants
+                  </button>
+                </div>
+              )}
 
-              {/* Unified Live Search Input */}
-              <div className="relative w-full sm:w-[260px]">
-                <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
-                <input
-                  type="text"
-                  placeholder="Search user name or phone..."
-                  value={searchName}
-                  onChange={(e) => setSearchName(e.target.value)}
-                  className="w-full pl-9 pr-4 py-2 bg-[#f6f3f2] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xs text-on-surface dark:text-white outline-none focus:border-[#006d37] transition-all"
-                />
+              {/* Right Side: Merchant Dropdown Selector & Unified Live Search Input */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full lg:w-auto">
+                {/* Searchable Merchant Selector */}
+                <div className="w-full sm:w-[240px]">
+                  <Select
+                    showSearch
+                    allowClear
+                    placeholder="Filter by Merchant..."
+                    value={selectedMerchantId}
+                    onChange={(val) => setSelectedMerchantId(val || null)}
+                    loading={loadingMerchants}
+                    optionFilterProp="label"
+                    className="w-full h-9 rounded-2xl text-xs"
+                    popupMatchSelectWidth={false}
+                    options={merchants.map((m) => ({
+                      value: m.id,
+                      label: `🏪 ${m.name}${m.category ? ` (${m.category})` : ''}`,
+                    }))}
+                  />
+                </div>
+
+                {/* Unified Live Search Input */}
+                <div className="relative w-full sm:w-[240px]">
+                  <span className="material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-base">search</span>
+                  <input
+                    type="text"
+                    placeholder={selectedMerchantId ? "Search merchant's customers..." : "Search user name or phone..."}
+                    value={searchName}
+                    onChange={(e) => setSearchName(e.target.value)}
+                    className="w-full pl-9 pr-4 py-2 bg-[#f6f3f2] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xs text-on-surface dark:text-white outline-none focus:border-[#006d37] transition-all"
+                  />
+                </div>
               </div>
 
             </div>
 
             {/* Mobile-Native Clean Cards Grid */}
-            {tableQueryResult.isLoading ? (
-              <div className="py-20 flex justify-center items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
-              </div>
-            ) : users.length === 0 ? (
-              <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
-                <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">group</span>
-                <p className="text-xs font-bold text-on-surface dark:text-white">No users found matching filter criteria.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-4">
-                {users.map((user) => (
-                  <div
-                    key={user.id}
-                    className="bg-[#f8faf9] dark:bg-[#001f15] rounded-2xl p-4 border border-surface-variant dark:border-[#004d30] flex flex-col justify-between shadow-sm hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
-                  >
-                    <div>
-                      {/* Top Row: User Avatar, Name, Role & Status */}
-                      <div className="flex items-start justify-between gap-2 mb-2">
-                        <div 
-                          className="flex items-center gap-3 cursor-pointer"
-                          onClick={() => navigate(`/users/${user.id}`)}
-                        >
-                          <div className="w-10 h-10 rounded-2xl bg-[#006d37]/10 text-[#006d37] dark:bg-[#6bfe9c]/15 dark:text-[#6bfe9c] flex items-center justify-center font-black text-sm shrink-0 border border-[#006d37]/15">
-                            {(user.name || 'U').substring(0, 2).toUpperCase()}
-                          </div>
-                          <div className="text-left">
-                            <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c] transition-colors leading-tight">
-                              {user.name}
-                            </h4>
-                            <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
-                              String(user.role).toLowerCase() === 'merchant'
-                                ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
-                                : 'bg-[#006d37]/10 text-[#006d37] dark:text-[#6bfe9c] border border-[#006d37]/20'
-                            }`}>
-                              {user.role || 'Customer'}
-                            </span>
-                          </div>
-                        </div>
+            {selectedMerchantId ? (
+              /* MERCHANT FILTERED CUSTOMERS VIEW */
+              loadingMerchantCards ? (
+                <div className="py-20 flex flex-col justify-center items-center gap-3">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+                  <p className="text-xs font-bold text-slate-500">Loading customers for {selectedMerchant?.name}...</p>
+                </div>
+              ) : filteredMerchantCards.length === 0 ? (
+                <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
+                  <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">person_search</span>
+                  <p className="text-xs font-bold text-on-surface dark:text-white mb-1">
+                    {searchName.trim()
+                      ? `No customers matching "${searchName}" under this merchant.`
+                      : `No customers enrolled at ${selectedMerchant?.name || 'this merchant'} yet.`}
+                  </p>
+                  <p className="text-[11px] text-slate-500">
+                    Customers who join via stamp card tap or QR scan will automatically appear here.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-4">
+                  {filteredMerchantCards.map((card) => {
+                    const cust = card.expand?.customer || {};
+                    const prog = card.expand?.program;
+                    const merch = card.expand?.merchant || selectedMerchant;
+                    const stampGoal = prog?.stamp_goal || 10;
+                    const stamps = card.stamps_collected || 0;
+                    const completions = card.completions || 0;
+                    const progressPercent = Math.min(100, Math.round((stamps / stampGoal) * 100));
+                    const points = card.points_balance !== undefined && card.points_balance !== null ? card.points_balance : (cust.total_points || 0);
 
-                        {/* Status Badge */}
-                        <div>
-                          {user.status === 'suspended' ? (
-                            <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
-                              SUSPENDED
-                            </span>
-                          ) : (
-                            <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border border-[#6bfe9c]/30">
-                              ACTIVE
-                            </span>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Phone & Points Balance Info Box */}
-                      <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-3">
-                        <span className="font-mono text-on-surface-variant dark:text-[#85af9b]">
-                          📱 {user.phone || 'No Phone Added'}
-                        </span>
-                        <span className="font-black text-[#006d37] dark:text-[#6bfe9c] bg-[#6bfe9c]/15 px-2.5 py-0.5 rounded-full">
-                          ⚡ {user.total_points || 0} pts
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Bottom Action Pill Buttons */}
-                    <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-surface-variant dark:border-white/10">
-                      
-                      <button
-                        onClick={() => handleAdjustPointsClick(user)}
-                        className="bg-[#006d37]/10 hover:bg-[#006d37]/20 text-[#006d37] dark:text-[#6bfe9c] px-3 py-1.5 rounded-xl text-[11px] font-black border border-[#006d37]/20 cursor-pointer flex items-center gap-1"
+                    return (
+                      <div
+                        key={card.id}
+                        className="bg-[#f8faf9] dark:bg-[#001f15] rounded-2xl p-4 border border-surface-variant dark:border-[#004d30] flex flex-col justify-between shadow-sm hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
                       >
-                        <span>⚡ Adjust Pts</span>
-                      </button>
+                        <div>
+                          {/* Top Row: User Avatar, Name, Badges & Status */}
+                          <div className="flex items-start justify-between gap-2 mb-2">
+                            <div 
+                              className="flex items-center gap-3 cursor-pointer"
+                              onClick={() => navigate(`/users/${cust.id}`)}
+                            >
+                              <div className="w-10 h-10 rounded-2xl bg-[#006d37]/10 text-[#006d37] dark:bg-[#6bfe9c]/15 dark:text-[#6bfe9c] flex items-center justify-center font-black text-sm shrink-0 border border-[#006d37]/15">
+                                {(cust.name || 'C').substring(0, 2).toUpperCase()}
+                              </div>
+                              <div className="text-left">
+                                <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c] transition-colors leading-tight">
+                                  {cust.name || 'Walk-in Customer'}
+                                </h4>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="text-[9px] font-black px-2 py-0.5 rounded-full uppercase bg-[#006d37]/10 text-[#006d37] dark:text-[#6bfe9c] border border-[#006d37]/20">
+                                    CUSTOMER
+                                  </span>
+                                  {merch?.name && (
+                                    <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 truncate max-w-[150px]">
+                                      🏪 {merch.name}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
 
-                      <div className="flex items-center gap-1.5">
+                            {/* Status Badge */}
+                            <div>
+                              {cust.status === 'suspended' ? (
+                                <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
+                                  SUSPENDED
+                                </span>
+                              ) : (
+                                <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border border-[#6bfe9c]/30">
+                                  ACTIVE
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Phone & Points Balance Info Box */}
+                          <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-2">
+                            <span className="font-mono text-on-surface-variant dark:text-[#85af9b]">
+                              📱 {cust.phone || 'No Phone Added'}
+                            </span>
+                            <span className="font-black text-[#006d37] dark:text-[#6bfe9c] bg-[#6bfe9c]/15 px-2.5 py-0.5 rounded-full">
+                              ⚡ {points} pts
+                            </span>
+                          </div>
+
+                          {/* Stamp Card Progress Box */}
+                          <div className="bg-white/60 dark:bg-[#002518]/60 p-2.5 rounded-xl border border-surface-variant/80 dark:border-[#004d30]/60 text-[11px] mb-3">
+                            <div className="flex items-center justify-between font-bold mb-1">
+                              <span className="text-slate-600 dark:text-[#85af9b] truncate max-w-[160px]">
+                                🎫 {prog?.name || 'Loyalty Stamp Card'}
+                              </span>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className="font-black text-[#006d37] dark:text-[#6bfe9c]">
+                                  🎯 {stamps} / {stampGoal} stamps
+                                </span>
+                                {completions > 0 && (
+                                  <span className="text-[10px] font-black text-amber-600 dark:text-amber-400 bg-amber-500/15 px-1.5 py-0.2 rounded-md">
+                                    🏆 {completions} completed
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            {/* Progress bar */}
+                            <div className="w-full bg-slate-100 dark:bg-black/30 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className="bg-gradient-to-r from-[#006d37] to-[#6bfe9c] h-full rounded-full transition-all duration-300"
+                                style={{ width: `${progressPercent}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Bottom Action Pill Buttons */}
+                        <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-surface-variant dark:border-white/10">
+                          <button
+                            onClick={() => handleAdjustPointsClick(cust)}
+                            className="bg-[#006d37]/10 hover:bg-[#006d37]/20 text-[#006d37] dark:text-[#6bfe9c] px-3 py-1.5 rounded-xl text-[11px] font-black border border-[#006d37]/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <span>⚡ Adjust Pts</span>
+                          </button>
+
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              onClick={() => handleToggleStatus(cust)}
+                              className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border cursor-pointer ${
+                                cust.status === 'suspended'
+                                  ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                  : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                              }`}
+                            >
+                              {cust.status === 'suspended' ? 'Activate' : 'Suspend'}
+                            </button>
+
+                            <Popconfirm
+                              title="Delete User"
+                              description={`Permanently delete ${cust.name || 'this customer'} and all associated data?`}
+                              okText="Delete"
+                              cancelText="Cancel"
+                              okButtonProps={{ danger: true, style: { border: 'none' } }}
+                              onConfirm={() => handleHardDelete(cust)}
+                            >
+                              <button
+                                disabled={deletingUserId === cust.id}
+                                className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-red-500/20 cursor-pointer disabled:opacity-50"
+                              >
+                                {deletingUserId === cust.id ? '⏳' : '🗑️'}
+                              </button>
+                            </Popconfirm>
+                          </div>
+                        </div>
+
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ) : (
+              /* GLOBAL ALL USERS VIEW */
+              tableQueryResult.isLoading ? (
+                <div className="py-20 flex justify-center items-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#006d37]"></div>
+                </div>
+              ) : users.length === 0 ? (
+                <div className="py-14 text-center text-on-surface-variant dark:text-[#85af9b]">
+                  <span className="material-symbols-outlined text-3xl text-slate-400 mb-1">group</span>
+                  <p className="text-xs font-bold text-on-surface dark:text-white">No users found matching filter criteria.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-4">
+                  {users.map((user) => (
+                    <div
+                      key={user.id}
+                      className="bg-[#f8faf9] dark:bg-[#001f15] rounded-2xl p-4 border border-surface-variant dark:border-[#004d30] flex flex-col justify-between shadow-sm hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
+                    >
+                      <div>
+                        {/* Top Row: User Avatar, Name, Role & Status */}
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div 
+                            className="flex items-center gap-3 cursor-pointer"
+                            onClick={() => navigate(`/users/${user.id}`)}
+                          >
+                            <div className="w-10 h-10 rounded-2xl bg-[#006d37]/10 text-[#006d37] dark:bg-[#6bfe9c]/15 dark:text-[#6bfe9c] flex items-center justify-center font-black text-sm shrink-0 border border-[#006d37]/15">
+                              {(user.name || 'U').substring(0, 2).toUpperCase()}
+                            </div>
+                            <div className="text-left">
+                              <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c] transition-colors leading-tight">
+                                {user.name}
+                              </h4>
+                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                                String(user.role).toLowerCase() === 'merchant'
+                                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                                  : 'bg-[#006d37]/10 text-[#006d37] dark:text-[#6bfe9c] border border-[#006d37]/20'
+                              }`}>
+                                {user.role || 'Customer'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Status Badge */}
+                          <div>
+                            {user.status === 'suspended' ? (
+                              <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-red-500/15 text-red-600 dark:text-red-400 border border-red-500/30">
+                                SUSPENDED
+                              </span>
+                            ) : (
+                              <span className="text-[9px] font-black px-2.5 py-0.5 rounded-full bg-[#6bfe9c]/20 text-[#006d37] dark:text-[#6bfe9c] border border-[#6bfe9c]/30">
+                                ACTIVE
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Phone & Points Balance Info Box */}
+                        <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-3">
+                          <span className="font-mono text-on-surface-variant dark:text-[#85af9b]">
+                            📱 {user.phone || 'No Phone Added'}
+                          </span>
+                          <span className="font-black text-[#006d37] dark:text-[#6bfe9c] bg-[#6bfe9c]/15 px-2.5 py-0.5 rounded-full">
+                            ⚡ {user.total_points || 0} pts
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Bottom Action Pill Buttons */}
+                      <div className="flex items-center justify-between gap-1.5 pt-2 border-t border-surface-variant dark:border-white/10">
+                        
                         <button
-                          onClick={() => handleToggleStatus(user)}
-                          className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border cursor-pointer ${
-                            user.status === 'suspended'
-                              ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                              : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
-                          }`}
+                          onClick={() => handleAdjustPointsClick(user)}
+                          className="bg-[#006d37]/10 hover:bg-[#006d37]/20 text-[#006d37] dark:text-[#6bfe9c] px-3 py-1.5 rounded-xl text-[11px] font-black border border-[#006d37]/20 cursor-pointer flex items-center gap-1"
                         >
-                          {user.status === 'suspended' ? 'Activate' : 'Suspend'}
+                          <span>⚡ Adjust Pts</span>
                         </button>
 
-                        <Popconfirm
-                          title="Delete User"
-                          description={`Permanently delete ${user.name} and all associated data?`}
-                          okText="Delete"
-                          cancelText="Cancel"
-                          okButtonProps={{ danger: true, style: { border: 'none' } }}
-                          onConfirm={() => handleHardDelete(user)}
-                        >
+                        <div className="flex items-center gap-1.5">
                           <button
-                            disabled={deletingUserId === user.id}
-                            className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-red-500/20 cursor-pointer disabled:opacity-50"
+                            onClick={() => handleToggleStatus(user)}
+                            className={`px-3 py-1.5 rounded-xl text-[11px] font-bold transition-all border cursor-pointer ${
+                              user.status === 'suspended'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
+                                : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
+                            }`}
                           >
-                            {deletingUserId === user.id ? '⏳' : '🗑️'}
+                            {user.status === 'suspended' ? 'Activate' : 'Suspend'}
                           </button>
-                        </Popconfirm>
+
+                          <Popconfirm
+                            title="Delete User"
+                            description={`Permanently delete ${user.name} and all associated data?`}
+                            okText="Delete"
+                            cancelText="Cancel"
+                            okButtonProps={{ danger: true, style: { border: 'none' } }}
+                            onConfirm={() => handleHardDelete(user)}
+                          >
+                            <button
+                              disabled={deletingUserId === user.id}
+                              className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 px-2.5 py-1.5 rounded-xl text-[11px] font-bold border border-red-500/20 cursor-pointer disabled:opacity-50"
+                            >
+                              {deletingUserId === user.id ? '⏳' : '🗑️'}
+                            </button>
+                          </Popconfirm>
+                        </div>
+
                       </div>
 
                     </div>
-
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )
             )}
 
-            {/* Pagination Controls */}
-            {tableQueryResult?.data?.total && tableQueryResult.data.total > pageSize && (
+            {/* Pagination Controls - only for global view */}
+            {!selectedMerchantId && tableQueryResult?.data?.total && tableQueryResult.data.total > pageSize && (
               <div className="flex justify-center items-center mt-6 pt-4 border-t border-surface-variant dark:border-white/10">
                 <Pagination
                   current={current}
