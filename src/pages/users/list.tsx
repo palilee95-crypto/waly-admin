@@ -13,8 +13,14 @@ export const UserList: React.FC = () => {
 
   // Search values state
   const [searchName, setSearchName] = useState('');
-  const [searchPhone, setSearchPhone] = useState('');
   const [searchRole, setSearchRole] = useState('all');
+
+  // Summary counts for tabs
+  const [roleCounts, setRoleCounts] = useState<{ all: number; customer: number; merchant: number }>({
+    all: 0,
+    customer: 0,
+    merchant: 0,
+  });
 
   // Merchant filter state
   const [selectedMerchantId, setSelectedMerchantId] = useState<string | null>(null);
@@ -33,12 +39,36 @@ export const UserList: React.FC = () => {
     setPageSize
   } = useTable<any>({
     resource: 'users',
-    pagination: { pageSize: 10 },
+    pagination: { pageSize: 24 },
+    sorters: {
+      initial: [{ field: 'created', order: 'desc' }]
+    },
     syncWithLocation: false, // Disable syncing to URL query params to prevent Vite URI malformed crashes from trailing wildcard (%) characters
   });
 
   const { mutate: updateUser } = useUpdate();
   const isFirstRender = useRef(true);
+
+  // Load summary user counts for tabs on mount
+  useEffect(() => {
+    const fetchCounts = async () => {
+      try {
+        const [allRes, custRes, merchRes] = await Promise.all([
+          pb.collection('users').getList(1, 1, { requestKey: null }),
+          pb.collection('users').getList(1, 1, { filter: 'role = "customer"', requestKey: null }),
+          pb.collection('users').getList(1, 1, { filter: 'role = "merchant"', requestKey: null }),
+        ]);
+        setRoleCounts({
+          all: allRes.totalItems,
+          customer: custRes.totalItems,
+          merchant: merchRes.totalItems,
+        });
+      } catch (err) {
+        console.warn('Failed to fetch user role counts:', err);
+      }
+    };
+    fetchCounts();
+  }, []);
 
   // Load merchants list for the dropdown filter
   useEffect(() => {
@@ -89,6 +119,54 @@ export const UserList: React.FC = () => {
     }
   }, [selectedMerchantId]);
 
+  // Helper to build active filters for PocketBase
+  const buildActiveFilters = (queryStr: string, roleStr: string) => {
+    const activeFilters: any[] = [];
+    const query = queryStr.trim();
+
+    if (query) {
+      const rawDigits = query.replace(/\D/g, '');
+      const phoneVariants: string[] = [];
+
+      if (rawDigits.length >= 3) {
+        if (rawDigits.startsWith('0')) {
+          phoneVariants.push('60' + rawDigits.slice(1));
+          phoneVariants.push(rawDigits.slice(1));
+        } else if (rawDigits.startsWith('60')) {
+          phoneVariants.push(rawDigits);
+          phoneVariants.push(rawDigits.slice(2));
+        } else {
+          phoneVariants.push(rawDigits);
+        }
+      }
+
+      const orConditions: any[] = [
+        { field: 'name', operator: 'contains', value: query },
+      ];
+
+      for (const variant of phoneVariants) {
+        if (variant && variant.length >= 3 && !orConditions.some((c: any) => c.value === variant)) {
+          orConditions.push({ field: 'phone', operator: 'contains', value: variant });
+        }
+      }
+
+      if (orConditions.length === 1) {
+        activeFilters.push(orConditions[0]);
+      } else {
+        activeFilters.push({
+          operator: 'or',
+          value: orConditions,
+        });
+      }
+    }
+
+    if (roleStr && roleStr !== 'all') {
+      activeFilters.push({ field: 'role', operator: 'eq', value: roleStr });
+    }
+
+    return activeFilters;
+  };
+
   // Perform search automatically when typing (with a short 250ms debounce)
   useEffect(() => {
     if (isFirstRender.current) {
@@ -100,37 +178,19 @@ export const UserList: React.FC = () => {
       return;
     }
     const handler = setTimeout(() => {
-      const activeFilters = [];
-      if (searchName.trim()) {
-        activeFilters.push({ field: 'name', operator: 'contains', value: searchName.trim() + '%' });
-      }
-      if (searchPhone.trim()) {
-        activeFilters.push({ field: 'phone', operator: 'contains', value: searchPhone.trim() + '%' });
-      }
-      if (searchRole && searchRole !== 'all') {
-        activeFilters.push({ field: 'role', operator: 'eq', value: searchRole });
-      }
-      setFilters(activeFilters, 'replace');
+      setCurrent(1);
+      setFilters(buildActiveFilters(searchName, searchRole), 'replace');
     }, 250);
 
     return () => clearTimeout(handler);
-  }, [searchName, searchPhone, searchRole, selectedMerchantId]);
+  }, [searchName, searchRole, selectedMerchantId]);
 
   // Handle immediate search / clear on Enter keydown
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       if (selectedMerchantId) return;
-      const activeFilters = [];
-      if (searchName.trim()) {
-        activeFilters.push({ field: 'name', operator: 'contains', value: searchName.trim() + '%' });
-      }
-      if (searchPhone.trim()) {
-        activeFilters.push({ field: 'phone', operator: 'contains', value: searchPhone.trim() + '%' });
-      }
-      if (searchRole && searchRole !== 'all') {
-        activeFilters.push({ field: 'role', operator: 'eq', value: searchRole });
-      }
-      setFilters(activeFilters, 'replace');
+      setCurrent(1);
+      setFilters(buildActiveFilters(searchName, searchRole), 'replace');
     }
   };
 
@@ -238,7 +298,11 @@ export const UserList: React.FC = () => {
     const query = searchName.trim().toLowerCase();
     if (!query) return true;
     const nameMatch = (cust.name || '').toLowerCase().includes(query);
-    const phoneMatch = (cust.phone || '').toLowerCase().includes(query);
+    const rawDigits = query.replace(/\D/g, '');
+    const custPhoneDigits = (cust.phone || '').replace(/\D/g, '');
+    const phoneMatch =
+      (cust.phone || '').toLowerCase().includes(query) ||
+      (rawDigits.length >= 3 && custPhoneDigits.includes(rawDigits));
     return nameMatch || phoneMatch;
   });
 
@@ -296,34 +360,43 @@ export const UserList: React.FC = () => {
               ) : (
                 <div className="flex items-center gap-2 overflow-x-auto pb-1 lg:pb-0">
                   <button
-                    onClick={() => setSearchRole('all')}
+                    onClick={() => {
+                      setSearchRole('all');
+                      setCurrent(1);
+                    }}
                     className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
                       searchRole === 'all'
                         ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
                         : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
                     }`}
                   >
-                    All Users ({users.length})
+                    All Users ({searchRole === 'all' ? (tableQueryResult?.data?.total ?? roleCounts.all) : (roleCounts.all || tableQueryResult?.data?.total || 0)})
                   </button>
                   <button
-                    onClick={() => setSearchRole('customer')}
+                    onClick={() => {
+                      setSearchRole('customer');
+                      setCurrent(1);
+                    }}
                     className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
                       searchRole === 'customer'
                         ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
                         : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
                     }`}
                   >
-                    Customers
+                    Customers {roleCounts.customer > 0 || (searchRole === 'customer' && tableQueryResult?.data?.total != null) ? `(${searchRole === 'customer' ? tableQueryResult?.data?.total : roleCounts.customer})` : ''}
                   </button>
                   <button
-                    onClick={() => setSearchRole('merchant')}
+                    onClick={() => {
+                      setSearchRole('merchant');
+                      setCurrent(1);
+                    }}
                     className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border cursor-pointer whitespace-nowrap ${
                       searchRole === 'merchant'
                         ? 'bg-[#006d37] text-white border-[#006d37] shadow-md'
                         : 'bg-[#f8faf9] dark:bg-[#001f15] text-slate-600 dark:text-[#85af9b] border-slate-200 dark:border-[#004d30] hover:text-slate-900'
                     }`}
                   >
-                    Merchants
+                    Merchants {roleCounts.merchant > 0 || (searchRole === 'merchant' && tableQueryResult?.data?.total != null) ? `(${searchRole === 'merchant' ? tableQueryResult?.data?.total : roleCounts.merchant})` : ''}
                   </button>
                 </div>
               )}
@@ -357,8 +430,22 @@ export const UserList: React.FC = () => {
                     placeholder={selectedMerchantId ? "Search merchant's customers..." : "Search user name or phone..."}
                     value={searchName}
                     onChange={(e) => setSearchName(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2 bg-[#f6f3f2] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xs text-on-surface dark:text-white outline-none focus:border-[#006d37] transition-all"
+                    onKeyDown={handleKeyDown}
+                    className="w-full pl-9 pr-8 py-2 bg-[#f6f3f2] dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-xs text-on-surface dark:text-white outline-none focus:border-[#006d37] transition-all"
                   />
+                  {searchName && (
+                    <button
+                      onClick={() => {
+                        setSearchName('');
+                        setCurrent(1);
+                        setFilters(buildActiveFilters('', searchRole), 'replace');
+                      }}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-white cursor-pointer"
+                      title="Clear search"
+                    >
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -638,17 +725,28 @@ export const UserList: React.FC = () => {
             )}
 
             {/* Pagination Controls - only for global view */}
-            {!selectedMerchantId && tableQueryResult?.data?.total && tableQueryResult.data.total > pageSize && (
-              <div className="flex justify-center items-center mt-6 pt-4 border-t border-surface-variant dark:border-white/10">
+            {!selectedMerchantId && (tableQueryResult?.data?.total || 0) > 0 && (
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-6 pt-4 border-t border-surface-variant dark:border-white/10">
+                <div className="text-xs font-semibold text-slate-500 dark:text-[#85af9b]">
+                  {(() => {
+                    const total = tableQueryResult?.data?.total || 0;
+                    const start = (current - 1) * pageSize + 1;
+                    const end = Math.min(current * pageSize, total);
+                    return `Showing ${start}–${end} of ${total} users`;
+                  })()}
+                </div>
                 <Pagination
                   current={current}
                   pageSize={pageSize}
-                  total={tableQueryResult.data.total}
+                  total={tableQueryResult?.data?.total || 0}
+                  pageSizeOptions={['12', '24', '48', '96']}
+                  showSizeChanger={true}
                   onChange={(page, pSize) => {
                     setCurrent(page);
-                    setPageSize(pSize);
+                    if (pSize && pSize !== pageSize) {
+                      setPageSize(pSize);
+                    }
                   }}
-                  showSizeChanger={false}
                 />
               </div>
             )}
