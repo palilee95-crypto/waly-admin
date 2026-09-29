@@ -529,69 +529,25 @@ export const ActivationCodesTab: React.FC = () => {
         format: [sizeMm, sizeMm],
       });
 
-      // 1. Pure White Clean Background
+      // 1. Pure White Clean Background (No borders, no cut guides)
       doc.setFillColor(255, 255, 255);
       doc.rect(0, 0, sizeMm, sizeMm, 'F');
 
-      // 2. Subtle Precision Hairline Cut Border
-      doc.setDrawColor(203, 213, 225); // #cbd5e1 slate-300
-      doc.setLineWidth(0.3);
-      doc.roundedRect(2.5, 2.5, sizeMm - 5, sizeMm - 5, 2.5, 2.5, 'S');
-
-      // 3. Mini Corner Cut Guides
-      doc.setDrawColor(148, 163, 184); // #94a3b8
-      doc.setLineWidth(0.2);
-      const markLen = 2;
-      // top-left
-      doc.line(1, 2.5, 1 + markLen, 2.5);
-      doc.line(2.5, 1, 2.5, 1 + markLen);
-      // top-right
-      doc.line(sizeMm - 1 - markLen, 2.5, sizeMm - 1, 2.5);
-      doc.line(sizeMm - 2.5, 1, sizeMm - 2.5, 1 + markLen);
-      // bottom-left
-      doc.line(1, sizeMm - 2.5, 1 + markLen, sizeMm - 2.5);
-      doc.line(2.5, sizeMm - 1 - markLen, 2.5, sizeMm - 1);
-      // bottom-right
-      doc.line(sizeMm - 1 - markLen, sizeMm - 2.5, sizeMm - 1, sizeMm - 2.5);
-      doc.line(sizeMm - 2.5, sizeMm - 1 - markLen, sizeMm - 2.5, sizeMm - 1);
-
-      // 4. Header: "TAP NFC OR SCAN"
+      // 2. Header: "TAP NFC OR SCAN"
       doc.setFont('helvetica', 'bold');
-      const headerFontSize = Math.max(6, Math.min(8.5, sizeMm * 0.11));
+      const headerFontSize = Math.max(6.5, Math.min(9, sizeMm * 0.11));
       doc.setFontSize(headerFontSize);
       doc.setTextColor(0, 109, 55); // #006d37
-      doc.text('TAP NFC OR SCAN', sizeMm / 2, Math.max(6, sizeMm * 0.12), { align: 'center' });
+      const headerY = sizeMm * 0.13;
+      doc.text('TAP NFC OR SCAN', sizeMm / 2, headerY, { align: 'center' });
 
-      // 5. Centered High-Contrast QR Code
-      const qrSize = sizeMm * 0.63;
+      // 3. Centered High-Contrast QR Code (No code text below)
+      const qrSize = sizeMm * 0.72;
       const qrX = (sizeMm - qrSize) / 2;
-      const qrY = Math.max(8.5, sizeMm * 0.16);
+      const qrY = headerY + 2.5;
       doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
 
-      // 6. Monospace Stand Code Pill Box
-      const pillHeight = Math.max(5.5, sizeMm * 0.09);
-      const pillWidth = sizeMm * 0.78;
-      const pillX = (sizeMm - pillWidth) / 2;
-      const pillY = sizeMm - pillHeight - (sizeMm * 0.08);
-
-      doc.setFillColor(241, 245, 249); // #f1f5f9 slate-100
-      doc.setDrawColor(203, 213, 225); // #cbd5e1
-      doc.setLineWidth(0.25);
-      doc.roundedRect(pillX, pillY, pillWidth, pillHeight, 1.8, 1.8, 'FD');
-
-      doc.setFont('courier', 'bold');
-      const codeFontSize = Math.max(7.5, Math.min(10.5, sizeMm * 0.14));
-      doc.setFontSize(codeFontSize);
-      doc.setTextColor(0, 109, 55);
-      doc.text(record.code, sizeMm / 2, pillY + (pillHeight * 0.68), { align: 'center' });
-
-      // 7. Subtle Footer Tagline
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(Math.max(4.5, sizeMm * 0.07));
-      doc.setTextColor(148, 163, 184); // #94a3b8
-      doc.text('risev.app • Stand Plate', sizeMm / 2, sizeMm - 2.2, { align: 'center' });
-
-      // 8. Trigger Instant Direct Download Named <CODE>.pdf
+      // 4. Trigger Instant Direct Download Named <CODE>.pdf
       doc.save(`${record.code}.pdf`);
       message.success({ content: `Downloaded ${record.code}.pdf successfully!`, key: 'gen_pdf' });
     } catch (err: any) {
@@ -650,45 +606,22 @@ export const ActivationCodesTab: React.FC = () => {
           color: { dark: '#002d1e', light: '#ffffff' },
         });
 
-        // Sticker Container Background & Cut Line
+        // Sticker Container Background (Clean white sticker, no inner border)
         doc.setFillColor(255, 255, 255);
-        doc.setDrawColor(203, 213, 225);
-        doc.setLineWidth(0.3);
-        doc.roundedRect(x, y, sizeMm, sizeMm, 2.5, 2.5, 'FD');
+        doc.rect(x, y, sizeMm, sizeMm, 'F');
 
         // Header
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(7.5);
         doc.setTextColor(0, 109, 55);
-        doc.text('TAP NFC OR SCAN', x + sizeMm / 2, y + 8, { align: 'center' });
+        const headerY = y + sizeMm * 0.13;
+        doc.text('TAP NFC OR SCAN', x + sizeMm / 2, headerY, { align: 'center' });
 
-        // QR Code
-        const qrSize = sizeMm * 0.62;
+        // QR Code (centered, no code pill)
+        const qrSize = sizeMm * 0.72;
         const qrX = x + (sizeMm - qrSize) / 2;
-        const qrY = y + 11;
+        const qrY = headerY + 2.5;
         doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
-
-        // Code Pill Box
-        const pillHeight = 6;
-        const pillWidth = sizeMm * 0.78;
-        const pillX = x + (sizeMm - pillWidth) / 2;
-        const pillY = y + sizeMm - pillHeight - 6.5;
-
-        doc.setFillColor(241, 245, 249);
-        doc.setDrawColor(203, 213, 225);
-        doc.setLineWidth(0.2);
-        doc.roundedRect(pillX, pillY, pillWidth, pillHeight, 1.5, 1.5, 'FD');
-
-        doc.setFont('courier', 'bold');
-        doc.setFontSize(9.5);
-        doc.setTextColor(0, 109, 55);
-        doc.text(item.code, x + sizeMm / 2, pillY + 4.2, { align: 'center' });
-
-        // Footer
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(5);
-        doc.setTextColor(148, 163, 184);
-        doc.text('risev.app • Stand Plate', x + sizeMm / 2, y + sizeMm - 2, { align: 'center' });
       }
 
       const dateStr = dayjs().format('YYYYMMDD_HHmm');
@@ -1847,42 +1780,28 @@ export const ActivationCodesTab: React.FC = () => {
             {/* Live Visual Preview of Clean Square Artwork */}
             <div className="flex justify-center p-5 bg-slate-100 dark:bg-[#001a11] rounded-2xl border border-slate-200 dark:border-white/10">
               <div
-                className="bg-white rounded-xl shadow-md border border-dashed border-slate-300 p-3.5 flex flex-col items-center justify-between text-center relative"
+                className="bg-white rounded-2xl p-4 flex flex-col items-center justify-between text-center relative"
                 style={{
-                  width: '240px',
-                  height: '240px',
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+                  width: '230px',
+                  height: '230px',
+                  boxShadow: '0 8px 30px rgba(0,0,0,0.08)',
                 }}
               >
-                {/* Subtle cut guides at corners */}
-                <div className="absolute top-1 left-1 w-2 h-2 border-t-2 border-l-2 border-slate-300" />
-                <div className="absolute top-1 right-1 w-2 h-2 border-t-2 border-r-2 border-slate-300" />
-                <div className="absolute bottom-1 left-1 w-2 h-2 border-b-2 border-l-2 border-slate-300" />
-                <div className="absolute bottom-1 right-1 w-2 h-2 border-b-2 border-r-2 border-slate-300" />
-
                 {/* Header */}
-                <div className="flex flex-col items-center pt-0.5">
-                  <span className="text-[9px] font-black text-[#006d37] tracking-wider uppercase">
+                <div className="pt-1">
+                  <span className="text-[11px] font-black text-[#006d37] tracking-wider uppercase">
                     TAP NFC OR SCAN
                   </span>
                 </div>
 
                 {/* QR Code */}
-                <div className="p-1 bg-white rounded-lg">
+                <div className="p-1 bg-white rounded-lg flex items-center justify-center flex-1 my-auto">
                   <QRCode
                     value={`https://risev.app/nfc?c=${selectedStandQrItem.code}`}
-                    size={140}
+                    size={160}
                     bordered={false}
                     color="#002d1e"
                   />
-                </div>
-
-                {/* Code Pill Box */}
-                <div className="w-full flex flex-col items-center gap-0.5 pb-0.5">
-                  <div className="font-mono text-xs font-black text-[#006d37] bg-slate-100 px-3 py-1 rounded-md border border-slate-200 tracking-wider">
-                    {selectedStandQrItem.code}
-                  </div>
-                  <span className="text-[7px] text-slate-400">risev.app • Stand Plate</span>
                 </div>
               </div>
             </div>
