@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTable, useDelete } from '@refinedev/core';
-import { Tag, message, Modal, Form, Select, Input, Button, Popconfirm, QRCode, Tooltip, InputNumber } from 'antd';
+import { Tag, message, Modal, Form, Select, Input, Button, Popconfirm, QRCode, Tooltip, InputNumber, Radio } from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -16,9 +16,12 @@ import {
   EditOutlined,
   CheckOutlined,
   CloseOutlined,
+  FilePdfOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { Link } from 'react-router-dom';
+import jsPDF from 'jspdf';
+import QRCodeLib from 'qrcode';
 import { pb } from '../../../lib/pocketbase';
 
 export interface ActivationCodeRecord {
@@ -78,6 +81,12 @@ export const ActivationCodesTab: React.FC = () => {
   // Print Slip Modal State
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [printCodes, setPrintCodes] = useState<ActivationCodeRecord[]>([]);
+
+  // Stand QR PDF Generator Modal State (Clean Square for Stand Plates)
+  const [isStandQrModalOpen, setIsStandQrModalOpen] = useState(false);
+  const [selectedStandQrItem, setSelectedStandQrItem] = useState<ActivationCodeRecord | null>(null);
+  const [standQrSizeMm, setStandQrSizeMm] = useState<number>(70);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Refine Table for activation_codes
   const { tableQueryResult } = useTable<ActivationCodeRecord>({
@@ -492,6 +501,209 @@ export const ActivationCodesTab: React.FC = () => {
       await new Promise((r) => setTimeout(r, 400));
     }
     message.success({ content: `Downloaded ${targetCodes.length} card images successfully!`, key: 'downloading_cards' });
+  };
+
+  // ── High-Precision Clean Square Stand QR PDF Generator ───────────────────
+  // Generates standalone vector PDF sized for physical stands, named directly as <CODE>.pdf
+  const downloadStandQrPdf = async (record: ActivationCodeRecord, customSizeMm?: number) => {
+    const sizeMm = customSizeMm || standQrSizeMm || 70;
+    try {
+      setIsGeneratingPdf(true);
+      message.loading({ content: `Generating ${record.code}.pdf...`, key: 'gen_pdf' });
+      const activateUrl = `https://risev.app/nfc?c=${record.code}`;
+
+      // Generate crisp offline QR data URL
+      const qrDataUrl = await QRCodeLib.toDataURL(activateUrl, {
+        errorCorrectionLevel: 'H',
+        margin: 1,
+        width: 800,
+        color: {
+          dark: '#002d1e', // Risev dark forest green
+          light: '#ffffff',
+        },
+      });
+
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: [sizeMm, sizeMm],
+      });
+
+      // 1. Pure White Clean Background
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, 0, sizeMm, sizeMm, 'F');
+
+      // 2. Subtle Precision Hairline Cut Border
+      doc.setDrawColor(203, 213, 225); // #cbd5e1 slate-300
+      doc.setLineWidth(0.3);
+      doc.roundedRect(2.5, 2.5, sizeMm - 5, sizeMm - 5, 2.5, 2.5, 'S');
+
+      // 3. Mini Corner Cut Guides
+      doc.setDrawColor(148, 163, 184); // #94a3b8
+      doc.setLineWidth(0.2);
+      const markLen = 2;
+      // top-left
+      doc.line(1, 2.5, 1 + markLen, 2.5);
+      doc.line(2.5, 1, 2.5, 1 + markLen);
+      // top-right
+      doc.line(sizeMm - 1 - markLen, 2.5, sizeMm - 1, 2.5);
+      doc.line(sizeMm - 2.5, 1, sizeMm - 2.5, 1 + markLen);
+      // bottom-left
+      doc.line(1, sizeMm - 2.5, 1 + markLen, sizeMm - 2.5);
+      doc.line(2.5, sizeMm - 1 - markLen, 2.5, sizeMm - 1);
+      // bottom-right
+      doc.line(sizeMm - 1 - markLen, sizeMm - 2.5, sizeMm - 1, sizeMm - 2.5);
+      doc.line(sizeMm - 2.5, sizeMm - 1 - markLen, sizeMm - 2.5, sizeMm - 1);
+
+      // 4. Header: "TAP NFC OR SCAN"
+      doc.setFont('helvetica', 'bold');
+      const headerFontSize = Math.max(6, Math.min(8.5, sizeMm * 0.11));
+      doc.setFontSize(headerFontSize);
+      doc.setTextColor(0, 109, 55); // #006d37
+      doc.text('TAP NFC OR SCAN', sizeMm / 2, Math.max(6, sizeMm * 0.12), { align: 'center' });
+
+      // 5. Centered High-Contrast QR Code
+      const qrSize = sizeMm * 0.63;
+      const qrX = (sizeMm - qrSize) / 2;
+      const qrY = Math.max(8.5, sizeMm * 0.16);
+      doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+
+      // 6. Monospace Stand Code Pill Box
+      const pillHeight = Math.max(5.5, sizeMm * 0.09);
+      const pillWidth = sizeMm * 0.78;
+      const pillX = (sizeMm - pillWidth) / 2;
+      const pillY = sizeMm - pillHeight - (sizeMm * 0.08);
+
+      doc.setFillColor(241, 245, 249); // #f1f5f9 slate-100
+      doc.setDrawColor(203, 213, 225); // #cbd5e1
+      doc.setLineWidth(0.25);
+      doc.roundedRect(pillX, pillY, pillWidth, pillHeight, 1.8, 1.8, 'FD');
+
+      doc.setFont('courier', 'bold');
+      const codeFontSize = Math.max(7.5, Math.min(10.5, sizeMm * 0.14));
+      doc.setFontSize(codeFontSize);
+      doc.setTextColor(0, 109, 55);
+      doc.text(record.code, sizeMm / 2, pillY + (pillHeight * 0.68), { align: 'center' });
+
+      // 7. Subtle Footer Tagline
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(Math.max(4.5, sizeMm * 0.07));
+      doc.setTextColor(148, 163, 184); // #94a3b8
+      doc.text('risev.app • Stand Plate', sizeMm / 2, sizeMm - 2.2, { align: 'center' });
+
+      // 8. Trigger Instant Direct Download Named <CODE>.pdf
+      doc.save(`${record.code}.pdf`);
+      message.success({ content: `Downloaded ${record.code}.pdf successfully!`, key: 'gen_pdf' });
+    } catch (err: any) {
+      console.error('Failed to generate stand QR PDF:', err);
+      message.error({ content: err?.message || 'Failed to generate PDF', key: 'gen_pdf' });
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
+  // Batch Printable A4 Sheet PDF Generator
+  const downloadBatchStandQrA4Pdf = async (recordsToExport?: ActivationCodeRecord[], customSizeMm = 65) => {
+    const list = recordsToExport && recordsToExport.length > 0 ? recordsToExport : filteredCodes.filter((c) => !c.is_redeemed).slice(0, 24);
+    if (list.length === 0) {
+      message.warning('No available codes to export.');
+      return;
+    }
+
+    try {
+      message.loading({ content: `Building A4 sheet with ${list.length} stand stickers...`, key: 'batch_pdf' });
+      const sizeMm = customSizeMm;
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4', // 210 x 297 mm
+      });
+
+      const a4Width = 210;
+      const a4Height = 297;
+      const cols = 2; // 2 stickers across
+      const rows = 3; // 3 stickers down
+      const perPage = cols * rows; // 6 per A4 sheet
+
+      const marginX = (a4Width - cols * sizeMm) / (cols + 1);
+      const marginY = 18;
+      const gapY = (a4Height - rows * sizeMm - marginY * 2) / (rows - 1);
+
+      for (let i = 0; i < list.length; i++) {
+        if (i > 0 && i % perPage === 0) {
+          doc.addPage('a4', 'portrait');
+        }
+
+        const pageIndex = i % perPage;
+        const col = pageIndex % cols;
+        const row = Math.floor(pageIndex / cols);
+
+        const x = marginX + col * (sizeMm + marginX);
+        const y = marginY + row * (sizeMm + gapY);
+
+        const item = list[i];
+        const activateUrl = `https://risev.app/nfc?c=${item.code}`;
+        const qrDataUrl = await QRCodeLib.toDataURL(activateUrl, {
+          errorCorrectionLevel: 'H',
+          margin: 1,
+          width: 600,
+          color: { dark: '#002d1e', light: '#ffffff' },
+        });
+
+        // Sticker Container Background & Cut Line
+        doc.setFillColor(255, 255, 255);
+        doc.setDrawColor(203, 213, 225);
+        doc.setLineWidth(0.3);
+        doc.roundedRect(x, y, sizeMm, sizeMm, 2.5, 2.5, 'FD');
+
+        // Header
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(7.5);
+        doc.setTextColor(0, 109, 55);
+        doc.text('TAP NFC OR SCAN', x + sizeMm / 2, y + 8, { align: 'center' });
+
+        // QR Code
+        const qrSize = sizeMm * 0.62;
+        const qrX = x + (sizeMm - qrSize) / 2;
+        const qrY = y + 11;
+        doc.addImage(qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+
+        // Code Pill Box
+        const pillHeight = 6;
+        const pillWidth = sizeMm * 0.78;
+        const pillX = x + (sizeMm - pillWidth) / 2;
+        const pillY = y + sizeMm - pillHeight - 6.5;
+
+        doc.setFillColor(241, 245, 249);
+        doc.setDrawColor(203, 213, 225);
+        doc.setLineWidth(0.2);
+        doc.roundedRect(pillX, pillY, pillWidth, pillHeight, 1.5, 1.5, 'FD');
+
+        doc.setFont('courier', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(0, 109, 55);
+        doc.text(item.code, x + sizeMm / 2, pillY + 4.2, { align: 'center' });
+
+        // Footer
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(5);
+        doc.setTextColor(148, 163, 184);
+        doc.text('risev.app • Stand Plate', x + sizeMm / 2, y + sizeMm - 2, { align: 'center' });
+      }
+
+      const dateStr = dayjs().format('YYYYMMDD_HHmm');
+      doc.save(`Risev_Stand_QRs_${dateStr}.pdf`);
+      message.success({ content: `Exported ${list.length} stand stickers to A4 PDF!`, key: 'batch_pdf' });
+    } catch (err: any) {
+      console.error('Failed to export batch stand QRs:', err);
+      message.error({ content: err?.message || 'Failed to export batch PDF', key: 'batch_pdf' });
+    }
+  };
+
+  // Open Stand QR Modal
+  const handleOpenStandQrModal = (record: ActivationCodeRecord) => {
+    setSelectedStandQrItem(record);
+    setIsStandQrModalOpen(true);
   };
 
   // Pure Standalone Print Engine for factory/box packaging (100% clean, no web UI artifacts)
@@ -926,6 +1138,15 @@ export const ActivationCodesTab: React.FC = () => {
           </Button>
 
           <Button
+            icon={<FilePdfOutlined style={{ color: '#dc2626' }} />}
+            onClick={() => downloadBatchStandQrA4Pdf()}
+            className="rounded-xl font-bold text-xs h-9"
+            title="Download printable A4 sheet of clean square stand stickers"
+          >
+            Stand QRs (A4 Sheet PDF)
+          </Button>
+
+          <Button
             icon={<PrinterOutlined />}
             onClick={() => handleOpenPrintModal()}
             className="rounded-xl font-bold text-xs h-9"
@@ -1211,6 +1432,15 @@ export const ActivationCodesTab: React.FC = () => {
                               className="text-slate-600 dark:text-slate-300 hover:text-[#006d37] dark:hover:text-[#6bfe9c] p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-all bg-transparent border-none cursor-pointer"
                             >
                               <LinkOutlined className="text-sm" />
+                            </button>
+                          </Tooltip>
+
+                          <Tooltip title={`Stand QR Plate (PDF) - ${item.code}.pdf`}>
+                            <button
+                              onClick={() => handleOpenStandQrModal(item)}
+                              className="text-slate-600 dark:text-slate-300 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-all bg-transparent border-none cursor-pointer flex items-center justify-center"
+                            >
+                              <FilePdfOutlined className="text-sm text-red-600" />
                             </button>
                           </Tooltip>
 
@@ -1558,6 +1788,139 @@ export const ActivationCodesTab: React.FC = () => {
             })}
           </div>
         </div>
+      </Modal>
+
+      {/* 6. Clean Square Stand QR Plate Modal */}
+      <Modal
+        title={
+          <div className="flex items-center gap-2 pt-1">
+            <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-black text-sm shrink-0">
+              <FilePdfOutlined />
+            </div>
+            <div>
+              <h3 className="font-black text-base text-on-surface dark:text-white mb-0 leading-tight">
+                Stand QR Plate (PDF) • {selectedStandQrItem?.code}
+              </h3>
+              <p className="text-[11px] text-slate-500 dark:text-[#85af9b] font-normal">
+                Clean square vector artwork to print and affix directly onto your acrylic or wooden counter stand
+              </p>
+            </div>
+          </div>
+        }
+        open={isStandQrModalOpen}
+        onCancel={() => setIsStandQrModalOpen(false)}
+        footer={null}
+        width={560}
+        destroyOnHidden
+        centered
+      >
+        {selectedStandQrItem && (
+          <div className="flex flex-col gap-4 pt-2">
+            {/* Dimension Selection */}
+            <div className="bg-slate-50 dark:bg-white/5 p-3 rounded-2xl border border-slate-200/60 dark:border-white/10 flex flex-col gap-2">
+              <span className="text-[10px] font-black uppercase text-slate-500 dark:text-[#85af9b] tracking-wider">
+                Select Plate / Sticker Dimensions
+              </span>
+              <Radio.Group
+                value={standQrSizeMm}
+                onChange={(e) => setStandQrSizeMm(e.target.value)}
+                className="grid grid-cols-4 gap-2 w-full"
+              >
+                {[
+                  { label: '50 × 50 mm', value: 50, desc: 'Compact' },
+                  { label: '60 × 60 mm', value: 60, desc: 'Medium' },
+                  { label: '70 × 70 mm', value: 70, desc: 'Standard' },
+                  { label: '80 × 80 mm', value: 80, desc: 'Large' },
+                ].map((sz) => (
+                  <Radio.Button
+                    key={sz.value}
+                    value={sz.value}
+                    className="h-auto py-1.5 px-2 text-center rounded-xl flex flex-col items-center justify-center"
+                  >
+                    <span className="font-bold text-xs leading-none">{sz.label}</span>
+                    <span className="text-[9px] text-slate-400 mt-0.5">{sz.desc}</span>
+                  </Radio.Button>
+                ))}
+              </Radio.Group>
+            </div>
+
+            {/* Live Visual Preview of Clean Square Artwork */}
+            <div className="flex justify-center p-5 bg-slate-100 dark:bg-[#001a11] rounded-2xl border border-slate-200 dark:border-white/10">
+              <div
+                className="bg-white rounded-xl shadow-md border border-dashed border-slate-300 p-3.5 flex flex-col items-center justify-between text-center relative"
+                style={{
+                  width: '240px',
+                  height: '240px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+                }}
+              >
+                {/* Subtle cut guides at corners */}
+                <div className="absolute top-1 left-1 w-2 h-2 border-t-2 border-l-2 border-slate-300" />
+                <div className="absolute top-1 right-1 w-2 h-2 border-t-2 border-r-2 border-slate-300" />
+                <div className="absolute bottom-1 left-1 w-2 h-2 border-b-2 border-l-2 border-slate-300" />
+                <div className="absolute bottom-1 right-1 w-2 h-2 border-b-2 border-r-2 border-slate-300" />
+
+                {/* Header */}
+                <div className="flex flex-col items-center pt-0.5">
+                  <span className="text-[9px] font-black text-[#006d37] tracking-wider uppercase">
+                    TAP NFC OR SCAN
+                  </span>
+                </div>
+
+                {/* QR Code */}
+                <div className="p-1 bg-white rounded-lg">
+                  <QRCode
+                    value={`https://risev.app/nfc?c=${selectedStandQrItem.code}`}
+                    size={140}
+                    bordered={false}
+                    color="#002d1e"
+                  />
+                </div>
+
+                {/* Code Pill Box */}
+                <div className="w-full flex flex-col items-center gap-0.5 pb-0.5">
+                  <div className="font-mono text-xs font-black text-[#006d37] bg-slate-100 px-3 py-1 rounded-md border border-slate-200 tracking-wider">
+                    {selectedStandQrItem.code}
+                  </div>
+                  <span className="text-[7px] text-slate-400">risev.app • Stand Plate</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Target URL Info */}
+            <div className="flex items-center justify-between text-xs px-2 text-slate-500">
+              <span>Target URL:</span>
+              <code className="text-[#006d37] font-mono text-[11px] bg-slate-100 dark:bg-white/10 px-2 py-0.5 rounded">
+                https://risev.app/nfc?c={selectedStandQrItem.code}
+              </code>
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-white/10 mt-1">
+              <Button onClick={() => setIsStandQrModalOpen(false)} className="rounded-xl font-bold">
+                Close
+              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  icon={<FilePdfOutlined />}
+                  onClick={() => downloadBatchStandQrA4Pdf([selectedStandQrItem], standQrSizeMm)}
+                  className="rounded-xl font-bold text-xs"
+                >
+                  Print on A4 Sheet
+                </Button>
+                <Button
+                  type="primary"
+                  icon={<DownloadOutlined />}
+                  loading={isGeneratingPdf}
+                  onClick={() => downloadStandQrPdf(selectedStandQrItem, standQrSizeMm)}
+                  className="rounded-xl font-black bg-[#dc2626] hover:bg-[#b91c1c] border-none shadow-md text-white"
+                >
+                  Download {selectedStandQrItem.code}.pdf
+                </Button>
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
