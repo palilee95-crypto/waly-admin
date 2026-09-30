@@ -133,8 +133,9 @@ export const ActivationCodesTab: React.FC = () => {
   const totalCount = allCodes.length;
   const availableCount = allCodes.filter((c) => !c.is_redeemed).length;
   const redeemedCount = allCodes.filter((c) => c.is_redeemed).length;
-  const redemptionRate = totalCount > 0 ? Math.round((redeemedCount / totalCount) * 100) : 0;
-  const totalQuotaProvisioned = redeemedCount * 500;
+  const totalQuotaProvisioned = allCodes
+    .filter((c) => c.is_redeemed)
+    .reduce((sum, c) => sum + (c.quota || 500), 0);
 
   // Remark Edit Handlers
   const handleStartEditRemark = (record: ActivationCodeRecord) => {
@@ -424,7 +425,7 @@ export const ActivationCodesTab: React.FC = () => {
       // Perks
       ctx.font = '800 22px "Plus Jakarta Sans", Poppins, sans-serif';
       ctx.fillStyle = '#065f46';
-      ctx.fillText('✓ 500 Customer Database Capacity Included', 380, 385);
+      ctx.fillText(`✓ ${(record.quota || 500).toLocaleString()} Customer Database Capacity Included`, 380, 385);
 
       ctx.font = '700 16px "Plus Jakarta Sans", Poppins, sans-serif';
       ctx.fillStyle = '#64748b';
@@ -676,7 +677,7 @@ export const ActivationCodesTab: React.FC = () => {
               <div class="info-col">
                 <div class="code-label">STAND ACTIVATION CODE</div>
                 <div class="code-box">${item.code}</div>
-                <div class="perk-badge">✓ 500 Customer Database Capacity</div>
+                <div class="perk-badge">✓ ${(item.quota || 500).toLocaleString()} Customer Database Capacity</div>
                 <div class="perk-sub">Lifetime Access • No Expiration Date</div>
               </div>
             </div>
@@ -1558,7 +1559,9 @@ export const ActivationCodesTab: React.FC = () => {
                 <Select.Option value={500}>500 Members</Select.Option>
                 <Select.Option value={1000}>1,000 Members</Select.Option>
                 <Select.Option value={2500}>2,500 Members</Select.Option>
+                <Select.Option value={3000}>3,000 Members</Select.Option>
                 <Select.Option value={5000}>5,000 Members</Select.Option>
+                <Select.Option value={10000}>10,000 Members</Select.Option>
               </Select>
             </Form.Item>
           </div>
@@ -1683,7 +1686,7 @@ export const ActivationCodesTab: React.FC = () => {
                         {item.code}
                       </span>
                       <span className="text-[10px] font-bold text-emerald-800 leading-tight">
-                        ✓ 500 Customer Database Capacity
+                        ✓ {(item.quota || 500).toLocaleString()} Customer Database Capacity
                       </span>
                       <span className="text-[9px] text-slate-500 font-medium mt-0.5">
                         Lifetime Access • No Expiry
