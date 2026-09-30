@@ -577,7 +577,7 @@ export const SubscriptionList: React.FC = () => {
             Grant trial passes, configure pricing tiers, manage promo vouchers, and view merchant billing.
           </p>
 
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <button
               onClick={() => handleOpenTrialModal()}
               className="inline-flex items-center gap-1.5 bg-amber-500 hover:bg-amber-600 text-white font-black text-xs px-4 py-2.5 rounded-full transition-all shadow-md border-none cursor-pointer"
@@ -599,10 +599,10 @@ export const SubscriptionList: React.FC = () => {
 
       {/* 2. Main Content Canvas */}
       <div className="relative z-20 bg-[#fcf9f8] dark:bg-[#00150e] pt-0 pb-28">
-        <div className="max-w-[1100px] mx-auto w-full px-3 sm:px-6">
+        <div className="max-w-[1100px] mx-auto w-full px-2 sm:px-6">
           
           {/* Main Bento Container (Overlapping Hero) */}
-          <div className="-mt-16 relative z-30 bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
+          <div className="-mt-16 relative z-30 bg-surface-container-lowest dark:bg-[#002518] rounded-[2rem] p-3.5 sm:p-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-surface-variant dark:border-[#004d30]">
             
             {/* Filter Tabs Bar */}
             <div 

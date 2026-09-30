@@ -967,7 +967,7 @@ export const ActivationCodesTab: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-5 pb-28 md:pb-8">
       {/* 1. Top KPI Bento Grid */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <div className="bg-[#f8faf9] dark:bg-[#001f15] p-4 rounded-2xl border border-surface-variant dark:border-[#004d30] flex flex-col justify-between">
@@ -1008,11 +1008,54 @@ export const ActivationCodesTab: React.FC = () => {
       </div>
 
       {/* 2. Controls & Actions Bar */}
-      <div className="bg-white dark:bg-[#002518] p-4 rounded-2xl border border-surface-variant dark:border-[#004d30] flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 shadow-sm">
-        {/* Left: Filters & Search */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Status Segment */}
-          <div className="flex items-center bg-slate-100 dark:bg-[#001f15] p-1 rounded-xl">
+      <div className="bg-white dark:bg-[#002518] p-3 sm:p-4 rounded-2xl border border-surface-variant dark:border-[#004d30] flex flex-col gap-3 shadow-sm">
+        {/* Top: Action Buttons Row */}
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+          {/* Main Primary Action: Generate Codes (Full width & top on mobile) */}
+          <button
+            onClick={handleOpenGenerateModal}
+            className="w-full sm:w-auto order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-[#006d37] hover:bg-[#00542a] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md border-none cursor-pointer active:scale-95"
+          >
+            <PlusOutlined />
+            <span>Generate Stand Codes</span>
+          </button>
+
+          {/* Secondary Action Toolbar: Print, PDF, Export (Clean 2-col grid on mobile, horizontal row on desktop) */}
+          <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 order-2 sm:order-1 w-full sm:w-auto">
+            <Button
+              icon={<PrinterOutlined />}
+              onClick={() => handleOpenPrintModal()}
+              className="rounded-xl font-bold text-xs h-9 flex items-center justify-center col-span-2 sm:col-span-1"
+            >
+              Print Cards ({printCodes.length > 0 ? printCodes.length : Math.min(availableCount, 40)})
+            </Button>
+
+            <Button
+              icon={<FilePdfOutlined style={{ color: '#dc2626' }} />}
+              onClick={() => downloadBatchStandQrA4Pdf()}
+              className="rounded-xl font-bold text-xs h-9 flex items-center justify-center"
+              title="Download printable A4 sheet of clean square stand stickers"
+            >
+              <span className="truncate">Stand QRs (PDF)</span>
+            </Button>
+
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={handleExportCSV}
+              className="rounded-xl font-bold text-xs h-9 flex items-center justify-center"
+            >
+              Export CSV
+            </Button>
+          </div>
+        </div>
+
+        {/* Subtle separator */}
+        <div className="border-t border-slate-100 dark:border-white/5 my-0.5" />
+
+        {/* Bottom: Filter Pills, Channel Dropdown, and Search Input */}
+        <div className="flex flex-col md:flex-row items-stretch md:items-center gap-2.5">
+          {/* Status Segment (Scrollable without overflow) */}
+          <div className="flex items-center bg-slate-100 dark:bg-[#001f15] p-1 rounded-xl overflow-x-auto w-full sm:w-auto shrink-0" style={{ scrollbarWidth: 'none' }}>
             {(
               [
                 { label: 'All', value: 'all' },
@@ -1023,7 +1066,7 @@ export const ActivationCodesTab: React.FC = () => {
               <button
                 key={opt.value}
                 onClick={() => setStatusFilter(opt.value)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold border-none cursor-pointer transition-all ${
+                className={`flex-1 sm:flex-initial px-3 py-1.5 rounded-lg text-xs font-bold border-none cursor-pointer transition-all whitespace-nowrap text-center ${
                   statusFilter === opt.value
                     ? 'bg-[#006d37] text-white shadow-sm'
                     : 'bg-transparent text-slate-600 dark:text-[#85af9b] hover:text-slate-900'
@@ -1034,67 +1077,32 @@ export const ActivationCodesTab: React.FC = () => {
             ))}
           </div>
 
-          {/* Channel Select */}
-          <Select
-            value={channelFilter}
-            onChange={setChannelFilter}
-            className="w-36 rounded-xl"
-            options={[
-              { label: 'All Channels', value: 'all' },
-              { label: 'TikTok Shop', value: 'tiktok_shop' },
-              { label: 'Shopee', value: 'shopee' },
-              { label: 'App Marketplace', value: 'marketplace' },
-              { label: 'Manual / Direct', value: 'manual' },
-            ]}
-          />
-
-          {/* Search Input */}
-          <div className="relative min-w-[200px] flex-1">
-            <Input
-              prefix={<SearchOutlined className="text-slate-400" />}
-              placeholder="Search code or merchant..."
-              value={searchKeyword}
-              onChange={(e) => setSearchKeyword(e.target.value)}
-              allowClear
-              className="rounded-xl h-9 border-slate-200 dark:border-[#004d30]"
+          {/* Channel Select & Search Input */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-1">
+            <Select
+              value={channelFilter}
+              onChange={setChannelFilter}
+              className="w-full sm:w-40 rounded-xl"
+              options={[
+                { label: 'All Channels', value: 'all' },
+                { label: 'TikTok Shop', value: 'tiktok_shop' },
+                { label: 'Shopee', value: 'shopee' },
+                { label: 'App Marketplace', value: 'marketplace' },
+                { label: 'Manual / Direct', value: 'manual' },
+              ]}
             />
+
+            <div className="relative w-full sm:flex-1">
+              <Input
+                prefix={<SearchOutlined className="text-slate-400" />}
+                placeholder="Search code, merchant, note..."
+                value={searchKeyword}
+                onChange={(e) => setSearchKeyword(e.target.value)}
+                allowClear
+                className="rounded-xl h-9 border-slate-200 dark:border-[#004d30] w-full"
+              />
+            </div>
           </div>
-        </div>
-
-        {/* Right: Actions */}
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            icon={<DownloadOutlined />}
-            onClick={handleExportCSV}
-            className="rounded-xl font-bold text-xs h-9"
-          >
-            Export CSV
-          </Button>
-
-          <Button
-            icon={<FilePdfOutlined style={{ color: '#dc2626' }} />}
-            onClick={() => downloadBatchStandQrA4Pdf()}
-            className="rounded-xl font-bold text-xs h-9"
-            title="Download printable A4 sheet of clean square stand stickers"
-          >
-            Stand QRs (A4 Sheet PDF)
-          </Button>
-
-          <Button
-            icon={<PrinterOutlined />}
-            onClick={() => handleOpenPrintModal()}
-            className="rounded-xl font-bold text-xs h-9"
-          >
-            Print Cards ({printCodes.length > 0 ? printCodes.length : Math.min(availableCount, 40)})
-          </Button>
-
-          <button
-            onClick={handleOpenGenerateModal}
-            className="inline-flex items-center gap-1.5 bg-[#006d37] hover:bg-[#00542a] text-white font-black text-xs px-4 py-2 rounded-xl transition-all shadow-md border-none cursor-pointer"
-          >
-            <PlusOutlined />
-            <span>Generate Codes</span>
-          </button>
         </div>
       </div>
 
@@ -1121,10 +1129,200 @@ export const ActivationCodesTab: React.FC = () => {
             </Button>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-[#001f15]/50">
+          <div>
+            {/* Mobile Cards View (< md) */}
+            <div className="block md:hidden divide-y divide-slate-100 dark:divide-white/5">
+              {filteredCodes.map((item) => (
+                <div key={item.id} className="p-3.5 flex flex-col gap-2.5 hover:bg-slate-50/50 dark:hover:bg-white/[0.02] transition-colors">
+                  {/* Top: Code & Status */}
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className="font-mono text-xs font-black text-[#006d37] dark:text-[#6bfe9c] bg-[#006d37]/10 dark:bg-[#6bfe9c]/15 px-2 py-0.5 rounded-lg border border-[#006d37]/20 select-all truncate">
+                        {item.code}
+                      </span>
+                      <Tooltip title="Copy Stand Link">
+                        <button
+                          onClick={() => handleCopyStandLink(item.code)}
+                          className="text-slate-400 hover:text-[#006d37] p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors bg-transparent border-none cursor-pointer flex items-center justify-center shrink-0"
+                        >
+                          <LinkOutlined className="text-xs" />
+                        </button>
+                      </Tooltip>
+                      <Tooltip title="Copy Code">
+                        <button
+                          onClick={() => handleCopy(item.code, 'Activation Code')}
+                          className="text-slate-400 hover:text-[#006d37] p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-white/10 transition-colors bg-transparent border-none cursor-pointer flex items-center justify-center shrink-0"
+                        >
+                          <CopyOutlined className="text-xs" />
+                        </button>
+                      </Tooltip>
+                    </div>
+
+                    {item.is_redeemed ? (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-800 shrink-0">
+                        <CheckCircleOutlined className="text-[10px]" />
+                        REDEEMED
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-[10px] font-black px-2.5 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 shrink-0">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        AVAILABLE
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Badges: Channel & Plan & Quota */}
+                  <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {getChannelTag(item.channel)}
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-md border border-slate-200/50 dark:border-white/10">
+                      {item.quota ? item.quota.toLocaleString() : 500} Capacity (Lifetime)
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-medium ml-auto">
+                      {dayjs(item.created).format('YYYY-MM-DD')}
+                    </span>
+                  </div>
+
+                  {/* Redeemed or Remark Information */}
+                  {item.is_redeemed ? (
+                    <div className="text-xs bg-purple-50/50 dark:bg-purple-950/20 p-2.5 rounded-xl border border-purple-100 dark:border-purple-900/30 flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase text-purple-600 dark:text-purple-400 tracking-wider">
+                          Redeemed By
+                        </span>
+                        <span className="text-[10px] text-slate-400">
+                          {item.redeemed_at ? dayjs(item.redeemed_at).format('MMM D, YYYY h:mm A') : ''}
+                        </span>
+                      </div>
+                      {item.expand?.redeemed_by ? (
+                        <Link
+                          to={`/merchants/${item.redeemed_by}`}
+                          className="font-bold text-[#006d37] dark:text-[#6bfe9c] hover:underline"
+                        >
+                          {item.expand.redeemed_by.name}
+                        </Link>
+                      ) : (
+                        <span className="font-mono text-slate-600 dark:text-slate-300">
+                          ID: {item.redeemed_by}
+                        </span>
+                      )}
+                      {item.remark && (
+                        <span className="text-[11px] text-slate-500 mt-0.5">
+                          📝 {item.remark}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-xs flex items-center justify-between bg-slate-50 dark:bg-white/5 p-2 rounded-xl">
+                      {editingRemarkId === item.id ? (
+                        <div className="flex items-center gap-1.5 w-full">
+                          <Input
+                            size="small"
+                            value={remarkInput}
+                            onChange={(e) => setRemarkInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSaveRemark(item.id);
+                              if (e.key === 'Escape') setEditingRemarkId(null);
+                            }}
+                            placeholder="Note / remark..."
+                            className="rounded-lg text-xs h-7 flex-1"
+                            autoFocus
+                          />
+                          <Button
+                            size="small"
+                            type="primary"
+                            loading={isSavingRemark}
+                            onClick={() => handleSaveRemark(item.id)}
+                            icon={<CheckOutlined />}
+                            className="bg-[#006d37] border-none h-7 px-2"
+                          />
+                          <Button
+                            size="small"
+                            onClick={() => setEditingRemarkId(null)}
+                            icon={<CloseOutlined />}
+                            className="h-7 px-2"
+                          />
+                        </div>
+                      ) : item.remark ? (
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-[11px] text-slate-700 dark:text-slate-200 font-medium truncate mr-2">
+                            📝 {item.remark}
+                          </span>
+                          <button
+                            onClick={() => handleStartEditRemark(item)}
+                            className="text-slate-400 hover:text-[#006d37] text-[11px] font-bold p-1 bg-transparent border-none cursor-pointer shrink-0"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-[11px] text-slate-400 italic">No notes</span>
+                          <button
+                            onClick={() => handleStartEditRemark(item)}
+                            className="text-[10px] font-bold text-[#006d37] dark:text-[#6bfe9c] bg-[#006d37]/10 hover:bg-[#006d37]/20 px-2 py-0.5 rounded-md border border-[#006d37]/20 cursor-pointer flex items-center gap-1"
+                          >
+                            <EditOutlined className="text-[10px]" />
+                            <span>+ Note</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Actions Bar */}
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-100 dark:border-white/5">
+                    <div className="flex items-center gap-1">
+                      <Button
+                        size="small"
+                        icon={<FilePdfOutlined className="text-red-500" />}
+                        onClick={() => handleOpenStandQrModal(item)}
+                        className="rounded-lg text-[11px] font-bold flex items-center h-7"
+                      >
+                        Stand QR
+                      </Button>
+                      <Button
+                        size="small"
+                        icon={<PrinterOutlined />}
+                        onClick={() => handleOpenPrintModal(item)}
+                        className="rounded-lg text-[11px] font-bold flex items-center h-7"
+                      >
+                        Slip
+                      </Button>
+                      <Button
+                        size="small"
+                        icon={<DownloadOutlined />}
+                        onClick={() => downloadCardAsImage(item)}
+                        className="rounded-lg text-[11px] font-bold flex items-center h-7"
+                      >
+                        PNG
+                      </Button>
+                    </div>
+
+                    {!item.is_redeemed && (
+                      <Popconfirm
+                        title="Revoke Activation Code?"
+                        description={`Are you sure you want to delete ${item.code}?`}
+                        okText="Revoke"
+                        cancelText="Cancel"
+                        okButtonProps={{ danger: true }}
+                        onConfirm={() => handleDeleteCode(item.id, item.code)}
+                      >
+                        <button className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-all bg-transparent border-none cursor-pointer flex items-center gap-1 text-[11px] font-bold">
+                          <DeleteOutlined />
+                          <span>Revoke</span>
+                        </button>
+                      </Popconfirm>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View (>= md) */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left min-w-[850px]">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-[#001f15]/50">
                   <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-[#85af9b]">
                     Activation Code
                   </th>
@@ -1418,8 +1616,9 @@ export const ActivationCodesTab: React.FC = () => {
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
 
       {/* 4. Generate Batch Codes Modal */}
       <Modal
