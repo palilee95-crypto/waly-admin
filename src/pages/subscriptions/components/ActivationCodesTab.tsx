@@ -133,6 +133,7 @@ export const ActivationCodesTab: React.FC = () => {
   const totalCount = allCodes.length;
   const availableCount = allCodes.filter((c) => !c.is_redeemed).length;
   const redeemedCount = allCodes.filter((c) => c.is_redeemed).length;
+  const redemptionRate = totalCount > 0 ? Math.round((redeemedCount / totalCount) * 100) : 0;
   const totalQuotaProvisioned = allCodes
     .filter((c) => c.is_redeemed)
     .reduce((sum, c) => sum + (c.quota || 500), 0);
