@@ -77,6 +77,13 @@ export const ActivationCodesTab: React.FC = () => {
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateForm] = Form.useForm();
+  const watchedPrefix = Form.useWatch('prefix', generateForm);
+  const watchedQuota = Form.useWatch('quota', generateForm);
+  const watchedCustomQuota = Form.useWatch('custom_quota', generateForm);
+
+  const effectiveQuota = watchedQuota === 'custom'
+    ? (Number(watchedCustomQuota) || 500)
+    : (Number(watchedQuota) || 500);
 
   // Print Slip Modal State
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
@@ -196,6 +203,7 @@ export const ActivationCodesTab: React.FC = () => {
       quantity: 10,
       plan: 'stand_bundle',
       quota: 500,
+      custom_quota: 500,
       channel: 'tiktok_shop',
       remark: '',
     });
@@ -208,7 +216,9 @@ export const ActivationCodesTab: React.FC = () => {
     const qty = Math.min(Math.max(Number(values.quantity) || 1, 1), 200);
     const prefix = (values.prefix || 'RSV').trim().toUpperCase();
     const plan = values.plan || 'stand_bundle';
-    const quota = Number(values.quota) || 500;
+    const quota = values.quota === 'custom'
+      ? (Number(values.custom_quota) || 500)
+      : (Number(values.quota) || 500);
     const channel = values.channel || 'manual';
 
     const remark = (values.remark || '').trim();
@@ -1762,18 +1772,48 @@ export const ActivationCodesTab: React.FC = () => {
                 <Select.Option value={3000}>3,000 Members</Select.Option>
                 <Select.Option value={5000}>5,000 Members</Select.Option>
                 <Select.Option value={10000}>10,000 Members</Select.Option>
+                <Select.Option value="custom">Custom Quota...</Select.Option>
               </Select>
             </Form.Item>
           </div>
+
+          {/* Conditional Custom Quota Input */}
+          {watchedQuota === 'custom' && (
+            <Form.Item
+              name="custom_quota"
+              label={<span className="text-[10px] font-black uppercase text-[#006d37] tracking-wider">Custom Member Capacity</span>}
+              rules={[
+                { required: true, message: 'Please enter custom member capacity' },
+                {
+                  validator: async (_, value) => {
+                    const num = Number(value);
+                    if (!value || isNaN(num) || num < 1) {
+                      throw new Error('Capacity must be a positive number (minimum 1)');
+                    }
+                  },
+                },
+              ]}
+              initialValue={500}
+              className="mb-1"
+            >
+              <InputNumber
+                min={1}
+                max={1000000}
+                step={100}
+                placeholder="e.g. 750, 1500, 20000"
+                className="w-full rounded-xl h-10 font-bold text-sm border-slate-200 flex items-center"
+              />
+            </Form.Item>
+          )}
 
           {/* Preview Box */}
           <div className="p-3.5 rounded-2xl bg-[#002d1e] text-white border border-[#004d30] flex flex-col gap-1.5 my-2">
             <span className="text-[10px] font-black uppercase tracking-wider text-[#6bfe9c]">FORMAT SAMPLE</span>
             <div className="font-mono text-sm font-bold text-white tracking-wider">
-              RSV-XXXX-XXXX
+              {((watchedPrefix || 'RSV').trim().toUpperCase() || 'RSV')}-XXXX-XXXX
             </div>
             <span className="text-[11px] text-[#85af9b]">
-              Includes QR code link to <code>risev.app/activate</code> with 500 capacity.
+              Includes QR code link to <code>risev.app/activate</code> with {effectiveQuota.toLocaleString()} capacity.
             </span>
           </div>
 
