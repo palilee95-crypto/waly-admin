@@ -4,6 +4,84 @@ import { Modal, Form, Input, Select, Button, message, Pagination, Popconfirm } f
 import { useNavigate } from 'react-router-dom';
 import { pb } from '../../lib/pocketbase';
 
+const getPlanInfo = (sub: any) => {
+  if (!sub) {
+    return {
+      planName: 'No Plan',
+      badgeLabel: 'NO PLAN',
+      badgeStyle: 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20',
+      icon: 'radio_button_unchecked',
+      status: 'none',
+      statusLabel: 'No Plan',
+      statusBadgeStyle: 'bg-slate-100 dark:bg-white/10 text-slate-500 border-slate-200 dark:border-white/10',
+      isUnlimited: false,
+    };
+  }
+
+  const rawPlan = String(sub.plan || '').toLowerCase();
+  const rawStatus = String(sub.status || '').toLowerCase();
+
+  let planName = 'Stand Bundle';
+  let badgeLabel = 'STAND BUNDLE';
+  let badgeStyle = 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
+  let icon = 'inventory_2';
+  let isUnlimited = false;
+
+  if (rawPlan === 'pro') {
+    planName = 'Pro';
+    badgeLabel = 'PRO ⚡';
+    badgeStyle = 'bg-indigo-500/15 text-indigo-700 dark:text-indigo-300 border-indigo-500/30';
+    icon = 'bolt';
+    isUnlimited = true;
+  } else if (rawPlan === 'business') {
+    planName = 'Business';
+    badgeLabel = 'BUSINESS 💼';
+    badgeStyle = 'bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-500/30';
+    icon = 'domain';
+    isUnlimited = true;
+  } else if (rawPlan === 'starter') {
+    planName = 'Starter';
+    badgeLabel = 'STARTER 🌱';
+    badgeStyle = 'bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-500/30';
+    icon = 'rocket_launch';
+    isUnlimited = false;
+  } else if (rawPlan === 'stand_bundle') {
+    planName = 'Stand Bundle';
+    badgeLabel = 'STAND BUNDLE';
+    badgeStyle = 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30';
+    icon = 'inventory_2';
+    isUnlimited = false;
+  } else if (rawPlan) {
+    planName = rawPlan.replace('_', ' ');
+    badgeLabel = rawPlan.replace('_', ' ').toUpperCase();
+  }
+
+  let statusLabel = rawStatus.toUpperCase();
+  let statusBadgeStyle = 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
+
+  if (rawStatus === 'trialing') {
+    statusLabel = 'TRIAL';
+    statusBadgeStyle = 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30';
+  } else if (rawStatus === 'canceled' || rawStatus === 'expired') {
+    statusLabel = 'EXPIRED';
+    statusBadgeStyle = 'bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30';
+  } else if (rawStatus === 'active') {
+    statusLabel = 'ACTIVE';
+    statusBadgeStyle = 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30';
+  }
+
+  return {
+    planName,
+    badgeLabel,
+    badgeStyle,
+    icon,
+    status: rawStatus,
+    statusLabel,
+    statusBadgeStyle,
+    isUnlimited,
+  };
+};
+
 export const UserList: React.FC = () => {
   const navigate = useNavigate();
   const [isAdjustmentModalOpen, setIsAdjustmentModalOpen] = useState(false);
@@ -28,6 +106,9 @@ export const UserList: React.FC = () => {
   const [loadingMerchants, setLoadingMerchants] = useState(false);
   const [merchantCards, setMerchantCards] = useState<any[]>([]);
   const [loadingMerchantCards, setLoadingMerchantCards] = useState(false);
+  const [subByMerchant, setSubByMerchant] = useState<Record<string, any>>({});
+  const [merchantById, setMerchantById] = useState<Record<string, any>>({});
+  const [merchantByOwner, setMerchantByOwner] = useState<Record<string, any>>({});
 
   // Fetch users from pocketbase
   const { 
@@ -70,24 +151,51 @@ export const UserList: React.FC = () => {
     fetchCounts();
   }, []);
 
-  // Load merchants list for the dropdown filter
+  // Load merchants list and subscriptions mapping
   useEffect(() => {
-    const fetchMerchants = async () => {
+    const fetchMerchantsAndSubs = async () => {
       try {
         setLoadingMerchants(true);
-        const records = await pb.collection('merchants').getFullList({
-          sort: 'name',
-          fields: 'id,name,status,category',
-          requestKey: null,
+        const [merchantRecords, subRecords] = await Promise.all([
+          pb.collection('merchants').getFullList({
+            sort: 'name',
+            fields: 'id,name,status,category,owner',
+            requestKey: null,
+          }),
+          pb.collection('subscriptions').getFullList({
+            sort: '-created',
+            requestKey: null,
+          }),
+        ]);
+        setMerchants(merchantRecords);
+
+        const byId: Record<string, any> = {};
+        const ownerMap: Record<string, any> = {};
+        merchantRecords.forEach((m: any) => {
+          byId[m.id] = m;
+          if (m.owner) {
+            ownerMap[m.owner] = m;
+          }
         });
-        setMerchants(records);
+        setMerchantById(byId);
+        setMerchantByOwner(ownerMap);
+
+        const sMap: Record<string, any> = {};
+        subRecords.forEach((s: any) => {
+          if (!s.merchant) return;
+          const existing = sMap[s.merchant];
+          if (!existing || (existing.status !== 'active' && s.status === 'active')) {
+            sMap[s.merchant] = s;
+          }
+        });
+        setSubByMerchant(sMap);
       } catch (err) {
-        console.warn('Failed to fetch merchants for filter:', err);
+        console.warn('Failed to fetch merchants and subscriptions for user list:', err);
       } finally {
         setLoadingMerchants(false);
       }
     };
-    fetchMerchants();
+    fetchMerchantsAndSubs();
   }, []);
 
   // Fetch loyalty cards and customer details when a merchant is selected
@@ -623,7 +731,18 @@ export const UserList: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 mt-4">
-                  {users.map((user) => (
+                  {users.map((user) => {
+                    const isMerchant =
+                      String(user.role).toLowerCase() === 'merchant' ||
+                      String(user.role).toLowerCase() === 'both' ||
+                      Boolean(user.merchant_id);
+                    const merchant = (user.merchant_id ? merchantById[user.merchant_id] : null) || merchantByOwner[user.id];
+                    const merchantId = user.merchant_id || merchant?.id;
+                    const storeName = merchant?.name;
+                    const sub = merchantId ? subByMerchant[merchantId] : null;
+                    const planInfo = getPlanInfo(sub);
+
+                    return (
                     <div
                       key={user.id}
                       className="bg-[#f8faf9] dark:bg-[#001f15] rounded-2xl p-4 border border-surface-variant dark:border-[#004d30] flex flex-col justify-between shadow-sm hover:border-[#006d37] dark:hover:border-[#6bfe9c] transition-all group"
@@ -642,13 +761,29 @@ export const UserList: React.FC = () => {
                               <h4 className="text-xs sm:text-sm font-black text-on-surface dark:text-white mb-0.5 group-hover:text-[#006d37] dark:group-hover:text-[#6bfe9c] transition-colors leading-tight">
                                 {user.name}
                               </h4>
-                              <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
-                                String(user.role).toLowerCase() === 'merchant'
-                                  ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
-                                  : 'bg-[#006d37]/10 text-[#006d37] dark:text-[#6bfe9c] border border-[#006d37]/20'
-                              }`}>
-                                {user.role || 'Customer'}
-                              </span>
+                              {isMerchant && storeName && (
+                                <p className="text-[11px] font-bold text-slate-500 dark:text-[#85af9b] flex items-center gap-1 mb-1">
+                                  <span className="material-symbols-outlined text-[13px] text-[#006d37] dark:text-[#6bfe9c]">storefront</span>
+                                  <span className="truncate max-w-[200px]">{storeName}</span>
+                                </p>
+                              )}
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                                  isMerchant
+                                    ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30'
+                                    : 'bg-[#006d37]/10 text-[#006d37] dark:text-[#6bfe9c] border border-[#006d37]/20'
+                                }`}>
+                                  {user.role || 'Customer'}
+                                </span>
+
+                                {/* Plan Badge on Header for Merchants */}
+                                {isMerchant && (
+                                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase border flex items-center gap-1 ${planInfo.badgeStyle}`}>
+                                    <span className="material-symbols-outlined text-[10px] leading-none">{planInfo.icon}</span>
+                                    <span>{planInfo.badgeLabel}</span>
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -667,7 +802,7 @@ export const UserList: React.FC = () => {
                         </div>
 
                         {/* Phone & Points Balance Info Box */}
-                        <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-3">
+                        <div className="bg-white dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex items-center justify-between text-[11px] mb-2">
                           <span className="font-mono text-on-surface-variant dark:text-[#85af9b]">
                             📱 {user.phone || 'No Phone Added'}
                           </span>
@@ -675,6 +810,47 @@ export const UserList: React.FC = () => {
                             ⚡ {user.total_points || 0} pts
                           </span>
                         </div>
+
+                        {/* Merchant Store & Subscription Plan Box */}
+                        {isMerchant && (
+                          <div className="bg-white/90 dark:bg-[#002518] p-2.5 rounded-xl border border-surface-variant dark:border-[#004d30] flex flex-col gap-1.5 text-[11px] mb-3">
+                            {storeName && (
+                              <div className="flex items-center justify-between pb-1.5 border-b border-slate-100 dark:border-white/5">
+                                <span className="text-slate-500 dark:text-[#85af9b] font-medium flex items-center gap-1">
+                                  <span className="material-symbols-outlined text-[13px] text-[#006d37] dark:text-[#6bfe9c]">storefront</span>
+                                  <span>Store:</span>
+                                </span>
+                                <span className="font-bold text-on-surface dark:text-white truncate max-w-[200px]">
+                                  {storeName}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="material-symbols-outlined text-[14px] text-slate-400 dark:text-[#85af9b] shrink-0">credit_card</span>
+                                <span className="text-slate-500 dark:text-[#85af9b] font-medium text-[11px]">Plan:</span>
+                                <span className="font-black text-on-surface dark:text-white uppercase tracking-tight text-[11px] truncate">
+                                  {planInfo.planName}
+                                </span>
+                                {planInfo.isUnlimited && (
+                                  <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 px-1.5 py-0.2 rounded-md shrink-0">
+                                    ♾️ Unlimited
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-1.5 shrink-0">
+                                <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase border ${planInfo.statusBadgeStyle}`}>
+                                  {planInfo.statusLabel}
+                                </span>
+                                {sub?.current_period_end && sub.status === 'trialing' && (
+                                  <span className="text-[10px] text-slate-400 font-medium">
+                                    until {new Date(sub.current_period_end).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
 
                       {/* Bottom Action Pill Buttons */}
@@ -719,7 +895,8 @@ export const UserList: React.FC = () => {
                       </div>
 
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )
             )}

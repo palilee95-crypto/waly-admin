@@ -3,6 +3,7 @@ import { useShow, useList } from '@refinedev/core';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tag, Tabs, Card, Spin } from 'antd';
 import { ArrowLeftOutlined, QrcodeOutlined, TrophyOutlined, HistoryOutlined } from '@ant-design/icons';
+import { pb } from '../../lib/pocketbase';
 
 export const UserShow: React.FC = () => {
   const { id } = useParams();
@@ -15,6 +16,34 @@ export const UserShow: React.FC = () => {
   });
 
   const user = queryResult?.data?.data;
+  const isMerchant = String(user?.role).toLowerCase() === 'merchant' || String(user?.role).toLowerCase() === 'both' || Boolean(user?.merchant_id);
+  const [sub, setSub] = React.useState<any>(null);
+  const [merchant, setMerchant] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    if (!user) return;
+    const loadSubAndMerchant = async () => {
+      try {
+        let merchantRecord: any = null;
+        if (user.merchant_id) {
+          merchantRecord = await pb.collection('merchants').getOne(user.merchant_id, { requestKey: null }).catch(() => null);
+        }
+        if (!merchantRecord) {
+          merchantRecord = await pb.collection('merchants').getFirstListItem(`owner = "${user.id}"`, { requestKey: null }).catch(() => null);
+        }
+        if (merchantRecord) {
+          setMerchant(merchantRecord);
+          const s = await pb.collection('subscriptions').getFirstListItem(`merchant = "${merchantRecord.id}"`, { sort: '-created', requestKey: null }).catch(() => null);
+          setSub(s);
+        }
+      } catch (e) {
+        console.warn('Failed to fetch user subscription in inspector:', e);
+      }
+    };
+    if (isMerchant) {
+      loadSubAndMerchant();
+    }
+  }, [user?.id, user?.merchant_id, isMerchant]);
 
   // 2. Fetch linked loyalty cards for this user
   const { data: loyaltyCardsData, isLoading: isLoadingCards } = useList<any>({
@@ -137,6 +166,50 @@ export const UserShow: React.FC = () => {
                   {new Date(user.created).toLocaleDateString()}
                 </p>
               </div>
+
+              {isMerchant && merchant?.name && (
+                <div>
+                  <p className="text-[10px] text-outline uppercase font-semibold">Store Name</p>
+                  <p className="font-bold text-on-surface flex items-center gap-1.5 mt-0.5">
+                    <span className="material-symbols-outlined text-sm text-[#006d37]">storefront</span>
+                    <span>{merchant.name}</span>
+                  </p>
+                </div>
+              )}
+
+              {isMerchant && (
+                <div className="bg-[#f8faf9] dark:bg-[#001f15] p-3 rounded-2xl border border-surface-variant dark:border-[#004d30] flex flex-col gap-1.5 mt-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] text-outline uppercase font-bold tracking-wider">
+                      SUBSCRIPTION PLAN
+                    </span>
+                    <span className={`text-[9px] font-black px-2 py-0.5 rounded-full uppercase ${
+                      sub?.status === 'active'
+                        ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
+                        : sub?.status === 'trialing'
+                        ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30'
+                        : 'bg-slate-500/15 text-slate-700 dark:text-slate-300 border border-slate-500/30'
+                    }`}>
+                      {sub?.status || 'NO PLAN'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-on-surface dark:text-white uppercase text-xs">
+                      {sub?.plan ? sub.plan.replace('_', ' ') : 'No Active Plan'}
+                    </span>
+                    {sub?.plan === 'pro' || sub?.plan === 'business' ? (
+                      <span className="text-[10px] font-black text-indigo-600 dark:text-indigo-400">
+                        ⚡ Unlimited
+                      </span>
+                    ) : null}
+                  </div>
+                  {sub?.current_period_end && (
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      Period End: {new Date(sub.current_period_end).toLocaleDateString()}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </Card>
 
