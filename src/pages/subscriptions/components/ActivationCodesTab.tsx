@@ -1055,10 +1055,10 @@ export const ActivationCodesTab: React.FC = () => {
             <button
               onClick={() => setIsMiniNfcModalOpen(true)}
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#047857] hover:bg-[#065f46] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md border-none cursor-pointer active:scale-95"
-              title="Manufacturer Prepress 8-Up A4 Imposition (85.5x54mm Mini NFC Cards)"
+              title="Manufacturer Prepress A4 Imposition (10-Up Mirror 5mm Gap or 8-Up Standard)"
             >
               <FilePdfOutlined />
-              <span>Mini NFC (8-Up PDF)</span>
+              <span>Mini NFC Cards (PDF)</span>
             </button>
           </div>
 

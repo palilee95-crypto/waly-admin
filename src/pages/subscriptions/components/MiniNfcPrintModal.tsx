@@ -11,25 +11,23 @@ import {
   Progress,
   message,
   Alert,
-  Space,
   Tag,
 } from 'antd';
 import {
   PrinterOutlined,
-  QrcodeOutlined,
-  CheckCircleOutlined,
   DownloadOutlined,
   FilePdfOutlined,
   ThunderboltOutlined,
-  InfoCircleOutlined,
+  SyncOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import { pb } from '../../../lib/pocketbase';
 import {
-  generateMiniNfc8UpPdf,
+  generateMiniNfcPrintPdf,
   downloadPdfBlob,
+  TEMPLATE_CONFIGS,
 } from '../../../lib/miniNfcPdfGenerator';
-import type { MiniNfcCardItem } from '../../../lib/miniNfcPdfGenerator';
+import type { MiniNfcCardItem, NfcPrintTemplateType } from '../../../lib/miniNfcPdfGenerator';
 import type { ActivationCodeRecord } from './ActivationCodesTab';
 import { generateActivationCodeString } from './ActivationCodesTab';
 
@@ -51,9 +49,14 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
   const [activeTab, setActiveTab] = useState<'generate' | 'selected'>('generate');
   const [form] = Form.useForm();
 
+  // Template Type State (Default to 10-Up Mirror with 5mm gap)
+  const [templateType, setTemplateType] = useState<NfcPrintTemplateType>('10_up_mirror');
+  const currentConfig = TEMPLATE_CONFIGS[templateType];
+  const cardsPerSheet = currentConfig.cardsPerPage;
+
   // Quantity State
-  const [cardQuantity, setCardQuantity] = useState<number>(16); // 2 sheets default
-  const [quantityPreset, setQuantityPreset] = useState<'8' | '16' | '40' | '80' | 'custom'>('16');
+  const [cardQuantity, setCardQuantity] = useState<number>(20); // 2 sheets default for 10-up
+  const [quantityPreset, setQuantityPreset] = useState<string>('20');
 
   // Quota State
   const [quotaPreset, setQuotaPreset] = useState<'500' | '1000' | '3000' | 'custom'>('500');
@@ -88,9 +91,20 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
     ? (Number(customQuota) > 0 ? Number(customQuota) : 500)
     : Number(quotaPreset);
 
-  const calculatedSheets = Math.ceil(cardQuantity / 8);
+  const calculatedSheets = Math.ceil(cardQuantity / cardsPerSheet);
 
-  const handlePresetQuantityChange = (val: '8' | '16' | '40' | '80' | 'custom') => {
+  const handleTemplateChange = (newType: NfcPrintTemplateType) => {
+    setTemplateType(newType);
+    if (newType === '10_up_mirror') {
+      setCardQuantity(20);
+      setQuantityPreset('20');
+    } else {
+      setCardQuantity(16);
+      setQuantityPreset('16');
+    }
+  };
+
+  const handlePresetQuantityChange = (val: string) => {
     setQuantityPreset(val);
     if (val !== 'custom') {
       setCardQuantity(parseInt(val, 10));
@@ -144,17 +158,18 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
         throw new Error('Failed to create activation codes in database. Please check connection.');
       }
 
-      // 2. Generate Prepress 8-Up Vector PDF
-      setProgressStatusText(`Imprinting ${generatedItems.length} QR codes onto 8-Up A4 template...`);
+      // 2. Generate Prepress Vector PDF
+      setProgressStatusText(`Imprinting ${generatedItems.length} QR codes onto ${currentConfig.title}...`);
       setProgressPercent(55);
 
-      const pdfBytes = await generateMiniNfc8UpPdf({
+      const pdfBytes = await generateMiniNfcPrintPdf({
         items: generatedItems,
+        templateType,
         showSerialText,
         onProgress: (current, total) => {
           const pct = Math.round(55 + (current / total) * 40);
           setProgressPercent(pct);
-          setProgressStatusText(`Rendering card ${current} of ${total} (${Math.ceil(current / 8)} sheets)...`);
+          setProgressStatusText(`Rendering card ${current} of ${total} (${Math.ceil(current / cardsPerSheet)} sheets)...`);
         },
       });
 
@@ -162,7 +177,8 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
       setProgressStatusText('PDF Generation Complete! Starting download...');
 
       // 3. Trigger Download
-      const filename = `Risev_Mini_NFC_A4_8up_${dayjs().format('YYYYMMDD_HHmm')}_${generatedItems.length}cards.pdf`;
+      const typeTag = templateType === '10_up_mirror' ? '10up_MIRROR' : '8up_STANDARD';
+      const filename = `Risev_Mini_NFC_A4_${typeTag}_${dayjs().format('YYYYMMDD_HHmm')}_${generatedItems.length}cards.pdf`;
       downloadPdfBlob(pdfBytes, filename);
 
       message.success(`Successfully generated ${successCount} Mini NFC cards (${calculatedSheets} A4 sheets)!`);
@@ -199,8 +215,9 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
         plan: c.plan || 'stand_bundle',
       }));
 
-      const pdfBytes = await generateMiniNfc8UpPdf({
+      const pdfBytes = await generateMiniNfcPrintPdf({
         items: itemsToExport,
+        templateType,
         showSerialText,
         onProgress: (current, total) => {
           const pct = Math.round(15 + (current / total) * 80);
@@ -212,10 +229,11 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
       setProgressPercent(100);
       setProgressStatusText('Download starting...');
 
-      const filename = `Risev_Mini_NFC_A4_8up_Selected_${dayjs().format('YYYYMMDD_HHmm')}_${itemsToExport.length}cards.pdf`;
+      const typeTag = templateType === '10_up_mirror' ? '10up_MIRROR' : '8up_STANDARD';
+      const filename = `Risev_Mini_NFC_A4_${typeTag}_Selected_${dayjs().format('YYYYMMDD_HHmm')}_${itemsToExport.length}cards.pdf`;
       downloadPdfBlob(pdfBytes, filename);
 
-      message.success(`Exported ${itemsToExport.length} selected cards (${Math.ceil(itemsToExport.length / 8)} sheets) to PDF!`);
+      message.success(`Exported ${itemsToExport.length} selected cards (${Math.ceil(itemsToExport.length / cardsPerSheet)} sheets) to PDF!`);
 
       if (onClearSelection) {
         onClearSelection();
@@ -231,18 +249,24 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
     }
   };
 
+  const presetValues = templateType === '10_up_mirror'
+    ? ['10', '20', '50', '100']
+    : ['8', '16', '40', '80'];
+
   return (
     <Modal
       title={
         <div className="flex items-center gap-2 text-emerald-900 font-bold text-lg">
           <FilePdfOutlined className="text-emerald-700 text-xl" />
-          <span>Mini NFC Card 8-Up Manufacturer PDF Generator</span>
-          <Tag color="gold" className="ml-2 font-mono font-bold">A4 • 85.5 × 54 mm</Tag>
+          <span>Mini NFC Card Manufacturer PDF Generator</span>
+          <Tag color="gold" className="ml-2 font-mono font-bold">
+            {templateType === '10_up_mirror' ? '10-Up Mirror (5mm Gap)' : '8-Up Standard'} &bull; 85.5 × 54 mm
+          </Tag>
         </div>
       }
       open={open}
       onCancel={isProcessing ? undefined : onClose}
-      width={680}
+      width={700}
       footer={null}
       destroyOnClose
     >
@@ -260,11 +284,66 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
               ),
               children: (
                 <div className="space-y-4 pt-1">
+                  {/* Manufacturer Print Template Selector */}
+                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                    <div className="flex justify-between items-center mb-2.5">
+                      <span className="text-sm font-bold text-slate-800">
+                        Manufacturer Print Layout & Template:
+                      </span>
+                      <span className="text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                        {cardsPerSheet} Cards per Sheet
+                      </span>
+                    </div>
+
+                    <Radio.Group
+                      value={templateType}
+                      onChange={(e) => handleTemplateChange(e.target.value)}
+                      disabled={isProcessing}
+                      className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full"
+                    >
+                      <Radio.Button
+                        value="10_up_mirror"
+                        className={`h-auto p-3 rounded-xl border flex flex-col transition-all text-left ${
+                          templateType === '10_up_mirror' ? 'border-emerald-600 bg-emerald-50/50 shadow-sm' : 'bg-white'
+                        }`}
+                      >
+                        <div className="font-black text-xs text-slate-900 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <SyncOutlined className="text-emerald-600" />
+                            10-Up Mirror Print
+                          </span>
+                          <Tag color="green" className="text-[10px] m-0 font-bold">5mm Gaps</Tag>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1 leading-normal">
+                          10 cards/sheet &bull; 5mm space between cards &bull; Mirrored QR for reverse acrylic/card print
+                        </div>
+                      </Radio.Button>
+
+                      <Radio.Button
+                        value="8_up_standard"
+                        className={`h-auto p-3 rounded-xl border flex flex-col transition-all text-left ${
+                          templateType === '8_up_standard' ? 'border-emerald-600 bg-emerald-50/50 shadow-sm' : 'bg-white'
+                        }`}
+                      >
+                        <div className="font-black text-xs text-slate-900 flex items-center justify-between">
+                          <span className="flex items-center gap-1.5">
+                            <FilePdfOutlined className="text-blue-600" />
+                            8-Up Standard Print
+                          </span>
+                          <Tag color="blue" className="text-[10px] m-0 font-bold">Flush</Tag>
+                        </div>
+                        <div className="text-[11px] text-slate-500 mt-1 leading-normal">
+                          8 cards/sheet &bull; Standard front print &bull; QR code on right side
+                        </div>
+                      </Radio.Button>
+                    </Radio.Group>
+                  </div>
+
                   {/* Card Quantity Selection */}
                   <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                     <div className="flex justify-between items-center mb-2">
                       <span className="text-sm font-bold text-slate-800">
-                        Total Cards to Print (Multiples of 8 per Sheet):
+                        Total Cards to Print (Multiples of {cardsPerSheet} per Sheet):
                       </span>
                       <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
                         📄 {calculatedSheets} A4 {calculatedSheets === 1 ? 'Sheet' : 'Sheets'} ({cardQuantity} Cards)
@@ -272,9 +351,9 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-3">
-                      {(['8', '16', '40', '80'] as const).map((preset) => {
+                      {presetValues.map((preset) => {
                         const count = parseInt(preset, 10);
-                        const sheets = count / 8;
+                        const sheets = count / cardsPerSheet;
                         const isSelected = quantityPreset === preset;
                         return (
                           <button
@@ -311,14 +390,14 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
                         <span className="text-xs font-medium text-slate-600">Enter Number of Cards:</span>
                         <InputNumber
                           min={1}
-                          max={800}
+                          max={1000}
                           value={cardQuantity}
-                          onChange={(val) => setCardQuantity(Number(val) || 8)}
+                          onChange={(val) => setCardQuantity(Number(val) || cardsPerSheet)}
                           disabled={isProcessing}
                           className="w-32"
                         />
                         <span className="text-xs text-slate-500">
-                          (= {Math.ceil(cardQuantity / 8)} A4 print sheets)
+                          (= {Math.ceil(cardQuantity / cardsPerSheet)} A4 print sheets)
                         </span>
                       </div>
                     )}
@@ -428,7 +507,8 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
                           QR Code + Serial Code Text <Tag color="green" className="ml-1 text-[10px]">Recommended</Tag>
                         </span>
                         <div className="text-[11px] text-slate-500 pl-6">
-                          Displays the QR code with monospace text (e.g. <span className="font-mono text-emerald-800 font-bold">RSV-8K2P-9M4X</span>) printed cleanly underneath.
+                          Displays the QR code with monospace text (e.g. <span className="font-mono text-emerald-800 font-bold">RSV-8K2P-9M4X</span>) printed cleanly underneath
+                          {templateType === '10_up_mirror' ? ' (automatically mirrored for reverse print)' : ''}.
                         </div>
                       </Radio>
                       <Radio value={false}>
@@ -463,7 +543,7 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
                       onClick={handleGenerateBatch}
                       className="w-full bg-emerald-700 hover:bg-emerald-800 font-bold h-11 text-sm shadow-md"
                     >
-                      Generate {cardQuantity} Cards & Download 8-Up PDF ({calculatedSheets} {calculatedSheets === 1 ? 'Sheet' : 'Sheets'})
+                      Generate {cardQuantity} Cards & Download PDF ({calculatedSheets} {calculatedSheets === 1 ? 'Sheet' : 'Sheets'})
                     </Button>
                   </div>
                 </div>
@@ -487,6 +567,24 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
                     />
                   ) : (
                     <>
+                      {/* Template Selector for Selected Codes */}
+                      <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                        <div className="text-xs font-bold text-slate-800 mb-2">Print Layout:</div>
+                        <Radio.Group
+                          value={templateType}
+                          onChange={(e) => setTemplateType(e.target.value)}
+                          disabled={isProcessing}
+                          className="grid grid-cols-2 gap-2 w-full"
+                        >
+                          <Radio.Button value="10_up_mirror" className="text-center font-bold text-xs py-1">
+                            10-Up Mirror (5mm Gap)
+                          </Radio.Button>
+                          <Radio.Button value="8_up_standard" className="text-center font-bold text-xs py-1">
+                            8-Up Standard Print
+                          </Radio.Button>
+                        </Radio.Group>
+                      </div>
+
                       <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                         <div className="flex justify-between items-center">
                           <div>
@@ -496,7 +594,7 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
                             <div className="text-xs text-slate-500 mt-0.5">
                               {selectedCodes.length} codes selected &bull; Will generate{' '}
                               <span className="font-bold text-emerald-800">
-                                {Math.ceil(selectedCodes.length / 8)} A4 {Math.ceil(selectedCodes.length / 8) === 1 ? 'Sheet' : 'Sheets'}
+                                {Math.ceil(selectedCodes.length / cardsPerSheet)} A4 {Math.ceil(selectedCodes.length / cardsPerSheet) === 1 ? 'Sheet' : 'Sheets'}
                               </span>
                             </div>
                           </div>
@@ -560,7 +658,7 @@ export const MiniNfcPrintModal: React.FC<MiniNfcPrintModalProps> = ({
                           onClick={handleExportSelected}
                           className="w-full bg-emerald-700 hover:bg-emerald-800 font-bold h-11 text-sm shadow-md"
                         >
-                          Export {selectedCodes.length} Selected Cards to 8-Up PDF ({Math.ceil(selectedCodes.length / 8)} Sheets)
+                          Export {selectedCodes.length} Selected Cards to PDF ({Math.ceil(selectedCodes.length / cardsPerSheet)} Sheets)
                         </Button>
                       </div>
                     </>
