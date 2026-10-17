@@ -29,3 +29,6 @@ dist-ssr
 .env.test
 !.env.production
 !.env.example
+
+# Local specs and documentation
+docs/

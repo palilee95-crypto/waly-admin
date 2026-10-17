@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTable, useDelete } from '@refinedev/core';
-import { Tag, message, Modal, Form, Select, Input, Button, Popconfirm, QRCode, Tooltip, InputNumber, Radio } from 'antd';
+import { Tag, message, Modal, Form, Select, Input, Button, Popconfirm, QRCode, Tooltip, InputNumber, Radio, Checkbox } from 'antd';
 import {
   PlusOutlined,
   DeleteOutlined,
@@ -23,6 +23,7 @@ import { Link } from 'react-router-dom';
 import jsPDF from 'jspdf';
 import QRCodeLib from 'qrcode';
 import { pb } from '../../../lib/pocketbase';
+import { MiniNfcPrintModal } from './MiniNfcPrintModal';
 
 export interface ActivationCodeRecord {
   id: string;
@@ -94,6 +95,25 @@ export const ActivationCodesTab: React.FC = () => {
   const [selectedStandQrItem, setSelectedStandQrItem] = useState<ActivationCodeRecord | null>(null);
   const [standQrSizeMm, setStandQrSizeMm] = useState<number>(70);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+
+  // Mini NFC Card 8-Up Manufacturer PDF Modal & Multi-Selection State
+  const [isMiniNfcModalOpen, setIsMiniNfcModalOpen] = useState(false);
+  const [selectedCodeIds, setSelectedCodeIds] = useState<string[]>([]);
+
+  const handleToggleSelectCode = (id: string) => {
+    setSelectedCodeIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    );
+  };
+
+  const handleSelectAllAvailable = (checked: boolean) => {
+    if (checked) {
+      const availableIds = filteredCodes.filter((c) => !c.is_redeemed).map((c) => c.id);
+      setSelectedCodeIds(availableIds);
+    } else {
+      setSelectedCodeIds([]);
+    }
+  };
 
   // Refine Table for activation_codes
   const { tableQueryResult } = useTable<ActivationCodeRecord>({
@@ -1023,13 +1043,24 @@ export const ActivationCodesTab: React.FC = () => {
         {/* Top: Action Buttons Row */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
           {/* Main Primary Action: Generate Codes (Full width & top on mobile) */}
-          <button
-            onClick={handleOpenGenerateModal}
-            className="w-full sm:w-auto order-1 sm:order-2 inline-flex items-center justify-center gap-2 bg-[#006d37] hover:bg-[#00542a] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md border-none cursor-pointer active:scale-95"
-          >
-            <PlusOutlined />
-            <span>Generate Stand Codes</span>
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto order-1 sm:order-2">
+            <button
+              onClick={handleOpenGenerateModal}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#006d37] hover:bg-[#00542a] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md border-none cursor-pointer active:scale-95"
+            >
+              <PlusOutlined />
+              <span>Generate Stand Codes</span>
+            </button>
+
+            <button
+              onClick={() => setIsMiniNfcModalOpen(true)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-[#047857] hover:bg-[#065f46] text-white font-black text-xs px-4 py-2.5 rounded-xl transition-all shadow-md border-none cursor-pointer active:scale-95"
+              title="Manufacturer Prepress 8-Up A4 Imposition (85.5x54mm Mini NFC Cards)"
+            >
+              <FilePdfOutlined />
+              <span>Mini NFC (8-Up PDF)</span>
+            </button>
+          </div>
 
           {/* Secondary Action Toolbar: Print, PDF, Export (Clean 2-col grid on mobile, horizontal row on desktop) */}
           <div className="grid grid-cols-2 sm:flex sm:items-center gap-2 order-2 sm:order-1 w-full sm:w-auto">
@@ -1148,6 +1179,13 @@ export const ActivationCodesTab: React.FC = () => {
                   {/* Top: Code & Status */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-1.5 min-w-0">
+                      {!item.is_redeemed && (
+                        <Checkbox
+                          checked={selectedCodeIds.includes(item.id)}
+                          onChange={() => handleToggleSelectCode(item.id)}
+                          className="mr-1"
+                        />
+                      )}
                       <span className="font-mono text-xs font-black text-[#006d37] dark:text-[#6bfe9c] bg-[#006d37]/10 dark:bg-[#6bfe9c]/15 px-2 py-0.5 rounded-lg border border-[#006d37]/20 select-all truncate">
                         {item.code}
                       </span>
@@ -1334,6 +1372,20 @@ export const ActivationCodesTab: React.FC = () => {
               <table className="w-full text-left min-w-[850px]">
                 <thead>
                   <tr className="border-b border-slate-100 dark:border-white/10 bg-slate-50/50 dark:bg-[#001f15]/50">
+                  <th className="py-3.5 px-3 w-10 text-center">
+                    <Checkbox
+                      indeterminate={
+                        selectedCodeIds.length > 0 &&
+                        selectedCodeIds.length < filteredCodes.filter((c) => !c.is_redeemed).length
+                      }
+                      checked={
+                        filteredCodes.filter((c) => !c.is_redeemed).length > 0 &&
+                        selectedCodeIds.length === filteredCodes.filter((c) => !c.is_redeemed).length
+                      }
+                      onChange={(e) => handleSelectAllAvailable(e.target.checked)}
+                      title="Select all unredeemed codes"
+                    />
+                  </th>
                   <th className="py-3.5 px-4 text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-[#85af9b]">
                     Activation Code
                   </th>
@@ -1364,6 +1416,16 @@ export const ActivationCodesTab: React.FC = () => {
                       key={item.id}
                       className="hover:bg-slate-50/80 dark:hover:bg-white/[0.02] transition-colors group"
                     >
+                      {/* Checkbox */}
+                      <td className="py-3 px-3 w-10 text-center">
+                        {!item.is_redeemed && (
+                          <Checkbox
+                            checked={selectedCodeIds.includes(item.id)}
+                            onChange={() => handleToggleSelectCode(item.id)}
+                          />
+                        )}
+                      </td>
+
                       {/* Code string with copy button */}
                       {/* Code string with copy buttons */}
                       <td className="py-3 px-4">
@@ -1627,6 +1689,30 @@ export const ActivationCodesTab: React.FC = () => {
               </tbody>
             </table>
           </div>
+        </div>
+      )}
+
+      {/* Floating Selection Bar */}
+      {selectedCodeIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-slate-900/95 backdrop-blur-md text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center gap-4 border border-slate-700 animate-in fade-in slide-in-from-bottom-4">
+          <span className="text-xs font-bold">
+            <span className="text-emerald-400 font-extrabold">{selectedCodeIds.length}</span> cards selected ({Math.ceil(selectedCodeIds.length / 8)} A4 sheets)
+          </span>
+          <Button
+            type="primary"
+            size="small"
+            icon={<FilePdfOutlined />}
+            onClick={() => setIsMiniNfcModalOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 border-none font-bold text-xs rounded-xl"
+          >
+            Export to 8-Up PDF
+          </Button>
+          <button
+            onClick={() => setSelectedCodeIds([])}
+            className="text-xs text-slate-400 hover:text-white underline cursor-pointer bg-transparent border-none"
+          >
+            Deselect
+          </button>
         </div>
       )}
     </div>
@@ -2084,6 +2170,18 @@ export const ActivationCodesTab: React.FC = () => {
           </div>
         )}
       </Modal>
+
+      {/* 6. Mini NFC Card 8-Up Manufacturer PDF Generator Modal */}
+      <MiniNfcPrintModal
+        open={isMiniNfcModalOpen}
+        onClose={() => setIsMiniNfcModalOpen(false)}
+        onSuccess={() => {
+          tableQueryResult.refetch();
+          setSelectedCodeIds([]);
+        }}
+        selectedCodes={allCodes.filter((c) => selectedCodeIds.includes(c.id))}
+        onClearSelection={() => setSelectedCodeIds([])}
+      />
     </div>
   );
 };
