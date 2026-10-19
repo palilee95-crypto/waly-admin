@@ -84,6 +84,7 @@ export const ActivationCodesTab: React.FC = () => {
     prefix: string;
   } | null>(null);
   const [isBuildingSheet, setIsBuildingSheet] = useState(false);
+  const [isRevokingSelected, setIsRevokingSelected] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateForm] = Form.useForm();
   const watchedPrefix = Form.useWatch('prefix', generateForm);
@@ -340,6 +341,44 @@ export const ActivationCodesTab: React.FC = () => {
         return false;
       },
     });
+  };
+
+  // Revoke (delete) every code in the multi-selection.
+  // Matches the per-row Revoke semantics — the record is removed entirely.
+  const handleRevokeSelected = async () => {
+    const ids = [...selectedCodeIds];
+    if (ids.length === 0) return;
+
+    try {
+      setIsRevokingSelected(true);
+      message.loading({ content: `Revoking ${ids.length} code(s)...`, key: 'revoke_selected' });
+
+      const results = await Promise.allSettled(
+        ids.map((id) => pb.collection('activation_codes').delete(id))
+      );
+      const revoked = results.filter((result) => result.status === 'fulfilled').length;
+      const failed = results.length - revoked;
+
+      if (failed > 0) {
+        message.warning({
+          content: `Revoked ${revoked} code(s); ${failed} failed.`,
+          key: 'revoke_selected',
+        });
+      } else {
+        message.success({ content: `Revoked ${revoked} code(s).`, key: 'revoke_selected' });
+      }
+
+      setSelectedCodeIds([]);
+      tableQueryResult.refetch();
+    } catch (err: any) {
+      console.error('Failed to revoke selected codes:', err);
+      message.error({
+        content: err?.message || 'Failed to revoke selected codes.',
+        key: 'revoke_selected',
+      });
+    } finally {
+      setIsRevokingSelected(false);
+    }
   };
 
   // CSV Export of filtered or unredeemed codes
@@ -1744,6 +1783,24 @@ export const ActivationCodesTab: React.FC = () => {
           >
             Export to 8-Up PDF
           </Button>
+          <Popconfirm
+            title="Revoke selected codes?"
+            description={`${selectedCodeIds.length} code${selectedCodeIds.length === 1 ? '' : 's'} will be permanently deleted.`}
+            okText="Revoke"
+            okButtonProps={{ danger: true }}
+            cancelText="Cancel"
+            onConfirm={handleRevokeSelected}
+          >
+            <Button
+              danger
+              size="small"
+              loading={isRevokingSelected}
+              icon={<DeleteOutlined />}
+              className="font-bold text-xs rounded-xl"
+            >
+              Revoke
+            </Button>
+          </Popconfirm>
           <button
             onClick={() => setSelectedCodeIds([])}
             className="text-xs text-slate-400 hover:text-white underline cursor-pointer bg-transparent border-none"
