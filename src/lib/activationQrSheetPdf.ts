@@ -67,3 +67,92 @@ export function buildStickerSlots(count: number): StickerSlot[] {
   }
   return slots;
 }
+
+export interface ActivationQrSheetOptions {
+  /** Activation codes, e.g. ['RSV-8K2P-9M4X']. Order is preserved on the sheet. */
+  codes: string[];
+  /** Member capacity this batch grants; rendered in the page band. */
+  quota: number;
+  /** Optional override for the band text. Defaults to `${quota} MEMBERS`. */
+  label?: string;
+  /** Injectable QR renderer — defaults to real QR PNG generation. */
+  renderQrPng?: (text: string) => Promise<string>;
+  onProgress?: (done: number, total: number) => void;
+}
+
+/**
+ * Renders a QR PNG data URL for one activation code.
+ * 4-module quiet zone, EC level H, pure black for maximum contrast at 29 mm.
+ */
+export async function defaultRenderQrPng(text: string): Promise<string> {
+  return QRCodeLib.toDataURL(text, {
+    errorCorrectionLevel: 'H',
+    margin: 4,
+    width: 1200,
+    color: { dark: '#000000', light: '#FFFFFF' },
+  });
+}
+
+/**
+ * Builds a print-ready A4 PDF of QR-only stickers (spec §2 and §3).
+ * Pure with respect to the DOM: it returns bytes and never triggers a download.
+ */
+export async function generateActivationQrSheetPdf(
+  options: ActivationQrSheetOptions
+): Promise<Uint8Array> {
+  const { codes, quota, label, renderQrPng = defaultRenderQrPng, onProgress } = options;
+
+  if (!codes || codes.length === 0) {
+    throw new Error('At least one activation code is required to build a QR sheet');
+  }
+
+  const bandText = label || formatQuotaLabel(quota);
+  const slots = buildStickerSlots(codes.length);
+  const totalPages = countPages(codes.length);
+
+  // Render every QR up front so drawing below stays synchronous.
+  const qrDataUrls: string[] = [];
+  for (let i = 0; i < codes.length; i++) {
+    const code = codes[i].trim().toUpperCase();
+    qrDataUrls.push(await renderQrPng(ACTIVATE_URL_BASE + code));
+    if (onProgress) onProgress(i + 1, codes.length);
+  }
+
+  // compress:false keeps the content streams plain so the band text stays
+  // verifiable in tests, and has negligible size impact next to the PNGs.
+  const doc = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4',
+    compress: false,
+  });
+
+  for (let page = 0; page < totalPages; page++) {
+    if (page > 0) {
+      doc.addPage('a4', 'portrait');
+    }
+
+    // Top band — repeated on every page (spec §2.2).
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14);
+    doc.setTextColor(0, 109, 55); // #006d37
+    doc.text(bandText, SHEET.PAGE_W_MM / 2, SHEET.BAND_Y_MM + SHEET.BAND_H_MM / 2, {
+      align: 'center',
+      baseline: 'middle',
+    });
+
+    for (const slot of slots) {
+      if (slot.page !== page) continue;
+      doc.addImage(
+        qrDataUrls[slot.index],
+        'PNG',
+        slot.xMm,
+        slot.yMm,
+        SHEET.STICKER_MM,
+        SHEET.STICKER_MM
+      );
+    }
+  }
+
+  return new Uint8Array(doc.output('arraybuffer'));
+}

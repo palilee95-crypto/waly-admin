@@ -100,3 +100,108 @@ describe('buildStickerSlots', () => {
     }
   });
 });
+
+import { beforeAll, vi } from 'vitest';
+import { PDFDocument } from 'pdf-lib';
+import QRCodeLib from 'qrcode';
+import {
+  generateActivationQrSheetPdf,
+  defaultRenderQrPng,
+} from './activationQrSheetPdf';
+
+// A real, tiny QR PNG produced once so jsPDF always receives a valid image.
+let stubQrDataUrl = '';
+beforeAll(async () => {
+  const buffer = await QRCodeLib.toBuffer('https://risev.app/nfc?c=STUB', {
+    errorCorrectionLevel: 'H',
+    margin: 4,
+    width: 64,
+  });
+  stubQrDataUrl = `data:image/png;base64,${buffer.toString('base64')}`;
+});
+
+const renderStub = async () => stubQrDataUrl;
+
+function codes(n: number): string[] {
+  return Array.from({ length: n }, (_, i) => `RSV-TEST-${String(i).padStart(4, '0')}`);
+}
+
+describe('generateActivationQrSheetPdf', () => {
+  it('throws when there are no codes', async () => {
+    await expect(
+      generateActivationQrSheetPdf({ codes: [], quota: 500, renderQrPng: renderStub })
+    ).rejects.toThrow(/at least one activation code/i);
+  });
+
+  it('produces one page for 30 codes', async () => {
+    const bytes = await generateActivationQrSheetPdf({
+      codes: codes(30),
+      quota: 500,
+      renderQrPng: renderStub,
+    });
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBe(1);
+  });
+
+  it('paginates 100 codes across three pages', async () => {
+    const bytes = await generateActivationQrSheetPdf({
+      codes: codes(100),
+      quota: 500,
+      renderQrPng: renderStub,
+    });
+    const doc = await PDFDocument.load(bytes);
+    expect(doc.getPageCount()).toBe(3);
+  });
+
+  it('renders exactly one QR image per code and encodes the activation URL', async () => {
+    const renderQrPng = vi.fn(renderStub);
+    await generateActivationQrSheetPdf({
+      codes: codes(30),
+      quota: 500,
+      renderQrPng,
+    });
+    expect(renderQrPng).toHaveBeenCalledTimes(30);
+    expect(renderQrPng).toHaveBeenNthCalledWith(1, 'https://risev.app/nfc?c=RSV-TEST-0000');
+  });
+
+  it('draws the quota band on every page', async () => {
+    const bytes = await generateActivationQrSheetPdf({
+      codes: codes(100),
+      quota: 500,
+      renderQrPng: renderStub,
+    });
+    const text = new TextDecoder().decode(bytes);
+    const occurrences = text.split('500 MEMBERS').length - 1;
+    expect(occurrences).toBe(3);
+  });
+
+  it('honours a custom label', async () => {
+    const bytes = await generateActivationQrSheetPdf({
+      codes: codes(2),
+      quota: 500,
+      label: 'RSV - TIKTOK SHOP - 500 MEMBERS',
+      renderQrPng: renderStub,
+    });
+    const text = new TextDecoder().decode(bytes);
+    expect(text).toContain('RSV - TIKTOK SHOP - 500 MEMBERS');
+  });
+
+  it('reports progress once per code', async () => {
+    const onProgress = vi.fn();
+    await generateActivationQrSheetPdf({
+      codes: codes(5),
+      quota: 500,
+      renderQrPng: renderStub,
+      onProgress,
+    });
+    expect(onProgress).toHaveBeenCalledTimes(5);
+    expect(onProgress).toHaveBeenLastCalledWith(5, 5);
+  });
+});
+
+describe('defaultRenderQrPng', () => {
+  it('returns a PNG data URL', async () => {
+    const dataUrl = await defaultRenderQrPng('https://risev.app/nfc?c=RSV-TEST-0000');
+    expect(dataUrl.startsWith('data:image/png;base64,')).toBe(true);
+  });
+});
