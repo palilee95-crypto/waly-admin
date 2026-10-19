@@ -78,6 +78,12 @@ export interface ActivationQrSheetOptions {
   /** Injectable QR renderer — defaults to real QR PNG generation. */
   renderQrPng?: (text: string) => Promise<string>;
   onProgress?: (done: number, total: number) => void;
+  /**
+   * Deflate the PDF streams (default true). Turning it off makes the drawn text
+   * readable in the raw bytes — useful for debugging and byte-level assertions,
+   * but it inflates the file dramatically because images go in uncompressed.
+   */
+  compress?: boolean;
 }
 
 /**
@@ -88,7 +94,8 @@ export async function defaultRenderQrPng(text: string): Promise<string> {
   return QRCodeLib.toDataURL(text, {
     errorCorrectionLevel: 'H',
     margin: 4,
-    width: 1200,
+    // ~610 dpi at the 29 mm sticker size — crisply printed without bloating the PDF.
+    width: 700,
     color: { dark: '#000000', light: '#FFFFFF' },
   });
 }
@@ -100,7 +107,14 @@ export async function defaultRenderQrPng(text: string): Promise<string> {
 export async function generateActivationQrSheetPdf(
   options: ActivationQrSheetOptions
 ): Promise<Uint8Array> {
-  const { codes, quota, label, renderQrPng = defaultRenderQrPng, onProgress } = options;
+  const {
+    codes,
+    quota,
+    label,
+    renderQrPng = defaultRenderQrPng,
+    onProgress,
+    compress = true,
+  } = options;
 
   if (!codes || codes.length === 0) {
     throw new Error('At least one activation code is required to build a QR sheet');
@@ -118,13 +132,13 @@ export async function generateActivationQrSheetPdf(
     if (onProgress) onProgress(i + 1, codes.length);
   }
 
-  // compress:false keeps the content streams plain so the band text stays
-  // verifiable in tests, and has negligible size impact next to the PNGs.
   const doc = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4',
-    compress: false,
+    // Compression must stay on in production: with it off, jsPDF embeds each QR
+    // as an uncompressed bitmap and a 30-sticker page balloons past 100 MB.
+    compress,
   });
 
   for (let page = 0; page < totalPages; page++) {

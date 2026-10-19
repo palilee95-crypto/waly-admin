@@ -165,10 +165,12 @@ describe('generateActivationQrSheetPdf', () => {
   });
 
   it('draws the quota band on every page', async () => {
+    // compress:false keeps the text streams readable so we can assert on bytes.
     const bytes = await generateActivationQrSheetPdf({
       codes: codes(100),
       quota: 500,
       renderQrPng: renderStub,
+      compress: false,
     });
     const text = new TextDecoder().decode(bytes);
     const occurrences = text.split('500 MEMBERS').length - 1;
@@ -181,6 +183,7 @@ describe('generateActivationQrSheetPdf', () => {
       quota: 500,
       label: 'RSV - TIKTOK SHOP - 500 MEMBERS',
       renderQrPng: renderStub,
+      compress: false,
     });
     const text = new TextDecoder().decode(bytes);
     expect(text).toContain('RSV - TIKTOK SHOP - 500 MEMBERS');
