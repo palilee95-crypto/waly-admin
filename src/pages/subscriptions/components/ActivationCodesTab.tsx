@@ -24,6 +24,8 @@ import jsPDF from 'jspdf';
 import QRCodeLib from 'qrcode';
 import { pb } from '../../../lib/pocketbase';
 import { MiniNfcPrintModal } from './MiniNfcPrintModal';
+import { generateActivationQrSheetPdf } from '../../../lib/activationQrSheetPdf';
+import { downloadPdfBlob } from '../../../lib/miniNfcPdfGenerator';
 
 export interface ActivationCodeRecord {
   id: string;
@@ -76,6 +78,12 @@ export const ActivationCodesTab: React.FC = () => {
 
   // Generation Modal State
   const [isGenerateModalOpen, setIsGenerateModalOpen] = useState(false);
+  const [generatedBatch, setGeneratedBatch] = useState<{
+    codes: string[];
+    quota: number;
+    prefix: string;
+  } | null>(null);
+  const [isBuildingSheet, setIsBuildingSheet] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateForm] = Form.useForm();
   const watchedPrefix = Form.useWatch('prefix', generateForm);
@@ -227,6 +235,7 @@ export const ActivationCodesTab: React.FC = () => {
       channel: 'tiktok_shop',
       remark: '',
     });
+    setGeneratedBatch(null);
     setIsGenerateModalOpen(true);
   };
 
@@ -256,7 +265,7 @@ export const ActivationCodesTab: React.FC = () => {
       }
     }
 
-    let successCount = 0;
+    const createdCodes: string[] = [];
     let failCount = 0;
 
     for (const code of newCodesToCreate) {
@@ -269,7 +278,7 @@ export const ActivationCodesTab: React.FC = () => {
           channel,
           ...(remark ? { remark } : {}),
         });
-        successCount++;
+        createdCodes.push(code);
       } catch (err: any) {
         console.error(`Failed to create code ${code}:`, err);
         failCount++;
@@ -277,14 +286,42 @@ export const ActivationCodesTab: React.FC = () => {
     }
 
     setIsGenerating(false);
-    setIsGenerateModalOpen(false);
 
-    if (successCount > 0) {
-      message.success(`Successfully generated ${successCount} Risev activation codes!`);
+    if (createdCodes.length > 0) {
+      message.success(`Successfully generated ${createdCodes.length} Risev activation codes!`);
+      setGeneratedBatch({ codes: createdCodes, quota, prefix });
       tableQueryResult.refetch();
+    } else {
+      setIsGenerateModalOpen(false);
     }
     if (failCount > 0) {
       message.warning(`${failCount} codes failed to generate. Check console for details.`);
+    }
+  };
+
+  // Build the A4 QR-only sticker sheet for the batch just minted.
+  const handleDownloadGeneratedSheet = async () => {
+    if (!generatedBatch) return;
+    try {
+      setIsBuildingSheet(true);
+      message.loading({ content: 'Building A4 QR sheet...', key: 'batch_sheet' });
+      const bytes = await generateActivationQrSheetPdf({
+        codes: generatedBatch.codes,
+        quota: generatedBatch.quota,
+      });
+      downloadPdfBlob(
+        bytes,
+        `Risev_QR_${generatedBatch.prefix}_${generatedBatch.quota}Members_${generatedBatch.codes.length}pcs.pdf`
+      );
+      message.success({ content: 'QR sheet downloaded.', key: 'batch_sheet' });
+    } catch (err: any) {
+      console.error('Failed to build activation QR sheet:', err);
+      message.error({
+        content: err?.message || 'Failed to build QR sheet. Codes were created — you can retry.',
+        key: 'batch_sheet',
+      });
+    } finally {
+      setIsBuildingSheet(false);
     }
   };
 
@@ -1735,12 +1772,50 @@ export const ActivationCodesTab: React.FC = () => {
           </div>
         }
         open={isGenerateModalOpen}
-        onCancel={() => setIsGenerateModalOpen(false)}
+        onCancel={() => {
+          setIsGenerateModalOpen(false);
+          setGeneratedBatch(null);
+        }}
         footer={null}
         destroyOnHidden
         centered
         width={480}
       >
+        {generatedBatch ? (
+          <div className="pt-3 flex flex-col gap-4">
+            <div className="p-3.5 rounded-2xl bg-[#002d1e] text-white border border-[#004d30] flex flex-col gap-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-[#6bfe9c]">
+                BATCH CREATED
+              </span>
+              <div className="font-mono text-sm font-bold text-white tracking-wider">
+                {generatedBatch.codes.length} x {generatedBatch.prefix}-XXXX-XXXX
+              </div>
+              <span className="text-[11px] text-[#85af9b]">
+                {generatedBatch.quota.toLocaleString()} members capacity each.
+              </span>
+            </div>
+
+            <Button
+              type="primary"
+              loading={isBuildingSheet}
+              icon={<DownloadOutlined />}
+              onClick={handleDownloadGeneratedSheet}
+              className="rounded-xl font-black bg-[#006d37] border-none shadow-md h-10"
+            >
+              Download QR Sheet (A4)
+            </Button>
+
+            <Button
+              onClick={() => {
+                setIsGenerateModalOpen(false);
+                setGeneratedBatch(null);
+              }}
+              className="rounded-xl font-bold"
+            >
+              Close
+            </Button>
+          </div>
+        ) : (
         <Form
           form={generateForm}
           layout="vertical"
@@ -1919,6 +1994,7 @@ export const ActivationCodesTab: React.FC = () => {
             </Button>
           </div>
         </Form>
+        )}
       </Modal>
 
       {/* 5. Print & Download Preview Modal */}
