@@ -32,3 +32,6 @@ dist-ssr
 
 # Local specs and documentation
 docs/
+
+# Local scratch outputs (sample PDFs, one-off scripts)
+scratch/
